@@ -6,10 +6,25 @@ build-backend = "setuptools.build_meta"
 name = "tou-calculator"
 version = "0.1.0"
 description = "Taiwan time-of-use electricity tariff calculator"
-readme = "README.md"
-requires-python = ">=3.10"
+readme = {file = "README.md", content-type = "text/markdown"}
+requires-python = ">=3.9"
 license = {text = "MIT"}
 authors = [{name = "Gary"}]
+keywords = ["taiwan", "tariff", "electricity", "time-of-use", "tou", "energy"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Scientific/Engineering",
+    "Topic :: Utilities",
+]
 
 dependencies = [
     "numpy>=1.21.0",
@@ -17,12 +32,36 @@ dependencies = [
     "platformdirs>=4.0.0",
 ]
 
+[project.urls]
+Homepage = "https://github.com/JUN-WEI-DING/tou_calculator"
+Repository = "https://github.com/JUN-WEI-DING/tou_calculator"
+Issues = "https://github.com/JUN-WEI-DING/tou_calculator/issues"
+Changelog = "https://github.com/JUN-WEI-DING/tou_calculator/blob/main/CHANGELOG.md"
+Documentation = "https://github.com/JUN-WEI-DING/tou_calculator#readme"
+
+[project.optional-dependencies]
+test = ["pytest"]
+dev = ["pre-commit", "ruff", "mypy"]
+
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-"tou_calculator" = ["data/*.json"]
+"tou_calculator" = ["data/*.json", "data/*.md", "data/*.pdf", "data/*.txt"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py39"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "FA"]
+
+[tool.mypy]
+python_version = "3.9"
+ignore_missing_imports = true
+warn_unused_ignores = true
+warn_redundant_casts = true

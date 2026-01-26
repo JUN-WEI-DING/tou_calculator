@@ -3,7 +3,13 @@ from datetime import date, datetime
 import pandas as pd
 import pytest
 
-from tou_calculator import InvalidUsageInput, monthly_breakdown, period_context, plan_details, pricing_context
+from tou_calculator import (
+    InvalidUsageInput,
+    monthly_breakdown,
+    period_context,
+    plan_details,
+    pricing_context,
+)
 from tou_calculator.calendar import TaiwanCalendar
 from tou_calculator.tariff import PeriodType, SeasonType, TaipowerTariffs, get_period
 

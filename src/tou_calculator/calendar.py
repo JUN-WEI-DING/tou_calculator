@@ -2,11 +2,11 @@
 
 from __future__ import annotations
 
+import json
+import time
 from datetime import date, datetime
 from functools import singledispatchmethod
-import json
 from pathlib import Path
-import time
 from typing import Any
 from urllib.error import URLError
 from urllib.request import urlopen
@@ -19,7 +19,6 @@ except ImportError:
     pd = None
 
 from tou_calculator.errors import CalendarError
-
 
 HOLIDAY_API_URL = (
     "https://raw.githubusercontent.com/ruyut/TaiwanCalendar/master/data/{year}.json"
@@ -40,7 +39,9 @@ class _HolidayCache:
         try:
             self._cache_dir.mkdir(parents=True, exist_ok=True)
         except PermissionError:
-            fallback_dir = Path.cwd() / ".cache" / "tou_calculator" / "calendar" / "taiwan"
+            fallback_dir = (
+                Path.cwd() / ".cache" / "tou_calculator" / "calendar" / "taiwan"
+            )
             fallback_dir.mkdir(parents=True, exist_ok=True)
             self._cache_dir = fallback_dir
 
@@ -66,7 +67,9 @@ class _HolidayParser:
                 description = entry.get("description", "")
                 if len(date_str) == 8:
                     try:
-                        d = date(int(date_str[:4]), int(date_str[4:6]), int(date_str[6:8]))
+                        d = date(
+                            int(date_str[:4]), int(date_str[4:6]), int(date_str[6:8])
+                        )
                         if d.weekday() == 5 and not description:
                             continue
                         holidays.add(d)
@@ -166,7 +169,7 @@ class TaiwanCalendar:
         self._loader = _HolidayLoader(cache_dir, api_timeout)
 
     @singledispatchmethod
-    def is_holiday(self, target: object) -> bool | "pd.Series":
+    def is_holiday(self, target: object) -> bool | pd.Series:
         raise CalendarError(f"Unsupported type: {type(target)}")
 
     @is_holiday.register
@@ -183,7 +186,7 @@ class TaiwanCalendar:
     if pd is not None:
 
         @is_holiday.register
-        def _(self, target: "pd.DatetimeIndex") -> "pd.Series":
+        def _(self, target: pd.DatetimeIndex) -> pd.Series:
             is_sunday = target.dayofweek == 6
 
             unique_years = target.year.unique()
@@ -203,5 +206,7 @@ class TaiwanCalendar:
             return pd.Series(final_mask, index=target, name="is_holiday")
 
 
-def taiwan_calendar(cache_dir: Path | None = None, api_timeout: int = 10) -> TaiwanCalendar:
+def taiwan_calendar(
+    cache_dir: Path | None = None, api_timeout: int = 10
+) -> TaiwanCalendar:
     return TaiwanCalendar(cache_dir=cache_dir, api_timeout=api_timeout)

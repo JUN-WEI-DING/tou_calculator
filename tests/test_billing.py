@@ -63,8 +63,17 @@ def test_calculate_bill_breakdown(tmp_path) -> None:
         calendar_instance=tou.taiwan_calendar(cache_dir=tmp_path),
     )
 
-    assert set(breakdown.keys()) == {"summary", "details"}
+    assert {"summary", "details", "basic_details", "adjustment_details"} <= set(
+        breakdown.keys()
+    )
     summary = breakdown["summary"]
     details = breakdown["details"]
+    basic_details = breakdown["basic_details"]
+    adjustment_details = breakdown["adjustment_details"]
     assert "total" in summary.columns
-    assert {"period", "season", "period_type", "usage_kwh", "energy_cost"} <= set(details.columns)
+    assert {"period", "season", "period_type", "usage_kwh", "energy_cost"} <= set(
+        details.columns
+    )
+    assert {"period", "label", "quantity", "rate", "cost"} <= set(basic_details.columns)
+    if not adjustment_details.empty:
+        assert {"period", "type", "amount"} <= set(adjustment_details.columns)

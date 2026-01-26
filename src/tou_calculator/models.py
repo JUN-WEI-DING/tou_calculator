@@ -41,7 +41,9 @@ class DaySchedule:
 
 @dataclass
 class TariffRate:
-    period_costs: dict[tuple[SeasonType | str, PeriodType | str], float] = field(default_factory=dict)
+    period_costs: dict[tuple[SeasonType | str, PeriodType | str], float] = field(
+        default_factory=dict
+    )
     tiered_rates: list[ConsumptionTier] = field(default_factory=list)
 
     def rate_structure(self) -> str:
@@ -62,7 +64,7 @@ class TariffRate:
         period_key = _label_value(period)
         return self.period_costs.get((season_key, period_key), 0.0)
 
-    def describe(self) -> dict[str, list[dict[str, float | str]] | str]:
+    def describe(self) -> dict[str, Any]:
         period_costs = [
             {
                 "season": _label_value(season),

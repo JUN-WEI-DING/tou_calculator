@@ -2,9 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Iterable, Mapping, Sequence
 from datetime import date, datetime, time
 from functools import singledispatchmethod
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any
 
 try:
     import pandas as pd
@@ -21,7 +22,12 @@ from tou_calculator.models import (
     TimeSlot,
     _label_value,
 )
-from tou_calculator.tariff import DayTypeStrategy, SeasonStrategy, TariffPlan, TariffProfile
+from tou_calculator.tariff import (
+    DayTypeStrategy,
+    SeasonStrategy,
+    TariffPlan,
+    TariffProfile,
+)
 
 
 class CustomCalendar:
@@ -36,7 +42,7 @@ class CustomCalendar:
         self._weekend_days = set(weekend_days or [])
 
     @singledispatchmethod
-    def is_holiday(self, target: object) -> bool | "pd.Series":
+    def is_holiday(self, target: object) -> bool | pd.Series:
         raise CalendarError(f"Unsupported type: {type(target)}")
 
     @is_holiday.register
@@ -50,7 +56,7 @@ class CustomCalendar:
     if pd is not None:
 
         @is_holiday.register
-        def _(self, target: "pd.DatetimeIndex") -> "pd.Series":
+        def _(self, target: pd.DatetimeIndex) -> pd.Series:
             is_weekend = target.dayofweek.isin(sorted(self._weekend_days))
             if not self._holidays:
                 return pd.Series(is_weekend, index=target, name="is_holiday")
@@ -108,7 +114,9 @@ def build_tariff_profile(
     name: str,
     season_strategy: SeasonStrategy,
     day_type_strategy: DayTypeStrategy,
-    schedules: Mapping[tuple[Any, Any], DaySchedule | Sequence[TimeSlot | Mapping[str, Any]]]
+    schedules: Mapping[
+        tuple[Any, Any], DaySchedule | Sequence[TimeSlot | Mapping[str, Any]]
+    ]
     | Sequence[Mapping[str, Any]],
     default_period: PeriodType | str = PeriodType.OFF_PEAK,
 ) -> TariffProfile:
@@ -138,7 +146,9 @@ def build_tariff_profile(
 
 
 def build_tariff_rate(
-    period_costs: Mapping[tuple[Any, Any], float] | Sequence[Mapping[str, Any]] | None = None,
+    period_costs: Mapping[tuple[Any, Any], float]
+    | Sequence[Mapping[str, Any]]
+    | None = None,
     tiered_rates: Sequence[ConsumptionTier | Mapping[str, Any]] | None = None,
     season_strategy: SeasonStrategy | None = None,
 ) -> TariffRate:
@@ -146,7 +156,9 @@ def build_tariff_rate(
     if period_costs:
         if isinstance(period_costs, Mapping):
             for (season, period), cost in period_costs.items():
-                period_cost_map[(_resolve_season(season, season_strategy), _resolve_period(period))] = float(cost)
+                period_cost_map[
+                    (_resolve_season(season, season_strategy), _resolve_period(period))
+                ] = float(cost)
         else:
             for item in period_costs:
                 season = _resolve_season(item["season"], season_strategy)
@@ -155,16 +167,16 @@ def build_tariff_rate(
 
     tiers: list[ConsumptionTier] = []
     if tiered_rates:
-        for item in tiered_rates:
-            if isinstance(item, ConsumptionTier):
-                tiers.append(item)
+        for t_item in tiered_rates:
+            if isinstance(t_item, ConsumptionTier):
+                tiers.append(t_item)
             else:
                 tiers.append(
                     ConsumptionTier(
-                        start_kwh=float(item["start_kwh"]),
-                        end_kwh=float(item["end_kwh"]),
-                        summer_cost=float(item["summer_cost"]),
-                        non_summer_cost=float(item["non_summer_cost"]),
+                        start_kwh=float(t_item["start_kwh"]),
+                        end_kwh=float(t_item["end_kwh"]),
+                        summer_cost=float(t_item["summer_cost"]),
+                        non_summer_cost=float(t_item["non_summer_cost"]),
                     )
                 )
 
@@ -214,7 +226,9 @@ def _resolve_period(period: PeriodType | str) -> PeriodType | str:
     return _label_value(period)
 
 
-def _resolve_season(season: SeasonType | str, season_strategy: SeasonStrategy | None) -> Any:
+def _resolve_season(
+    season: SeasonType | str, season_strategy: SeasonStrategy | None
+) -> Any:
     if isinstance(season, SeasonType):
         return season
     if isinstance(season, str):
@@ -239,7 +253,9 @@ def _resolve_day_type(day_type: Any, day_type_strategy: DayTypeStrategy | None) 
     return day_type
 
 
-def _ensure_schedule(schedule: DaySchedule | Sequence[TimeSlot | Mapping[str, Any]]) -> DaySchedule:
+def _ensure_schedule(
+    schedule: DaySchedule | Sequence[TimeSlot | Mapping[str, Any]],
+) -> DaySchedule:
     if isinstance(schedule, DaySchedule):
         return schedule
     return build_day_schedule(schedule)

@@ -1,5 +1,5 @@
-from datetime import date, datetime, time
 import json
+from datetime import date, datetime, time
 
 import pandas as pd
 
@@ -31,9 +31,13 @@ class FixedCalendar:
 def _build_profile() -> TariffProfile:
     schedule = DaySchedule(
         slots=[
-            TimeSlot(start=time(0, 0), end=time(12, 0), period_type=PeriodType.OFF_PEAK),
+            TimeSlot(
+                start=time(0, 0), end=time(12, 0), period_type=PeriodType.OFF_PEAK
+            ),
             TimeSlot(start=time(12, 0), end=time(18, 0), period_type=PeriodType.PEAK),
-            TimeSlot(start=time(18, 0), end=time(0, 0), period_type=PeriodType.OFF_PEAK),
+            TimeSlot(
+                start=time(18, 0), end=time(0, 0), period_type=PeriodType.OFF_PEAK
+            ),
         ]
     )
     schedules = {

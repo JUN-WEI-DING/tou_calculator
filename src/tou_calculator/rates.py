@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from importlib import resources
 import json
+from importlib import resources
 from typing import IO, Any
 
 from tou_calculator.models import ConsumptionTier, PeriodType, SeasonType, TariffRate
@@ -26,17 +26,21 @@ class TariffJSONLoader:
                 return resource.open("r", encoding="utf-8")
             except FileNotFoundError as exc:
                 raise FileNotFoundError(
-                    f"Tariff file not found in package: {self._package}/{self._filename}"
+                    f"Tariff file not found in package: "
+                    f"{self._package}/{self._filename}"
                 ) from exc
 
         try:
             return resources.open_text(self._package, self._filename)
         except (ImportError, FileNotFoundError) as exc:
             raise FileNotFoundError(
-                f"Tariff file not found in package (legacy): {self._package}/{self._filename}"
+                f"Tariff file not found in package (legacy): "
+                f"{self._package}/{self._filename}"
             ) from exc
         except ModuleNotFoundError as exc:
-            raise FileNotFoundError(f"Tariff package not found: {self._package}") from exc
+            raise FileNotFoundError(
+                f"Tariff package not found: {self._package}"
+            ) from exc
 
     def load(self) -> dict[str, Any]:
         if self._data is None:
@@ -54,7 +58,7 @@ class TariffJSONLoader:
     def get_residential_simple_rate(self) -> TariffRate:
         try:
             section = self._find_plan("residential_simple_2_tier")["rates"]
-            period_costs = {}
+            period_costs: dict[tuple[SeasonType | str, PeriodType | str], float] = {}
 
             for item in section:
                 season = item.get("season")
@@ -67,7 +71,9 @@ class TariffJSONLoader:
                 elif season == "non_summer" and period == "peak":
                     period_costs[(SeasonType.NON_SUMMER, PeriodType.PEAK)] = float(cost)
                 elif season == "non_summer" and period == "off_peak":
-                    period_costs[(SeasonType.NON_SUMMER, PeriodType.OFF_PEAK)] = float(cost)
+                    period_costs[(SeasonType.NON_SUMMER, PeriodType.OFF_PEAK)] = float(
+                        cost
+                    )
 
             return TariffRate(period_costs=period_costs)
         except (KeyError, TypeError):

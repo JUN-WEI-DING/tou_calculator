@@ -30,10 +30,11 @@ def main() -> None:
     # available_plans: 取得支援方案名稱列表
     print("available_plans:", tou.available_plans())
 
-    # residential_simple_two_stage_plan / high_voltage_two_stage_plan / residential_non_tou_plan:
+    # residential_simple_two_stage_plan / high_voltage_two_stage_plan
+    # / residential_non_tou_plan:
     # 直接取得各方案的 TariffPlan
     simple_plan = tou.residential_simple_two_stage_plan(calendar)
-    hv_plan = tou.high_voltage_two_stage_plan(calendar)
+    tou.high_voltage_two_stage_plan(calendar)
     non_tou_plan = tou.residential_non_tou_plan(calendar)
 
     # plan: 以方案名稱取得 TariffPlan
@@ -42,17 +43,23 @@ def main() -> None:
 
     # period_at: 以方案名稱取得時間點的時段類型
     dt = datetime(2025, 7, 15, 10, 0)
-    print("period_at:", tou.period_at(dt, "residential_simple_two_stage", calendar_instance=calendar))
+    print(
+        "period_at:",
+        tou.period_at(dt, "residential_simple_two_stage", calendar_instance=calendar),
+    )
     # get_period: 直接用 profile 查時段類型
     print("get_period:", tou.get_period(dt, simple_plan.profile))
 
     # period_context: 回傳 season/day_type/period
     print(
         "period_context:",
-        tou.period_context(dt, "residential_simple_two_stage", calendar_instance=calendar),
+        tou.period_context(
+            dt, "residential_simple_two_stage", calendar_instance=calendar
+        ),
     )
 
-    # pricing_context: 回傳 season/period/rate/cost（時間電價方案可用 usage 計算逐時費用）
+    # pricing_context: 回傳 season/period/rate/cost
+    # （時間電價方案可用 usage 計算逐時費用）
     print(
         "pricing_context:",
         tou.pricing_context(
@@ -75,17 +82,26 @@ def main() -> None:
     )
 
     # plan_details: 回傳完整方案結構（時段表與費率表）
-    print("plan_details:", tou.plan_details("high_voltage_two_stage", calendar_instance=calendar))
+    print(
+        "plan_details:",
+        tou.plan_details("high_voltage_two_stage", calendar_instance=calendar),
+    )
 
-    # calculate_costs: 以 TariffPlan 計算每月費用（usage 必須是 Series，index 為 DatetimeIndex）
+    # calculate_costs: 以 TariffPlan 計算每月費用
+    # （usage 必須是 Series，index 為 DatetimeIndex）
     usage = _sample_usage(datetime(2025, 7, 15, 16, 0), periods=4, freq_minutes=30)
     print("calculate_costs:", tou.calculate_costs(usage, simple_plan))
     # costs: 以方案名稱計算每月費用（內部會建立 TariffPlan）
-    print("costs:", tou.costs(usage, "residential_simple_two_stage", calendar_instance=calendar))
+    print(
+        "costs:",
+        tou.costs(usage, "residential_simple_two_stage", calendar_instance=calendar),
+    )
     # monthly_breakdown: 以方案名稱輸出每月用電/費用，按 season/period 彙總
     print(
         "monthly_breakdown:\n",
-        tou.monthly_breakdown(usage, "residential_simple_two_stage", calendar_instance=calendar),
+        tou.monthly_breakdown(
+            usage, "residential_simple_two_stage", calendar_instance=calendar
+        ),
     )
     # monthly_breakdown + include_shares: 附上各時段占比
     print(
@@ -111,10 +127,14 @@ def main() -> None:
 
     # 直接使用工廠方法取得 profile 或 plan
     print("tariff factory profile:", tariffs.get_high_voltage_two_stage().name)
-    print("tariff factory plan:", tariffs.get_high_voltage_two_stage_plan().profile.name)
+    print(
+        "tariff factory plan:", tariffs.get_high_voltage_two_stage_plan().profile.name
+    )
 
     # Non-TOU（分級電價）範例
-    non_tou_usage = _sample_usage(datetime(2025, 7, 1, 0, 0), periods=5, freq_minutes=60)
+    non_tou_usage = _sample_usage(
+        datetime(2025, 7, 1, 0, 0), periods=5, freq_minutes=60
+    )
     print("non_tou_costs:", tou.calculate_costs(non_tou_usage, non_tou_plan))
 
     # period_context（DatetimeIndex 版本）: 回傳 DataFrame（season/day_type/period）
@@ -122,7 +142,9 @@ def main() -> None:
     window = pd.date_range(start, start + timedelta(hours=6), freq="2H")
     print(
         "period_context_index:\n",
-        tou.period_context(window, "high_voltage_two_stage", calendar_instance=calendar),
+        tou.period_context(
+            window, "high_voltage_two_stage", calendar_instance=calendar
+        ),
     )
 
     # 自訂方案範例：自訂行事曆 + 自訂時段 + 自訂費率

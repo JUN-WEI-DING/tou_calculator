@@ -158,6 +158,12 @@ python -m pip install dist/tou_calculator-0.1.0-py3-none-any.whl
 - Cached JSON files are stored under the user cache directory, unless `cache_dir` is provided.
 - If the API is unavailable, the calendar falls back to static holidays.
 
+## Data sources and licensing
+
+- Taipower tariff data is derived from the public tariff tables and bundled under `src/tou_calculator/data/`.
+- Holiday data is fetched from the TaiwanCalendar dataset at runtime and cached locally.
+- Please review upstream data sources for any applicable terms before redistribution.
+
 ## Notes
 
 - Holiday data is fetched from the public Taiwan holiday dataset and cached

@@ -5,13 +5,13 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any
 
-from tou_calculator.calendar import TaiwanCalendar, taiwan_calendar
 from tou_calculator.billing import (
     BillingInputs,
     calculate_bill,
     calculate_bill_breakdown,
     calculate_bill_simple,
 )
+from tou_calculator.calendar import TaiwanCalendar, taiwan_calendar
 from tou_calculator.custom import (
     CustomCalendar,
     WeekdayDayTypeStrategy,
@@ -21,16 +21,25 @@ from tou_calculator.custom import (
     build_tariff_rate,
     custom_calendar,
 )
-from tou_calculator.errors import CalendarError, InvalidUsageInput, PowerKitError, TariffError
+from tou_calculator.errors import (
+    CalendarError,
+    InvalidUsageInput,
+    PowerKitError,
+    TariffError,
+)
 from tou_calculator.tariff import (
     PeriodType,
     SeasonType,
     TaipowerTariffs,
+    TaiwanDayTypeStrategy,
+    TaiwanSeasonStrategy,
     TariffPlan,
     TariffProfile,
     get_context,
     get_period,
 )
+
+__version__ = "0.1.0"
 
 
 def taipower_tariffs(
@@ -55,7 +64,9 @@ def is_holiday(
     cache_dir: Path | None = None,
     api_timeout: int = 10,
 ) -> bool:
-    calendar_instance = calendar or taiwan_calendar(cache_dir=cache_dir, api_timeout=api_timeout)
+    calendar_instance = calendar or taiwan_calendar(
+        cache_dir=cache_dir, api_timeout=api_timeout
+    )
     return calendar_instance.is_holiday(target)
 
 
@@ -113,7 +124,9 @@ def plan(
     api_timeout: int = 10,
 ) -> TariffPlan:
     if name == "residential_simple_two_stage":
-        return residential_simple_two_stage_plan(calendar_instance, cache_dir, api_timeout)
+        return residential_simple_two_stage_plan(
+            calendar_instance, cache_dir, api_timeout
+        )
     if name == "high_voltage_two_stage":
         return high_voltage_two_stage_plan(calendar_instance, cache_dir, api_timeout)
     if name == "residential_non_tou":
@@ -201,6 +214,8 @@ __all__ = [
     "TariffProfile",
     "PeriodType",
     "SeasonType",
+    "TaiwanDayTypeStrategy",
+    "TaiwanSeasonStrategy",
     "taiwan_calendar",
     "custom_calendar",
     "taipower_tariffs",
@@ -232,4 +247,5 @@ __all__ = [
     "calculate_bill",
     "calculate_bill_breakdown",
     "calculate_bill_simple",
+    "__version__",
 ]

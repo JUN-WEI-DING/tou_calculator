@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from datetime import date, datetime, time
 import functools
+from datetime import date, datetime, time
 from typing import Any, Protocol
 
 try:
@@ -27,23 +27,21 @@ from tou_calculator.rates import TariffJSONLoader
 
 
 class SeasonStrategy(Protocol):
-    def get_season(self, target: date) -> SeasonType | str:
-        ...
+    def get_season(self, target: date) -> SeasonType | str: ...
 
-    def get_all_seasons(self) -> list[SeasonType | str]:
-        ...
+    def get_all_seasons(self) -> list[SeasonType | str]: ...
 
 
 class DayTypeStrategy(Protocol):
-    def get_day_type(self, target: date) -> str:
-        ...
+    def get_day_type(self, target: date) -> str: ...
 
-    def get_all_day_types(self) -> list[str]:
-        ...
+    def get_all_day_types(self) -> list[str]: ...
 
 
 class TaiwanSeasonStrategy:
-    def __init__(self, summer_start: tuple[int, int], summer_end: tuple[int, int]) -> None:
+    def __init__(
+        self, summer_start: tuple[int, int], summer_end: tuple[int, int]
+    ) -> None:
         self._start = summer_start
         self._end = summer_end
 
@@ -52,10 +50,16 @@ class TaiwanSeasonStrategy:
         start = self._start
         end = self._end
         if start <= end:
-            return SeasonType.SUMMER if start <= current <= end else SeasonType.NON_SUMMER
-        return SeasonType.SUMMER if current >= start or current <= end else SeasonType.NON_SUMMER
+            return (
+                SeasonType.SUMMER if start <= current <= end else SeasonType.NON_SUMMER
+            )
+        return (
+            SeasonType.SUMMER
+            if current >= start or current <= end
+            else SeasonType.NON_SUMMER
+        )
 
-    def get_all_seasons(self) -> list[SeasonType]:
+    def get_all_seasons(self) -> list[SeasonType | str]:
         return [SeasonType.SUMMER, SeasonType.NON_SUMMER]
 
 
@@ -91,12 +95,12 @@ class TariffProfile:
         self._engine: _TariffEngine | None = None
 
     @property
-    def engine(self) -> "_TariffEngine":
+    def engine(self) -> _TariffEngine:
         if self._engine is None:
             self._engine = _TariffEngine(self)
         return self._engine
 
-    def evaluate(self, index: "pd.DatetimeIndex") -> "pd.DataFrame":
+    def evaluate(self, index: pd.DatetimeIndex) -> pd.DataFrame:
         if pd is None:
             raise TariffError("pandas is required for tariff evaluation")
         return self.engine.evaluate(index)
@@ -115,7 +119,9 @@ class TariffProfile:
             return (season_key, str(day_type))
 
         schedules = []
-        for (season, day_type), schedule in sorted(self.schedules.items(), key=_schedule_key):
+        for (season, day_type), schedule in sorted(
+            self.schedules.items(), key=_schedule_key
+        ):
             schedules.append(
                 {
                     "season": _label_value(season),
@@ -124,8 +130,12 @@ class TariffProfile:
                 }
             )
 
-        seasons = [_label_value(season) for season in self.season_strategy.get_all_seasons()]
-        day_types = [str(day_type) for day_type in self.day_type_strategy.get_all_day_types()]
+        seasons = [
+            _label_value(season) for season in self.season_strategy.get_all_seasons()
+        ]
+        day_types = [
+            str(day_type) for day_type in self.day_type_strategy.get_all_day_types()
+        ]
 
         return {
             "name": self.name,
@@ -178,24 +188,32 @@ class _TariffEngine:
                     self._lookup_table[s_idx, d_idx, start_min:] = p_idx
                     self._lookup_table[s_idx, d_idx, :end_min] = p_idx
 
-    def evaluate(self, index: "pd.DatetimeIndex") -> "pd.DataFrame":
+    def evaluate(self, index: pd.DatetimeIndex) -> pd.DataFrame:
         if pd is None or np is None:
             raise ImportError("pandas and numpy are required for vectorized lookup")
         if not isinstance(index, pd.DatetimeIndex):
             raise TypeError("Index must be a pandas.DatetimeIndex")
 
         unique_dates = pd.Series(index.normalize().unique())
-        date_to_season = unique_dates.dt.date.apply(self.profile.season_strategy.get_season)
+        date_to_season = unique_dates.dt.date.apply(
+            self.profile.season_strategy.get_season
+        )
         season_map = dict(zip(unique_dates, date_to_season))
         season_objs = index.normalize().map(season_map)
         season_series = pd.Series(season_objs, index=index, name="season")
-        season_codes = season_objs.map(self._season_map).fillna(0).astype(np.int8).values
+        season_codes = (
+            season_objs.map(self._season_map).fillna(0).astype(np.int8).values
+        )
 
-        date_to_day_type = unique_dates.dt.date.apply(self.profile.day_type_strategy.get_day_type)
+        date_to_day_type = unique_dates.dt.date.apply(
+            self.profile.day_type_strategy.get_day_type
+        )
         day_type_map = dict(zip(unique_dates, date_to_day_type))
         day_type_objs = index.normalize().map(day_type_map)
         day_type_series = pd.Series(day_type_objs, index=index, name="day_type")
-        day_type_codes = day_type_objs.map(self._day_type_map).fillna(0).astype(np.int8).values
+        day_type_codes = (
+            day_type_objs.map(self._day_type_map).fillna(0).astype(np.int8).values
+        )
 
         minutes = index.hour * 60 + index.minute
         period_codes = self._lookup_table[season_codes, day_type_codes, minutes]
@@ -204,7 +222,7 @@ class _TariffEngine:
 
         return pd.concat([season_series, day_type_series, period_series], axis=1)
 
-    def get_period_type_scalar(self, dt: datetime) -> PeriodType:
+    def get_period_type_scalar(self, dt: datetime) -> PeriodType | str:
         season = self.profile.season_strategy.get_season(dt.date())
         day_type = self.profile.day_type_strategy.get_day_type(dt.date())
         schedule = self.profile.schedules.get((season, day_type))
@@ -228,7 +246,7 @@ class _TariffEngine:
 
 
 @functools.singledispatch
-def get_period(target: object, profile: TariffProfile) -> PeriodType | str | "pd.Series":
+def get_period(target: object, profile: TariffProfile) -> PeriodType | str | pd.Series:
     raise NotImplementedError(f"Unsupported type: {type(target)}")
 
 
@@ -240,7 +258,7 @@ def _(target: datetime, profile: TariffProfile) -> PeriodType | str:
 if pd is not None:
 
     @get_period.register(pd.DatetimeIndex)
-    def _(target: "pd.DatetimeIndex", profile: TariffProfile) -> "pd.Series":
+    def _(target: pd.DatetimeIndex, profile: TariffProfile) -> pd.Series:
         return profile.engine.evaluate(target)["period"]
 
 
@@ -264,7 +282,7 @@ def _(target: datetime, profile: TariffProfile) -> dict[str, Any]:
 if pd is not None:
 
     @get_context.register(pd.DatetimeIndex)
-    def _(target: "pd.DatetimeIndex", profile: TariffProfile) -> "pd.DataFrame":
+    def _(target: pd.DatetimeIndex, profile: TariffProfile) -> pd.DataFrame:
         return profile.engine.evaluate(target)
 
 
@@ -282,7 +300,7 @@ class TariffPlan:
     def pricing_context(
         self,
         target: object,
-        usage_kwh: float | "pd.Series" | None = None,
+        usage_kwh: float | pd.Series | None = None,
         include_details: bool = False,
     ) -> Any:
         if pd is None and hasattr(target, "__iter__"):
@@ -331,7 +349,10 @@ class TariffPlan:
             cost_series = pd.Series([None] * len(target), index=target, name="cost")
         else:
             rate_series = pd.Series(
-                [self.rates.get_cost(season, period) for season, period in zip(seasons, periods)],
+                [
+                    self.rates.get_cost(season, period)
+                    for season, period in zip(seasons, periods)
+                ],
                 index=target,
                 name="rate",
             )
@@ -360,7 +381,7 @@ class TariffPlan:
             }
         return result
 
-    def calculate_costs(self, usage_kwh: "pd.Series") -> "pd.Series":
+    def calculate_costs(self, usage_kwh: pd.Series) -> pd.Series:
         if pd is None:
             raise TariffError("pandas is required for cost calculation")
         _validate_usage_series(usage_kwh)
@@ -383,7 +404,7 @@ class TariffPlan:
         monthly_costs.name = "cost"
         return monthly_costs
 
-    def _calculate_tiered_costs(self, usage_kwh: "pd.Series") -> "pd.Series":
+    def _calculate_tiered_costs(self, usage_kwh: pd.Series) -> pd.Series:
         context = self.profile.evaluate(usage_kwh.index)
         monthly_costs: dict[pd.Timestamp, float] = {}
         month_index = _month_group_index(usage_kwh.index)
@@ -410,7 +431,9 @@ class TariffPlan:
                     break
 
                 tier_limit_kwh = (
-                    (tier.end_kwh - last_limit_kwh) if tier.end_kwh < 999999 else float("inf")
+                    (tier.end_kwh - last_limit_kwh)
+                    if tier.end_kwh < 999999
+                    else float("inf")
                 )
                 usage_in_tier_kwh = min(remaining_kwh, tier_limit_kwh)
 
@@ -432,9 +455,9 @@ class TariffPlan:
 
     def monthly_breakdown(
         self,
-        usage_kwh: "pd.Series",
+        usage_kwh: pd.Series,
         include_shares: bool = False,
-    ) -> "pd.DataFrame":
+    ) -> pd.DataFrame:
         if pd is None:
             raise TariffError("pandas is required for cost calculation")
         _validate_usage_series(usage_kwh)
@@ -470,7 +493,15 @@ class TariffPlan:
                 result["usage_share"] = 1.0
                 result["cost_share"] = 1.0
                 return result[
-                    ["month", "season", "period", "usage_kwh", "cost", "usage_share", "cost_share"]
+                    [
+                        "month",
+                        "season",
+                        "period",
+                        "usage_kwh",
+                        "cost",
+                        "usage_share",
+                        "cost_share",
+                    ]
                 ]
             return result
 
@@ -490,30 +521,37 @@ class TariffPlan:
                 "cost": (usage_kwh * unit_costs).values,
             }
         )
-        grouped = (
-            base.groupby(["month", "season", "period"], sort=False, as_index=False)
-            .sum()
-        )
+        grouped = base.groupby(
+            ["month", "season", "period"], sort=False, as_index=False
+        ).sum()
         grouped["month"] = grouped["month"].dt.to_timestamp()
         if include_shares:
-            month_totals = grouped.groupby("month", sort=False)[["usage_kwh", "cost"]].transform(
-                "sum"
-            )
+            month_totals = grouped.groupby("month", sort=False)[
+                ["usage_kwh", "cost"]
+            ].transform("sum")
             grouped["usage_share"] = grouped["usage_kwh"] / month_totals["usage_kwh"]
             grouped["cost_share"] = grouped["cost"] / month_totals["cost"]
             return grouped[
-                ["month", "season", "period", "usage_kwh", "cost", "usage_share", "cost_share"]
+                [
+                    "month",
+                    "season",
+                    "period",
+                    "usage_kwh",
+                    "cost",
+                    "usage_share",
+                    "cost_share",
+                ]
             ]
         return grouped[["month", "season", "period", "usage_kwh", "cost"]]
 
 
-def _month_group_index(index: "pd.DatetimeIndex") -> "pd.DatetimeIndex":
+def _month_group_index(index: pd.DatetimeIndex) -> pd.DatetimeIndex:
     if index.tz is None:
         return index
     return index.tz_localize(None)
 
 
-def _validate_usage_series(usage_kwh: "pd.Series") -> None:
+def _validate_usage_series(usage_kwh: pd.Series) -> None:
     if not isinstance(usage_kwh, pd.Series):
         raise InvalidUsageInput("usage must be a pandas.Series")
     if not isinstance(usage_kwh.index, pd.DatetimeIndex):
@@ -532,7 +570,9 @@ def _make_slot(start_h: int, end_h: int, ptype: PeriodType) -> TimeSlot:
     return TimeSlot(start, end, ptype)
 
 
-_ALL_DAY_OFF_PEAK = DaySchedule(slots=[TimeSlot(time(0, 0), time(0, 0), PeriodType.OFF_PEAK)])
+_ALL_DAY_OFF_PEAK = DaySchedule(
+    slots=[TimeSlot(time(0, 0), time(0, 0), PeriodType.OFF_PEAK)]
+)
 
 _RESIDENTIAL_SUMMER_START = (6, 1)
 _RESIDENTIAL_SUMMER_END = (9, 30)
@@ -557,7 +597,9 @@ _res_simple_two_stage_nonsummer_weekday = DaySchedule(
 def _create_residential_simple_two_stage(calendar: Any) -> TariffProfile:
     return TariffProfile(
         name="Residential-Simple-Two-Stage",
-        season_strategy=TaiwanSeasonStrategy(_RESIDENTIAL_SUMMER_START, _RESIDENTIAL_SUMMER_END),
+        season_strategy=TaiwanSeasonStrategy(
+            _RESIDENTIAL_SUMMER_START, _RESIDENTIAL_SUMMER_END
+        ),
         day_type_strategy=TaiwanDayTypeStrategy(calendar),
         schedules={
             (SeasonType.SUMMER, "weekday"): _res_simple_two_stage_summer_weekday,
@@ -573,7 +615,9 @@ def _create_residential_simple_two_stage(calendar: Any) -> TariffProfile:
 def _create_residential_non_tou(calendar: Any) -> TariffProfile:
     return TariffProfile(
         name="Residential-Non-TOU",
-        season_strategy=TaiwanSeasonStrategy(_RESIDENTIAL_SUMMER_START, _RESIDENTIAL_SUMMER_END),
+        season_strategy=TaiwanSeasonStrategy(
+            _RESIDENTIAL_SUMMER_START, _RESIDENTIAL_SUMMER_END
+        ),
         day_type_strategy=TaiwanDayTypeStrategy(calendar),
         schedules={
             (SeasonType.SUMMER, "weekday"): _ALL_DAY_OFF_PEAK,
@@ -623,7 +667,9 @@ _hv_two_stage_nonsummer_saturday = DaySchedule(
 def _create_high_voltage_two_stage(calendar: Any) -> TariffProfile:
     return TariffProfile(
         name="High-Voltage-Two-Stage",
-        season_strategy=TaiwanSeasonStrategy(_HIGH_VOLTAGE_SUMMER_START, _HIGH_VOLTAGE_SUMMER_END),
+        season_strategy=TaiwanSeasonStrategy(
+            _HIGH_VOLTAGE_SUMMER_START, _HIGH_VOLTAGE_SUMMER_END
+        ),
         day_type_strategy=TaiwanDayTypeStrategy(calendar),
         schedules={
             (SeasonType.SUMMER, "weekday"): _hv_two_stage_summer_weekday,
