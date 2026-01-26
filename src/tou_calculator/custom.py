@@ -42,7 +42,7 @@ class CustomCalendar:
         self._weekend_days = set(weekend_days or [])
 
     @singledispatchmethod
-    def is_holiday(self, target: object) -> bool | pd.Series:
+    def is_holiday(self, target: object) -> Any:
         raise CalendarError(f"Unsupported type: {type(target)}")
 
     @is_holiday.register

@@ -169,7 +169,7 @@ class TaiwanCalendar:
         self._loader = _HolidayLoader(cache_dir, api_timeout)
 
     @singledispatchmethod
-    def is_holiday(self, target: object) -> bool | pd.Series:
+    def is_holiday(self, target: object) -> Any:
         raise CalendarError(f"Unsupported type: {type(target)}")
 
     @is_holiday.register
