@@ -349,6 +349,176 @@ print(result["details"].head())  # Detailed period-by-period breakdown
 print(result["adjustment_details"])  # Specific adjustments (e.g., PF discount amounts)
 ```
 
+## Public API Index (公開 API 總覽)
+
+Quick index of all public entry points exported by `tou_calculator`.
+
+### Core helpers (核心入口)
+- `available_plans()` list supported plan IDs
+- `plan(name, ...)` get a `TariffPlan`
+- `plan_details(name, ...)` return structured plan schema
+- `period_at(target, plan_name, ...)` return period enum at timepoint
+- `period_context(target, plan_name, ...)` return season/day/period context
+- `pricing_context(target, plan_name, usage=None, include_details=False, ...)` pricing at timepoint
+- `costs(usage, plan_name, ...)` energy cost series (wrapper)
+- `monthly_breakdown(usage, plan_name, include_shares=False, ...)` monthly usage/cost summary
+
+### Billing helpers (帳單計算)
+- `BillingInputs` billing configuration model
+- `calculate_bill(usage, plan_name, inputs)` full bill DataFrame
+- `calculate_bill_breakdown(usage, plan_name, inputs)` bill + line items
+- `calculate_bill_simple(usage, plan_name)` minimal bill calculation
+
+### Calendar & tariff access (日曆與費率)
+- `taiwan_calendar(...)` cached Taiwan holiday calendar
+- `custom_calendar(...)` create a custom calendar instance
+- `is_holiday(target, ...)` holiday check
+- `taipower_tariffs(...)` legacy access (deprecated)
+- `TariffFactory` data-driven plan loader
+
+### Custom plan builders (自定義方案)
+- `build_tariff_profile(...)` create profile
+- `build_tariff_rate(...)` create rate definition
+- `build_day_schedule(...)` create day schedule
+- `build_tariff_plan(...)` create `TariffPlan`
+- `WeekdayDayTypeStrategy` simple weekday/weekend strategy
+
+### Types & enums (型別與列舉)
+- `TariffPlan`, `TariffProfile`
+- `PeriodType`, `SeasonType`
+
+### Errors (錯誤型別)
+- `PowerKitError`, `CalendarError`, `TariffError`, `InvalidUsageInput`
+
+## API Examples (公開 API 範例)
+
+Short examples for each public entry point. Imports are shown once to keep this section compact.
+
+```python
+import tou_calculator as tou
+import pandas as pd
+from datetime import datetime
+from tou_calculator import (
+    BillingInputs,
+    TariffFactory,
+    TariffPlan,
+    TariffProfile,
+    PeriodType,
+    SeasonType,
+    PowerKitError,
+)
+```
+
+### Core helpers (核心入口)
+
+```python
+# available_plans
+print(tou.available_plans())
+
+# plan + plan_details
+plan = tou.plan("residential_simple_2_tier")
+details = tou.plan_details("residential_simple_2_tier")
+
+# period_at + period_context
+dt = datetime(2025, 7, 15, 14, 0)
+print(tou.period_at(dt, "residential_simple_2_tier"))
+print(tou.period_context(dt, "residential_simple_2_tier"))
+
+# pricing_context wrapper (uses plan_name)
+print(tou.pricing_context(dt, "residential_simple_2_tier"))
+print(tou.pricing_context(dt, "residential_simple_2_tier", usage=2.5, include_details=True))
+
+# costs + monthly_breakdown
+usage = pd.Series([1.5, 2.0, 1.8], index=pd.date_range("2025-07-15 14:00", periods=3, freq="h"))
+print(tou.costs(usage, "residential_simple_2_tier"))
+print(tou.monthly_breakdown(usage, "residential_simple_2_tier"))
+```
+
+### Billing helpers (帳單計算)
+
+```python
+inputs = BillingInputs(contract_capacities={"regular": 200}, power_factor=95.0)
+
+print(tou.calculate_bill(usage, "high_voltage_two_stage", inputs=inputs))
+print(tou.calculate_bill_breakdown(usage, "high_voltage_two_stage", inputs=inputs))
+print(tou.calculate_bill_simple(usage, "high_voltage_two_stage"))
+```
+
+### Calendar & tariff access (日曆與費率)
+
+```python
+# taiwan_calendar + is_holiday
+calendar = tou.taiwan_calendar()
+print(calendar.is_holiday(datetime(2025, 1, 1)))
+print(tou.is_holiday(datetime(2025, 1, 1)))
+
+# custom_calendar
+custom = tou.custom_calendar(holidays={"2025-01-02"})
+print(custom.is_holiday(datetime(2025, 1, 2)))
+
+# TariffFactory
+factory = TariffFactory()
+plan = factory.create("residential_simple_2_tier", calendar=calendar)
+
+# taipower_tariffs (legacy, deprecated)
+legacy = tou.taipower_tariffs(calendar)
+```
+
+### Custom plan builders (自定義方案)
+
+```python
+from tou_calculator import (
+    build_tariff_profile,
+    build_tariff_rate,
+    build_day_schedule,
+    build_tariff_plan,
+    WeekdayDayTypeStrategy,
+)
+
+profile = build_tariff_profile(
+    name="demo_plan",
+    seasons=["summer", "non_summer"],
+    day_types=["weekday", "weekend"],
+    period_types=["peak", "off_peak"],
+)
+rate = build_tariff_rate(
+    season="summer",
+    day_type="weekday",
+    period_type="peak",
+    rate=5.0,
+)
+schedule = build_day_schedule(
+    period_map=[("08:00", "22:00", "peak")],
+    default_period="off_peak",
+)
+plan = build_tariff_plan(
+    profile=profile,
+    rates=[rate],
+    schedules={"weekday": schedule, "weekend": schedule},
+    day_type_strategy=WeekdayDayTypeStrategy(),
+)
+```
+
+### Types & enums (型別與列舉)
+
+```python
+def accepts_types(plan: TariffPlan, profile: TariffProfile) -> tuple[TariffPlan, TariffProfile]:
+    return plan, profile
+
+print(PeriodType.PEAK, SeasonType.SUMMER)
+```
+
+### Errors (錯誤型別)
+
+```python
+try:
+    tou.plan("unknown_plan")
+except PowerKitError as exc:
+    print("powerkit error:", exc)
+except Exception as exc:
+    print("other error:", exc)
+```
+
 ## Available Plans (可用方案)
 
 All 20 Taipower plans are now supported. Plans are organized by category:

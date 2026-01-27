@@ -8,13 +8,13 @@ version = "0.1.0"
 description = "Taiwan time-of-use electricity tariff calculator"
 readme = {file = "README.md", content-type = "text/markdown"}
 requires-python = ">=3.9"
-license = {text = "MIT"}
+license = "MIT"
+license-files = ["LICENSE"]
 authors = [{name = "Gary"}]
 keywords = ["taiwan", "tariff", "electricity", "time-of-use", "tou", "energy"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.9",
