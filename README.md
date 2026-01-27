@@ -29,6 +29,17 @@ Taiwan's electricity pricing, especially for Time-of-Use (TOU) plans, is determi
     - **Off-Peak (離峰)**: Cheaper hours (nights, weekends).
     - **Semi-Peak (半尖峰)**: Intermediate rates for some industrial plans.
 
+**Data Resolution Requirements (數據解析度要求)**
+
+| Calculation Type | Recommended Resolution | Notes |
+|------------------|------------------------|-------|
+| Energy Cost (電能費) | Any resolution | Only total kWh per period matters |
+| Demand Penalty (違約金) | **15 minutes** | Taipower uses 15-min average for contract capacity |
+| Basic Fee (基本費) | N/A | Based on contract capacity, not usage |
+
+**Critical for Industrial Users:**
+Taipower calculates demand penalties based on **15-minute average demand** (台電詳細電價表：最高需量以15分鐘平均計算). Using hourly or coarser data for `demand_kw` may significantly underestimate peak demand and penalty charges. See Section 4 for detailed guidance.
+
 **Why use this tool?**
 Manually implementing these rules is error-prone because holidays change every year and peak hours differ by plan. `tou_calculator` automates this entire lookup process.
 
@@ -138,6 +149,66 @@ print(report)
 ### 4. Advanced Bill Calculation (完整帳單計算)
 
 For industrial or complex scenarios involving Basic Fees (基本費), Contract Capacities (契約容量), and Adjustments (Power Factor, etc.).
+
+#### ⚠️ Important: Data Resolution Requirements (數據解析度要求)
+
+**Taiwan Power Company's Official Standard (台電官方規定)**
+
+According to Taipower's official tariff regulations (詳細電價表 第八章), contract capacity and demand penalties are calculated based on **15-minute average demand**:
+
+> 「以雙方約定最高需量（**15分鐘平均**）為契約容量」
+
+This means Taipower measures your highest power demand averaged over any 15-minute window during the billing period.
+
+**Data Resolution Guidelines**
+
+| Data Resolution | Accuracy | Risk | Recommendation |
+|-----------------|----------|-------|----------------|
+| **15 minutes** | ✅ Accurate | None | **Recommended** - Matches Taipower's official measurement |
+| **30 minutes** | ⚠️ May underestimate | Up to 50% peak error | Use `demand_adjustment_factor=1.1-1.15` |
+| **1 hour** | ⚠️ Underestimates likely | Up to 75% peak error | Use `demand_adjustment_factor=1.15-1.2` |
+| **Daily** | ❌ Not reliable | Severe underestimation | Not recommended for penalty calculation |
+
+**Why Resolution Matters: Peak Underestimation Example**
+
+```
+Actual 15-min demand pattern within one hour:
+  14:00-14:15: 100 kW
+  14:15-14:30: 200 kW  ← Taipower records: 200 kW peak
+  14:30-14:45: 100 kW
+  14:45-15:00: 100 kW
+
+If using hourly averaged data:
+  Hourly average = 125 kW
+  Computed peak = 125 kW (37.5% UNDERESTIMATED!)
+
+Penalty Impact (assuming 200 kW contract, 2x rate for over-contract):
+  - Actual penalty: (200 - 200) × 2 = 0 kW (no penalty if contract=200)
+  - With 200 kW contract and 230 kW actual peak: (230-200) × 2 = 60 kW × rate
+  - With hourly data showing 200 kW: Penalty = 0 (WRONG - missed 30 kW overage!)
+```
+
+**Recommended Usage**
+
+```python
+from tou_calculator import calculate_bill, BillingInputs
+
+# Best practice: Use 15-minute demand data
+inputs = BillingInputs(
+    contract_capacities={"regular": 200, "off_peak": 50},
+    demand_kw=demand_15min,  # 15-minute interval data
+    demand_adjustment_factor=1.0,  # No adjustment needed
+)
+
+# If only hourly data is available: apply conservative adjustment
+inputs = BillingInputs(
+    contract_capacities={"regular": 200, "off_peak": 50},
+    demand_kw=demand_hourly,  # hourly data
+    demand_adjustment_factor=1.15,  # 15% conservative adjustment
+)
+```
+
+**The library will automatically warn** if detected resolution is coarser than 15 minutes.
 
 **Calculate Total Bill:**
 

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import warnings
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
@@ -30,6 +31,7 @@ class BillingInputs:
     meter_voltage_v: int | None = None
     meter_ampere: float | None = None
     billing_cycle_months: int | None = None
+    demand_adjustment_factor: float = 1.0
 
 
 def calculate_bill(
@@ -812,6 +814,60 @@ def _billing_period_index(
     return pd.PeriodIndex([start + int(g) * cycle_months for g in group], freq="M")
 
 
+def _check_demand_resolution(demand: pd.Series) -> None:
+    """Check demand data resolution and warn if coarser than 15 minutes.
+
+    Taiwan Power Company calculates demand penalties based on 15-minute
+    interval data. Using hourly or coarser data may underestimate peak demand
+    and result in inaccurate penalty calculations.
+
+    Args:
+        demand: pandas Series with DatetimeIndex containing demand values in kW
+    """
+    if len(demand) < 2:
+        return
+
+    inferred_freq = demand.index.inferred_freq
+    if inferred_freq is None:
+        # Try to detect median interval
+        intervals = demand.index.to_series().diff().dropna()
+        if len(intervals) > 0:
+            median_interval = intervals.median()
+            minutes = median_interval.total_seconds() / 60
+        else:
+            return
+    else:
+        # Parse frequency string to get minutes
+        freq_str = inferred_freq.upper()
+        if freq_str.startswith("15T") or freq_str == "15MIN":
+            return  # 15 minute data is ideal
+        elif freq_str.startswith("30T") or freq_str == "30MIN":
+            minutes = 30
+        elif freq_str.startswith("H") or freq_str.startswith("1H"):
+            minutes = 60
+        elif freq_str.startswith("T"):
+            # Parse minutes from T format (e.g., 5T, 10T)
+            try:
+                minutes = int(freq_str[1:]) if len(freq_str) > 1 else 1
+            except ValueError:
+                return
+        else:
+            return  # Unknown frequency, skip warning
+
+    if minutes > 15:
+        warnings.warn(
+            f"Demand data resolution is approximately {int(minutes)} minutes, "
+            f"which is coarser than the recommended 15-minute resolution. "
+            f"Taiwan Power Company calculates demand penalties based on 15-minute "
+            f"intervals. Using coarser data may underestimate peak demand and result "
+            f"in inaccurate penalty calculations. "
+            f"Consider using 'demand_adjustment_factor' parameter to apply a "
+            f"conservative adjustment (e.g., 1.1-1.2 for hourly data).",
+            UserWarning,
+            stacklevel=3,
+        )
+
+
 def _compute_over_contract_kw(
     inputs: BillingInputs,
     context_df: pd.DataFrame,
@@ -829,6 +885,13 @@ def _compute_over_contract_kw(
         demand.index, pd.DatetimeIndex
     ):
         raise InvalidUsageInput("demand_kw must be a pandas.Series with DatetimeIndex")
+
+    # Detect data resolution and warn if coarser than 15 minutes
+    _check_demand_resolution(demand)
+
+    # Apply adjustment factor if specified (default is 1.0)
+    if inputs.demand_adjustment_factor != 1.0:
+        demand = demand * inputs.demand_adjustment_factor
 
     categories = _demand_categories(context_df)
     demand = demand.reindex(context_df.index)
