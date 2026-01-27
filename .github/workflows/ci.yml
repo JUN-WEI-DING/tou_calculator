@@ -14,10 +14,11 @@ jobs:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v3
         with:
-          python-version: ${{ matrix.python-version }}
+          version: "latest"
           enable-cache: true
+          cache-dependency-glob: ""
       - name: Create venv
-        run: uv venv
+        run: uv venv --python ${{ matrix.python-version }}
       - name: Install dependencies
         run: uv pip install -e ".[test]"
       - name: Run tests
