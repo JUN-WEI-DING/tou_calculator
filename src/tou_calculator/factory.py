@@ -21,12 +21,13 @@ class PlanRequirements:
     """Required and optional inputs for a tariff plan.
 
     Attributes:
-        requires_contract_capacity: Whether the plan requires contract capacity input
-            (typically for high_voltage and extra_high_voltage plans).
+        requires_contract_capacity: Whether the plan requires contract capacity
+            input (typically for high_voltage and extra_high_voltage plans).
         requires_meter_spec: Whether the plan requires meter specifications
             (phase, voltage, ampere) for minimum usage calculation.
         valid_basic_fee_labels: Set of valid labels for basic_fee_inputs.
-        uses_basic_fee_formula: Whether the plan uses a formula for basic fee calculation.
+        uses_basic_fee_formula: Whether the plan uses a formula for basic fee
+            calculation.
         formula_type: The type of formula ("two_stage", "three_stage", "regular_only").
     """
 
@@ -37,7 +38,7 @@ class PlanRequirements:
     formula_type: str | None
 
     @classmethod
-    def from_plan_data(cls, plan_data: dict[str, Any]) -> "PlanRequirements":
+    def from_plan_data(cls, plan_data: dict[str, Any]) -> PlanRequirements:
         """Extract requirements from plan JSON data.
 
         Args:

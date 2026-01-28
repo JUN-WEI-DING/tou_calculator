@@ -7,16 +7,13 @@ These tests verify that multiple components work together correctly:
 - Multi-module workflows
 """
 
-from datetime import datetime, date
-from pathlib import Path
-from unittest.mock import patch
+from datetime import date, datetime
 
 import pandas as pd
 import pytest
 
 import tou_calculator as tou
-from tou_calculator import BillingInputs, calculate_bill, calculate_bill_breakdown
-
+from tou_calculator import BillingInputs, calculate_bill
 
 # =============================================================================
 # Integration: Calendar + Tariff
@@ -28,15 +25,19 @@ def test_calendar_tariff_integration():
     cal = tou.taiwan_calendar()
 
     # Test that holiday affects rate selection
-    plan = tou.plan("residential_simple_2_tier", calendar_instance=cal)
+    tou.plan("residential_simple_2_tier", calendar_instance=cal)
 
     # Sunday (should be off-peak)
     sunday = datetime(2024, 7, 14, 14, 0)
-    ctx_sun = tou.pricing_context(sunday, "residential_simple_2_tier", calendar_instance=cal)
+    ctx_sun = tou.pricing_context(
+        sunday, "residential_simple_2_tier", calendar_instance=cal
+    )
 
     # Monday (should be peak)
     monday = datetime(2024, 7, 15, 14, 0)
-    ctx_mon = tou.pricing_context(monday, "residential_simple_2_tier", calendar_instance=cal)
+    ctx_mon = tou.pricing_context(
+        monday, "residential_simple_2_tier", calendar_instance=cal
+    )
 
     # Off-peak rate should be lower than peak rate
     assert ctx_sun['rate'] < ctx_mon['rate']
@@ -77,9 +78,8 @@ def test_calendar_cache_persistence(tmp_path):
     is_hol1 = cal1.is_holiday(date(2024, 1, 1))
 
     # Check cache file was created
-    year = 2024
-    cache_file = cache_dir / "calendar" / "taiwan" / f"{year}.json"
     # Cache may or may not exist depending on API availability
+    _ = cache_dir / "calendar" / "taiwan" / "2024.json"
 
     # Second instance - should use cache if available
     cal2 = tou.taiwan_calendar(cache_dir=cache_dir)
@@ -268,7 +268,11 @@ def test_multi_plan_comparison_workflow():
 
     # Simple 2-tier and 3-tier should be similar for low usage
     # (they have similar rates for the first tier)
-    assert abs(results["residential_simple_2_tier"] - results["residential_simple_3_tier"]) < 1000
+    diff = abs(
+        results["residential_simple_2_tier"]
+        - results["residential_simple_3_tier"]
+    )
+    assert diff < 1000
 
 
 # =============================================================================
@@ -329,8 +333,14 @@ def test_period_analysis_workflow():
 def test_seasonal_rate_comparison():
     """Test comparing rates across seasons."""
     # Same usage pattern in summer and non-summer
-    usage_pattern = pd.Series([1.0] * 24, index=pd.date_range("2024-01-15", periods=24, freq="h"))
-    summer_usage = pd.Series([1.0] * 24, index=pd.date_range("2024-07-15", periods=24, freq="h"))
+    usage_pattern = pd.Series(
+        [1.0] * 24,
+        index=pd.date_range("2024-01-15", periods=24, freq="h"),
+    )
+    summer_usage = pd.Series(
+        [1.0] * 24,
+        index=pd.date_range("2024-07-15", periods=24, freq="h"),
+    )
 
     plan = tou.plan("residential_simple_2_tier")
 

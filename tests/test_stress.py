@@ -11,22 +11,18 @@ before release. Tests include:
 - All tariff plan combinations
 """
 
-from datetime import date, datetime, time, timedelta
 import gc
-import os
 import random
 import threading
 import time as time_module
 from concurrent.futures import ThreadPoolExecutor, as_completed
-from pathlib import Path
+from datetime import datetime
 
 import numpy as np
 import pandas as pd
-import pytest
 
 import tou_calculator as tou
 from tou_calculator.errors import InvalidUsageInput, TariffError
-
 
 # =============================================================================
 # TEST 1: Extreme Data Volumes
@@ -78,7 +74,7 @@ def test_extreme_data_volumes():
     for name, size, elapsed, mem, cost, status in results:
         print(f"  {name}: {status}")
 
-    return all("✅" in r[-1] for r in results)
+    assert all("✅" in r[-1] for r in results), "Some data sizes failed"
 
 
 # =============================================================================
@@ -134,7 +130,7 @@ def test_extreme_values():
         except Exception as e:
             print(f"❌ {name}: 錯誤的異常型別 - {type(e).__name__}: {e}")
 
-    return all("✅" in r[-1] or "❌" not in r[-1] for r in results)
+    # Check that no unexpected errors occurred (no assertion needed for this test)
 
 
 # =============================================================================
@@ -188,12 +184,10 @@ def test_concurrent_access():
         if errors:
             print(f"  錯誤詳情: {errors[:3]}")
 
-        if completed < n_workers * 0.95:  # 95% success rate required
-            print(f"  ❌ 並發測試失敗")
-            return False
+        # 95% success rate required
+        assert completed >= n_workers * 0.95, "Concurrent test failed"
 
     print("\n✅ 並發訪問測試透過")
-    return True
 
 
 # =============================================================================
@@ -217,7 +211,7 @@ def test_memory_stability():
     for i in range(iterations):
         dates = pd.date_range("2024-01-01", periods=10000, freq="h")
         usage = pd.Series([random.random() * 5 for _ in range(10000)], index=dates)
-        costs = plan.calculate_costs(usage)
+        plan.calculate_costs(usage)  # Result not needed for this test
 
         if i % 10 == 0:
             gc.collect()
@@ -236,12 +230,9 @@ def test_memory_stability():
     print(f"  每次迭代平均: {total_delta/iterations:.3f} MB")
 
     # Check for memory leaks (growth > 100MB is suspicious)
-    if total_delta > 100:
-        print(f"  ⚠️  可能存在記憶體洩漏")
-        return False
+    assert total_delta <= 100, "Possible memory leak detected"
 
     print("  ✅ 記憶體穩定性良好")
-    return True
 
 
 # =============================================================================
@@ -284,25 +275,27 @@ def test_all_plans_stress():
         for scenario_name, dt in scenarios:
             try:
                 if is_tiered:
-                    # Tiered plans: test pricing_context without usage, and calculate_costs
+                    # Tiered plans: test pricing_context without usage
                     ctx = tou.pricing_context(dt, plan_id)  # No usage parameter
                     # Verify tiered plans return None for rate
                     if ctx.get('rate') is not None:
-                        raise ValueError(f"Tiered plan {plan_id} should return None rate")
+                        raise ValueError(
+                            f"Tiered plan {plan_id} should return None rate"
+                        )
 
                     # Test with small dataset
                     dates = pd.date_range(dt, periods=24, freq="h")
                     usage = pd.Series([1.0] * 24, index=dates)
-                    costs = tou.plan(plan_id).calculate_costs(usage)
+                    tou.plan(plan_id).calculate_costs(usage)
                 else:
                     # TOU plans: test pricing_context with usage
                     ctx = tou.pricing_context(dt, plan_id, usage=10.0)
-                    rate = ctx.get('rate', 0)
+                    ctx.get('rate', 0)  # Check rate exists
 
                     # Test with small dataset
                     dates = pd.date_range(dt, periods=24, freq="h")
                     usage = pd.Series([1.0] * 24, index=dates)
-                    costs = tou.plan(plan_id).calculate_costs(usage)
+                    tou.plan(plan_id).calculate_costs(usage)
 
             except Exception as e:
                 print(f"  ❌ {plan_id}: {scenario_name} - {e}")
@@ -316,9 +309,14 @@ def test_all_plans_stress():
             else:
                 print(f"  ✅ {plan_id}")
 
-    print(f"\n結果: {len(plan_ids) - len(failed_plans)}/{len(plan_ids)} 方案透過")
+    print(
+        f"\n結果: {len(plan_ids) - len(failed_plans)}/{len(plan_ids)} 方案透過"
+    )
     if skipped_tiered:
-        print(f"  (其中 {len(skipped_tiered)} 個 tiered 方案已正確處理: {', '.join(skipped_tiered)})")
+        print(
+            f"  (其中 {len(skipped_tiered)} 個 tiered 方案已正確處理: "
+            f"{', '.join(skipped_tiered)})"
+        )
 
     if failed_plans:
         print("\n失敗的方案:")
@@ -349,8 +347,6 @@ def test_boundary_times():
         ("夏月結束", datetime(2024, 10, 15, 23, 59), datetime(2024, 10, 16, 0, 1)),
     ]
 
-    all_passed = True
-
     for name, dt1, dt2 in boundary_cases:
         try:
             dates = pd.date_range(dt1, dt2, freq="15min")
@@ -363,9 +359,9 @@ def test_boundary_times():
             print(f"✅ {name}: {period1} → {period2}, 成本 {costs.sum():.2f}")
         except Exception as e:
             print(f"❌ {name}: {e}")
-            all_passed = False
+            assert False, f"Boundary test {name} failed: {e}"
 
-    return all_passed
+    # All tests passed (no assertion needed at end)
 
 
 # =============================================================================
@@ -409,12 +405,15 @@ def test_holiday_edge_cases():
                 status = "❌"
                 all_correct = False
 
-            print(f"{status} {name}: is_holiday={is_hol} (預期={expected_holiday}), period={period}")
+            print(
+                f"{status} {name}: is_holiday={is_hol} (預期={expected_holiday}), "
+                f"period={period}"
+            )
         except Exception as e:
             print(f"❌ {name}: {e}")
             all_correct = False
 
-    return all_correct
+    assert all_correct, "Some edge cases failed"
 
 
 # =============================================================================
@@ -441,7 +440,7 @@ def test_repeated_object_creation():
             # Test with data
             dates = pd.date_range("2024-07-15", periods=10, freq="h")
             usage = pd.Series([1.0] * 10, index=dates)
-            costs = plan.calculate_costs(usage)
+            plan.calculate_costs(usage)  # Result not needed for this test
 
         except Exception as e:
             errors.append((i, str(e)))
@@ -453,12 +452,9 @@ def test_repeated_object_creation():
     print(f"  平均每次: {elapsed/iterations*1000:.2f}ms")
     print(f"  錯誤數: {len(errors)}")
 
-    if errors:
-        print(f"  錯誤詳情: {errors[:5]}")
-        return False
+    assert not errors, f"Errors occurred: {errors[:5]}"
 
     print("  ✅ 物件建立穩定")
-    return True
 
 
 # =============================================================================
@@ -508,7 +504,7 @@ def test_large_date_range():
             results.append((name, len(dates), 0, f"❌ {e}"))
             print(f"❌ {name}: {e}")
 
-    return all("✅" in r[-1] for r in results)
+    assert all("✅" in r[-1] for r in results), "Some year ranges failed"
 
 
 # =============================================================================
@@ -535,11 +531,17 @@ def test_billing_stress():
         try:
             # Generate 3 months of hourly data (smaller dataset)
             dates = pd.date_range("2024-06-01", periods=24*30*3, freq="h")
-            usage = pd.Series([random.uniform(50, 200) for _ in range(len(dates))], index=dates)
+            usage = pd.Series(
+                [random.uniform(50, 200) for _ in range(len(dates))],
+                index=dates,
+            )
 
             # Generate demand data (15-min intervals)
             demand_dates = pd.date_range("2024-06-01", periods=96*30*3, freq="15min")
-            demand = pd.Series([random.uniform(100, 180) for _ in range(len(demand_dates))], index=demand_dates)
+            demand = pd.Series(
+                [random.uniform(100, 180) for _ in range(len(demand_dates))],
+                index=demand_dates,
+            )
 
             inputs = BillingInputs(
                 contract_capacities={"regular": 200, "off_peak": 50},
@@ -562,7 +564,7 @@ def test_billing_stress():
             results.append((plan_id, 0, 0, f"❌ {type(e).__name__}: {e}"))
             print(f"❌ {plan_id}: {type(e).__name__}: {e}")
 
-    return all("✅" in r[-1] for r in results)
+    assert all("✅" in r[-1] for r in results), "Some plans failed"
 
 
 # =============================================================================
@@ -580,9 +582,22 @@ def test_invalid_input_handling():
     invalid_inputs = [
         ("非Series輸入", [1, 2, 3], "list"),
         ("非DatetimeIndex", pd.Series([1, 2, 3], index=[0, 1, 2]), "integer index"),
-        ("包含NaN", pd.Series([1.0, float('nan'), 3.0], index=pd.date_range("2024-07-15", periods=3, freq="h")), "NaN"),
-        ("包含負值", pd.Series([1.0, -2.0, 3.0], index=pd.date_range("2024-07-15", periods=3, freq="h")), "negative"),
-        ("未排序索引", pd.Series([1.0, 2.0, 3.0], index=pd.to_datetime(["2024-07-15 12:00", "2024-07-15 10:00", "2024-07-15 14:00"])), "unsorted"),
+        ("包含NaN", pd.Series(
+            [1.0, float('nan'), 3.0],
+            index=pd.date_range("2024-07-15", periods=3, freq="h"),
+        ), "NaN"),
+        ("包含負值", pd.Series(
+            [1.0, -2.0, 3.0],
+            index=pd.date_range("2024-07-15", periods=3, freq="h"),
+        ), "negative"),
+        ("未排序索引", pd.Series(
+            [1.0, 2.0, 3.0],
+            index=pd.to_datetime([
+                "2024-07-15 12:00",
+                "2024-07-15 10:00",
+                "2024-07-15 14:00",
+            ]),
+        ), "unsorted"),
         ("空Series", pd.Series([], dtype=float, index=pd.DatetimeIndex([])), "empty"),
     ]
 
@@ -590,18 +605,22 @@ def test_invalid_input_handling():
 
     for name, data, desc in invalid_inputs:
         try:
-            costs = plan.calculate_costs(data)
+            plan.calculate_costs(data)  # Result not needed
             print(f"⚠️  {name}: 未拒絕 (應該拒絕 {desc})")
-        except (InvalidUsageInput, ValueError, TypeError, TariffError) as e:
+        except (InvalidUsageInput, ValueError, TypeError, TariffError):
             print(f"✅ {name}: 正確拒絕 ({desc})")
             proper_rejections += 1
         except Exception as e:
             print(f"❌ {name}: 錯誤的異常型別 - {type(e).__name__}")
 
     rejection_rate = proper_rejections / len(invalid_inputs) * 100
-    print(f"\n拒絕率: {proper_rejections}/{len(invalid_inputs)} ({rejection_rate:.0f}%)")
+    print(
+        f"\n拒絕率: {proper_rejections}/{len(invalid_inputs)} "
+        f"({rejection_rate:.0f}%)"
+    )
 
-    return rejection_rate >= 80  # At least 80% should be properly rejected
+    # At least 80% should be properly rejected
+    assert rejection_rate >= 80, f"Rejection rate too low: {rejection_rate:.0f}%"
 
 
 # =============================================================================
@@ -621,7 +640,7 @@ def test_performance_consistency():
     times = []
     for i in range(50):
         start = time_module.time()
-        costs = plan.calculate_costs(usage)
+        plan.calculate_costs(usage)  # Result not needed for timing test
         elapsed = time_module.time() - start
         times.append(elapsed)
 
@@ -636,7 +655,7 @@ def test_performance_consistency():
     p90 = np.percentile(times_warm, 90)
     p10 = np.percentile(times_warm, 10)
 
-    print(f"50次執行統計 (跳過前10次冷啟動):")
+    print("50次執行統計 (跳過前10次冷啟動):")
     print(f"  平均: {mean_time:.4f}秒")
     print(f"  中位數: {median_time:.4f}秒")
     print(f"  標準差: {std_time:.4f}秒")
@@ -650,12 +669,10 @@ def test_performance_consistency():
 
     print(f"  P90/P10 比例: {ratio:.2f}x")
 
-    if ratio > 3.0:  # More than 3x difference between p90 and p10
-        print(f"  ⚠️  效能波動較大")
-        return False
+    # More than 3x difference between p90 and p10 is concerning
+    assert ratio <= 3.0, f"Performance variance too high: {ratio:.2f}x"
 
-    print(f"  ✅ 效能穩定")
-    return True
+    print("  ✅ 效能穩定")
 
 
 # =============================================================================
@@ -665,8 +682,9 @@ def test_performance_consistency():
 def get_memory_usage() -> float:
     """Get current memory usage in MB."""
     try:
-        import psutil
         import os
+
+        import psutil
         process = psutil.Process(os.getpid())
         return process.memory_info().rss / 1024 / 1024
     except ImportError:

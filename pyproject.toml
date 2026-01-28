@@ -60,6 +60,7 @@ target-version = "py39"
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP", "FA"]
+per-file-ignores = {"tests/test_custom_stress.py" = ["E501"]}
 
 [tool.mypy]
 python_version = "3.9"

@@ -1,6 +1,7 @@
 import json
 from datetime import date
-from unittest.mock import Mock, patch
+from unittest.mock import patch
+
 import pytest
 
 from tou_calculator.calendar import TaiwanCalendar
@@ -12,7 +13,10 @@ def offline_calendar(tmp_path):
     Returns a TaiwanCalendar instance that is forced offline.
     Prevents network calls during testing.
     """
-    with patch("tou_calculator.calendar._HolidayFetcher.fetch", side_effect=RuntimeError("Offline mode")):
+    with patch(
+        "tou_calculator.calendar._HolidayFetcher.fetch",
+        side_effect=RuntimeError("Offline mode"),
+    ):
         yield TaiwanCalendar(cache_dir=tmp_path)
 
 

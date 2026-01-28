@@ -1,25 +1,30 @@
 """Comprehensive API testing for performance, accuracy, and edge cases."""
 
-from datetime import date, datetime, time
 import time as time_module
+from datetime import datetime
+
 import pandas as pd
-import numpy as np
+
 import tou_calculator as tou
 
 
 def test_different_data_sizes():
-    """Test 1: Different data volumes (性能測試)."""
+    """Test 1: Different data volumes (效能測試)."""
     print("\n" + "="*60)
-    print("TEST 1: 不同數據量測試 (Different Data Volumes)")
+    print("TEST 1: 不同資料量測試 (Different Data Volumes)")
     print("="*60)
 
     plan = tou.plan("residential_simple_2_tier")
 
     test_cases = [
-        ("小數據 (10條)", pd.date_range("2025-07-15", periods=10, freq="h"), [1.0] * 10),
-        ("中數據 (1,000條)", pd.date_range("2025-07-01", periods=1000, freq="h"), [1.0] * 1000),
-        ("大數據 (100,000條)", pd.date_range("2025-01-01", periods=100000, freq="h"), [1.0] * 100000),
-        ("超大數據 (1,000,000條)", pd.date_range("2025-01-01", periods=1000000, freq="h"), [1.0] * 1000000),
+        ("小資料 (10條)", pd.date_range("2025-07-15", periods=10, freq="h"), [
+            1.0] * 10),
+        ("中資料 (1,000條)", pd.date_range("2025-07-01", periods=1000, freq="h"), [
+            1.0] * 1000),
+        ("大資料 (100,000條)", pd.date_range("2025-01-01", periods=100000, freq="h"), [
+            1.0] * 100000),
+        ("超大資料 (1,000,000條)", pd.date_range(
+            "2025-01-01", periods=1000000, freq="h"), [1.0] * 1000000),
     ]
 
     for name, dates, values in test_cases:
@@ -42,7 +47,10 @@ def test_all_plans():
     print("="*60)
 
     plan_ids = tou.available_plan_ids()
-    sample_usage = pd.Series([1.0] * 24, index=pd.date_range("2025-07-15", periods=24, freq="h"))
+    sample_usage = pd.Series(
+        [1.0] * 24,
+        index=pd.date_range("2025-07-15", periods=24, freq="h"),
+    )
 
     results = []
     for plan_id in plan_ids:
@@ -76,13 +84,15 @@ def test_accuracy_verification():
     # Note: pricing_context takes (target, plan_name, usage=None, ...)
     ctx = tou.pricing_context(dt, "residential_simple_2_tier", usage=10.0)
 
-    print(f"測試場景: 2025-07-15 14:00 (夏月尖峰) 用電 10 kWh")
+    print("測試場景: 2025-07-15 14:00 (夏月尖峰) 用電 10 kWh")
     print(f"預期費率: {expected_rate} TWD/kWh")
     print(f"實際費率: {ctx['rate']} TWD/kWh")
     print(f"預期成本: {expected_cost} TWD")
     print(f"實際成本: {ctx['cost']} TWD")
-    print(f"費率準確: {'✅ 通過' if abs(ctx['rate'] - expected_rate) < 0.01 else '❌ 失敗'}")
-    print(f"成本準確: {'✅ 通過' if abs(ctx['cost'] - expected_cost) < 0.01 else '❌ 失敗'}")
+    rate_pass = abs(ctx['rate'] - expected_rate) < 0.01
+    cost_pass = abs(ctx['cost'] - expected_cost) < 0.01
+    print(f"費率準確: {'✅ 透過' if rate_pass else '❌ 失敗'}")
+    print(f"成本準確: {'✅ 透過' if cost_pass else '❌ 失敗'}")
 
 
 def test_holiday_accuracy():
@@ -111,7 +121,10 @@ def test_holiday_accuracy():
         status = "✅" if actual == expected else "❌"
         if actual != expected:
             all_correct = False
-        print(f"{dt.isoformat():<20} {str(expected):<8} {str(actual):<8} {desc:<15} {status}")
+        print(
+            f"{dt.isoformat():<20} {str(expected):<8} "
+            f"{str(actual):<8} {desc:<15} {status}"
+        )
 
     print(f"\n假日判斷: {'✅ 全部正確' if all_correct else '❌ 有錯誤'}")
 
@@ -125,8 +138,8 @@ def test_edge_cases():
     plan = tou.plan("residential_simple_2_tier")
 
     edge_cases = [
-        ("跨月數據", pd.date_range("2025-06-30 22:00", periods=6, freq="h"), [1.0] * 6),
-        ("跨年數據", pd.date_range("2024-12-31 22:00", periods=6, freq="h"), [1.0] * 6),
+        ("跨月資料", pd.date_range("2025-06-30 22:00", periods=6, freq="h"), [1.0] * 6),
+        ("跨年資料", pd.date_range("2024-12-31 22:00", periods=6, freq="h"), [1.0] * 6),
         ("閏年2月29", pd.date_range("2024-02-29", periods=24, freq="h"), [1.0] * 24),
         ("凌晨時段", pd.date_range("2025-07-15 00:00", periods=3, freq="h"), [1.0] * 3),
         ("深夜時段", pd.date_range("2025-07-15 23:00", periods=3, freq="h"), [1.0] * 3),
@@ -161,7 +174,12 @@ def test_different_formats():
     print(f"✅ DataFrame column: 成本 {costs_df.iloc[0]:.2f} 元")
 
     # Test with different frequencies
-    for freq, name in [("15min", "15分鐘"), ("30min", "30分鐘"), ("1h", "1小時"), ("1D", "1天")]:
+    for freq, name in [
+        ("15min", "15分鐘"),
+        ("30min", "30分鐘"),
+        ("1h", "1小時"),
+        ("1D", "1天"),
+    ]:
         d = pd.date_range("2025-07-15", periods=10, freq=freq)
         u = pd.Series([1.0] * 10, index=d)
         c = plan.calculate_costs(u)
@@ -174,7 +192,7 @@ def test_seasonal_variation():
     print("TEST 7: 季節費率差異測試 (Seasonal Rate Variation)")
     print("="*60)
 
-    plan = tou.plan("residential_simple_2_tier")
+    tou.plan("residential_simple_2_tier")  # For coverage
 
     # 夏月 vs 非夏月
     summer_dt = datetime(2025, 7, 15, 14, 0)  # 夏月
@@ -186,7 +204,8 @@ def test_seasonal_variation():
     print(f"夏月 (7月15日) 費率: {summer_ctx['rate']:.2f} TWD/kWh")
     print(f"非夏月 (1月15日) 費率: {non_summer_ctx['rate']:.2f} TWD/kWh")
     print(f"差異: {summer_ctx['rate'] - non_summer_ctx['rate']:.2f} TWD/kWh")
-    print(f"✅ 夏月費率較高: {'是' if summer_ctx['rate'] > non_summer_ctx['rate'] else '否'}")
+    summer_higher = summer_ctx['rate'] > non_summer_ctx['rate']
+    print(f"✅ 夏月費率較高: {'是' if summer_higher else '否'}")
 
 
 def test_period_classification():
@@ -196,7 +215,7 @@ def test_period_classification():
     print("="*60)
 
     # 測試高壓三段式方案
-    plan = tou.plan("high_voltage_three_stage")
+    tou.plan("high_voltage_three_stage")  # For coverage
 
     test_times = [
         ("尖峰時段", datetime(2025, 7, 15, 14, 0)),   # 週二下午
@@ -204,7 +223,7 @@ def test_period_classification():
         ("離峰時段", datetime(2025, 7, 16, 2, 0)),    # 週三凌晨
     ]
 
-    print(f"{'測試時段':<15} {'時段類型':<15} {'結果'}")
+    print(f"{'測試時段':<15} {'時段型別':<15} {'結果'}")
     print("-" * 40)
 
     for name, dt in test_times:
@@ -228,7 +247,8 @@ def test_weekday_vs_holiday():
     print(f"週一 (7/14) 下午2點 - 費率: {weekday_ctx['rate']:.2f} TWD/kWh")
     print(f"週日 (7/13) 下午2點 - 費率: {sunday_ctx['rate']:.2f} TWD/kWh")
     print(f"差異: {weekday_ctx['rate'] - sunday_ctx['rate']:.2f} TWD/kWh")
-    print(f"✅ 假日費率較低: {'是' if sunday_ctx['rate'] < weekday_ctx['rate'] else '否'}")
+    sunday_cheaper = sunday_ctx['rate'] < weekday_ctx['rate']
+    print(f"✅ 假日費率較低: {'是' if sunday_cheaper else '否'}")
 
 
 def test_consistency():
@@ -255,9 +275,9 @@ def test_billing_accuracy():
     print("TEST 11: 完整帳單計算準確度 (Billing Calculation)")
     print("="*60)
 
-    from tou_calculator import calculate_bill, BillingInputs
+    from tou_calculator import BillingInputs, calculate_bill
 
-    # 場景：高壓用戶，契約容量200kW，實際用電
+    # 場景：高壓使用者，契約容量200kW，實際用電
     dates = pd.date_range("2025-07-01 00:00", periods=48, freq="30min")
     usage = pd.Series([100.0] * 48, index=dates)  # 每半小時100kW
 
@@ -269,18 +289,18 @@ def test_billing_accuracy():
     bill = calculate_bill(usage, "high_voltage_2_tier", inputs=inputs)
 
     print(f"用電度數: {usage.sum():.0f} kWh")
-    print(f"\n帳單明細:")
+    print("\n帳單明細:")
     print(f"  - 電能費: {bill['energy_cost'].iloc[0]:.2f} 元")
     print(f"  - 基本費: {bill['basic_cost'].iloc[0]:.2f} 元")
     print(f"  - 違約金: {bill['surcharge'].iloc[0]:.2f} 元")
     print(f"  - 力率調整: {bill['adjustment'].iloc[0]:.2f} 元")
     print(f"  - 總計: {bill['total'].iloc[0]:.2f} 元")
-    print(f"\n✅ 計算完成，無錯誤")
+    print("\n✅ 計算完成，無錯誤")
 
 
 if __name__ == "__main__":
     print("\n" + "="*60)
-    print("台灣時間電價 API 綜合測試")
+    print("臺灣時間電價 API 綜合測試")
     print("Comprehensive API Testing for Taiwan TOU Calculator")
     print("="*60)
 

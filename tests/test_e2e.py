@@ -4,15 +4,11 @@ These tests simulate complete user journeys from raw data to final bills,
 covering typical use cases for different customer types.
 """
 
-from datetime import datetime
-from pathlib import Path
 
 import pandas as pd
-import pytest
 
 import tou_calculator as tou
-from tou_calculator import BillingInputs, calculate_bill, calculate_bill_breakdown
-
+from tou_calculator import BillingInputs, calculate_bill
 
 # =============================================================================
 # E2E Scenario 1: Household with Smart Meter Data
@@ -23,7 +19,6 @@ def test_e2e_household_smart_meter_analysis():
     # Simulate importing smart meter data (CSV-like)
     # User has 1 month of 15-minute interval data
     dates = pd.date_range("2024-07-01", periods=96*30, freq="15min")
-    np = pd.NP if hasattr(pd, 'NP') else __import__('numpy')
 
     # Realistic household consumption pattern
     hour = dates.hour
@@ -53,7 +48,8 @@ def test_e2e_household_smart_meter_analysis():
 
     usage = pd.Series(usage, index=dates)
 
-    # User wants to: 1) Calculate current bill, 2) See when electricity is most expensive
+    # User wants to: 1) Calculate current bill,
+    # 2) See when electricity is most expensive
     plan = tou.plan("residential_simple_2_tier")
 
     # Step 1: Get total cost
@@ -205,7 +201,7 @@ def test_e2e_small_shop_plan_selection():
             plan = tou.plan(plan_id)
             cost = plan.calculate_costs(usage).iloc[0]
             results[plan_id] = cost
-        except Exception as e:
+        except Exception:
             results[plan_id] = None
 
     # Both should give valid costs
@@ -468,8 +464,14 @@ def test_e2e_budget_planning_forecast():
     assert total_annual_cost > 0
 
     # Summer months (Jun-Sep) should be most expensive
-    summer_months = [m for m in monthly_forecasts if m["month"] in ["2024-06", "2024-07", "2024-08", "2024-09"]]
-    other_months = [m for m in monthly_forecasts if m["month"] not in ["2024-06", "2024-07", "2024-08", "2024-09"]]
+    summer_months = [
+        m for m in monthly_forecasts
+        if m["month"] in ["2024-06", "2024-07", "2024-08", "2024-09"]
+    ]
+    other_months = [
+        m for m in monthly_forecasts
+        if m["month"] not in ["2024-06", "2024-07", "2024-08", "2024-09"]
+    ]
 
     avg_summer = sum(m["cost_twd"] for m in summer_months) / len(summer_months)
     avg_other = sum(m["cost_twd"] for m in other_months) / len(other_months)

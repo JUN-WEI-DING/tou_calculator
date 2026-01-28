@@ -8,7 +8,7 @@ from datetime import date, datetime
 from functools import singledispatchmethod
 from pathlib import Path
 from typing import Any
-from urllib.error import URLError, HTTPError
+from urllib.error import HTTPError, URLError
 from urllib.request import urlopen
 
 from platformdirs import user_cache_path
@@ -104,7 +104,6 @@ class _HolidayParser:
 
         This optimized version uses efficient Sunday calculation.
         """
-        import calendar
 
         holidays = set()
 

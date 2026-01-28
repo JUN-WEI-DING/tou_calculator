@@ -48,7 +48,7 @@ class BillingInputs:
         power_factor: float | None = None,
         demand_kw: pd.Series | None = None,
         demand_adjustment_factor: float = 1.0,
-    ) -> "BillingInputs":
+    ) -> BillingInputs:
         """Create inputs for high voltage two-stage TOU plans.
 
         Args:
@@ -90,7 +90,7 @@ class BillingInputs:
         power_factor: float | None = None,
         demand_kw: pd.Series | None = None,
         demand_adjustment_factor: float = 1.0,
-    ) -> "BillingInputs":
+    ) -> BillingInputs:
         """Create inputs for high voltage three-stage TOU plans.
 
         Args:
@@ -124,7 +124,7 @@ class BillingInputs:
         power_factor: float | None = None,
         demand_kw: pd.Series | None = None,
         demand_adjustment_factor: float = 1.0,
-    ) -> "BillingInputs":
+    ) -> BillingInputs:
         """Create inputs for extra high voltage two-stage TOU plans.
 
         Args:
@@ -158,7 +158,7 @@ class BillingInputs:
         power_factor: float | None = None,
         demand_kw: pd.Series | None = None,
         demand_adjustment_factor: float = 1.0,
-    ) -> "BillingInputs":
+    ) -> BillingInputs:
         """Create inputs for extra high voltage three-stage TOU plans.
 
         Args:
@@ -189,7 +189,7 @@ class BillingInputs:
         voltage: int,
         ampere: float,
         basic_fee_multiplier: float = 1.0,
-    ) -> "BillingInputs":
+    ) -> BillingInputs:
         """Create inputs for residential plans with meter specification.
 
         Args:
@@ -218,7 +218,7 @@ class BillingInputs:
         phase: str,
         contract_kw: float,
         household_count: float = 1.0,
-    ) -> "BillingInputs":
+    ) -> BillingInputs:
         """Create inputs for standard lighting TOU plans with contract capacity.
 
         Args:
@@ -282,7 +282,10 @@ def _validate_billing_inputs(
 
     # 2. Validate basic_fee_inputs keys
     if inputs.basic_fee_inputs:
-        unknown_keys = set(inputs.basic_fee_inputs.keys()) - requirements.valid_basic_fee_labels
+        unknown_keys = (
+            set(inputs.basic_fee_inputs.keys())
+            - requirements.valid_basic_fee_labels
+        )
         if unknown_keys:
             if strict:
                 raise InvalidBasicFeeInput(
@@ -590,7 +593,11 @@ def _calculate_basic_fees(
             plan_data, inputs, month_index, store, formula, detailed=False
         )
         # _basic_fee_from_formula always returns (monthly, details) tuple
-        monthly = basic_fee_result[0] if isinstance(basic_fee_result, tuple) else basic_fee_result
+        monthly = (
+            basic_fee_result[0]
+            if isinstance(basic_fee_result, tuple)
+            else basic_fee_result
+        )
     else:
         basic_fee = plan_data.get("basic_fee")
         if basic_fee is not None:
