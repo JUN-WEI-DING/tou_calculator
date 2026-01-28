@@ -16,26 +16,34 @@ pip install tou-calculator[lunar]
 
 ## Quick Start Tutorial (快速入門教學)
 
+This section teaches you how to use this library to calculate Taiwan electricity costs with simple examples. Whatever format your data is in, we can handle it!
+
 這個章節用簡單的範例教妳如何使用這個套件計算台灣電費。不管妳的資料是什麼格式，我們都能處理！
 
-### Step 1: 準備妳的用電資料
+---
+
+### Step 1: Prepare Your Data (準備妳的用電資料)
+
+This library requires two pieces of information: **Time** and **Usage (kWh)**. Time must be in datetime format, and usage is just a number.
 
 這個套件需要「時間」和「用電度數」兩種資訊。時間必須是日期格式，用電度數就是數字。
 
-#### 範例 A：用 Python 手動建立資料
+#### Example A: Create Data Manually (範例 A：用 Python 手動建立資料)
 
 ```python
 import pandas as pd
 from datetime import datetime
 
+# Method 1: Using list (simplest)
 # 方法 1：用 list 建立（最簡單）
 timestamps = [
-    "2025-07-15 09:00",  # 2025年7月15日 早上9點
+    "2025-07-15 09:00",  # July 15, 2025, 9:00 AM
     "2025-07-15 10:00",
     "2025-07-15 11:00",
 ]
-usage_kwh = [1.5, 2.3, 1.8]  # 每小時用了多少度電
+usage_kwh = [1.5, 2.3, 1.8]  # kWh used per hour
 
+# Convert to pandas Series (required format)
 # 轉換成 pandas Series（套件需要的格式）
 dates = pd.to_datetime(timestamps)
 usage_series = pd.Series(usage_kwh, index=dates)
@@ -45,8 +53,9 @@ print(usage_series)
 # 2025-07-15 11:00:00    1.8
 ```
 
-#### 範例 B：從 CSV 檔案讀取
+#### Example B: Read from CSV (範例 B：從 CSV 檔案讀取)
 
+Assume you have an `electricity.csv` file:
 假設妳有一個 `electricity.csv` 檔案：
 
 ```csv
@@ -57,25 +66,31 @@ timestamp,usage
 ```
 
 ```python
+# Read CSV file
 # 讀取 CSV 檔
 df = pd.read_csv("electricity.csv")
 
+# Ensure timestamp column is datetime format
 # 確保時間欄位是日期格式
 df["timestamp"] = pd.to_datetime(df["timestamp"])
 
+# Set time as index (important!)
 # 將時間設為索引（重要！）
 df = df.set_index("timestamp")
 
+# Extract usage data
 # 取出用電資料
 usage_series = df["usage"]
 ```
 
-#### 範例 C：從 Excel 檔案讀取
+#### Example C: Read from Excel (範例 C：從 Excel 檔案讀取)
 
 ```python
+# Read Excel file
 # 讀取 Excel 檔
-df = pd.read_excel("electricity.xlsx", sheet_name="七月用電")
+df = pd.read_excel("electricity.xlsx", sheet_name="July")
 
+# Assuming column names are "時間" and "用電度數"
 # 假設欄位名稱是 "時間" 和 "用電度數"
 df["時間"] = pd.to_datetime(df["時間"])
 df = df.set_index("時間")
@@ -83,89 +98,110 @@ df = df.set_index("時間")
 usage_series = df["用電度數"]
 ```
 
-#### 範例 D：處理不同的資料格式
+#### Example D: Handle Different Data Formats (範例 D：處理不同的資料格式)
 
 ```python
 import numpy as np
 
+# numpy array → convert to Series
 # numpy array → 轉成 Series
 usage_array = np.array([1.5, 2.3, 1.8])
 dates = pd.date_range("2025-07-15 09:00", periods=3, freq="h")
 usage_series = pd.Series(usage_array, index=dates)
 
+# DataFrame → use index directly
 # DataFrame → 直接使用索引
 df = pd.DataFrame({
     "時間": pd.date_range("2025-07-15", periods=24, freq="h"),
-    "用電": np.random.rand(24) * 5  # 隨機產生用電資料
+    "用電": np.random.rand(24) * 5  # random usage data
 })
 df = df.set_index("時間")
 usage_series = df["用電"]
 ```
 
-### Step 2: 選擇妳的電價方案
+---
 
+### Step 2: Choose Your Tariff Plan (選擇妳的電價方案)
+
+Taipower has many plans. Let's see what's available:
 台電有很多種方案，先看看有哪些：
 
 ```python
 import tou_calculator as tou
 
+# List all available plans
 # 列出所有可用的方案
 print(tou.available_plans())
 ```
 
+Common plans:
 常見的方案：
 
-| 用戶類型 | 推薦方案 | 說明 |
-|---------|---------|------|
-| **家庭用電** | `residential_simple_2_tier` | 簡單兩段式 |
-| **低壓用電** | `low_voltage_2_tier` | 一般商業用電 |
-| **高壓用電** | `high_voltage_2_tier` | 工業用電 |
-| **高壓三段式** | `high_voltage_three_stage` | 尖峰/半尖峰/離峰 |
+| User Type | 用戶類型 | Recommended Plan | 推薦方案 | Description | 說明 |
+|-----------|---------|------------------|---------|-------------|------|
+| Residential | 家庭用電 | `residential_simple_2_tier` | | Simple 2-tier | 簡單兩段式 |
+| Low Voltage | 低壓用電 | `low_voltage_2_tier` | | General commercial | 一般商業用電 |
+| High Voltage | 高壓用電 | `high_voltage_2_tier` | | Industrial | 工業用電 |
+| High Voltage 3-Stage | 高壓三段式 | `high_voltage_three_stage` | | Peak/Semi-Peak/Off-Peak | 尖峰/半尖峰/離峰 |
 
-### Step 3: 計算電費
+---
 
-#### 基礎計算：只算電能費
+### Step 3: Calculate Costs (計算電費)
+
+#### Basic Calculation: Energy Cost Only (基礎計算：只算電能費)
 
 ```python
+# Get plan object
 # 取得方案物件
 plan = tou.plan("residential_simple_2_tier")
 
+# Calculate costs for each time period
 # 計算每個時段的電費
 costs = plan.calculate_costs(usage_series)
 
+# View results
 # 看結果
+print(f"Total Cost: {costs.sum():.2f} TWD")  # 總電費
 print(f"總電費: {costs.sum():.2f} 元")
 
+# View cost per time period
 # 看每個時段的電費
 print(costs)
-# 2025-07-15 09:00:00    7.74  元  (1.5度 × 5.16元/度)
-# 2025-07-15 10:00:00   11.87  元
-# 2025-07-15 11:00:00    9.29  元
+# 2025-07-15 09:00:00    7.74  (1.5 kWh × 5.16 TWD/kWh)
+# 2025-07-15 10:00:00   11.87
+# 2025-07-15 11:00:00    9.29
 ```
 
-#### 進階計算：包含基本費和違約金
+#### Advanced Calculation: With Basic Fee and Penalty (進階計算：包含基本費和違約金)
 
+For industrial users or those with contract capacity:
 適合工業用戶或有契約容量的用戶：
 
 ```python
 from tou_calculator import calculate_bill, BillingInputs
 
+# Set contract capacity (in kW)
 # 設定契約容量（以 kW 為單位）
 inputs = BillingInputs(
-    contract_capacities={"regular": 100},  # 契約容量 100 kW
-    power_factor=90.0,  # 力率 90%
+    contract_capacities={"regular": 100},  # 100 kW contract
+    power_factor=90.0,  # 90% power factor
 )
 
+# Calculate full bill
 # 計算完整帳單
 bill = calculate_bill(usage_series, "high_voltage_2_tier", inputs=inputs)
 
 print(bill)
-# 電能費   | 基本費   | 違約金 | 力率調整 | 總計
+# Energy Cost | Basic Fee | Penalty | PF Adjustment | Total
+# 電能費      | 基本費    | 違約金  | 力率調整     | 總計
 ```
 
-### Step 4: 查看詳細報表
+---
+
+### Step 4: View Detailed Report (查看詳細報表)
 
 ```python
+# View monthly statistics
 # 查看每月統計
 report = plan.monthly_breakdown(usage_series)
 print(report)
@@ -174,42 +210,57 @@ print(report)
 # 1      7  summer  off_peak      12.50   25.75
 ```
 
-### Step 5: 匯出結果
+---
+
+### Step 5: Export Results (匯出結果)
 
 ```python
+# Save results to CSV
 # 把結果存成 CSV
 result_df = pd.DataFrame({
-    "用電度數": usage_series,
-    "電費": costs
+    "Usage_kWh": usage_series,  # 用電度數
+    "Cost_TWD": costs,           # 電費
 })
 result_df.to_csv("電費計算結果.csv", encoding="utf-8-sig")
 
+# Or save to Excel
 # 或存成 Excel
 result_df.to_excel("電費計算結果.xlsx")
 ```
 
-### 完整範例：從頭到尾
+---
+
+### Complete Example: End-to-End (完整範例：從頭到尾)
 
 ```python
 import pandas as pd
 import tou_calculator as tou
 
+# 1. Load your usage data
 # 1. 讀取妳的用電資料
-df = pd.read_csv("我的用電.csv")
-df["時間"] = pd.to_datetime(df["時間"])
-df = df.set_index("時間")
+df = pd.read_csv("my_usage.csv")
+df["timestamp"] = pd.to_datetime(df["timestamp"])
+df = df.set_index("timestamp")
 
+# 2. Get tariff plan
 # 2. 取得電價方案
 plan = tou.plan("residential_simple_2_tier")
 
+# 3. Calculate costs
 # 3. 計算電費
-costs = plan.calculate_costs(df["用電度數"])
+costs = plan.calculate_costs(df["usage"])
 
+# 4. Print results
 # 4. 印出結果
-print(f"這個月總電費: {costs.sum():.2f} 元")
-print(f"總用電: {df['用電度數'].sum():.2f} 度")
-print(f"平均每度: {costs.sum() / df['用電度數'].sum():.2f} 元")
+print(f"Total Cost: {costs.sum():.2f} TWD")
+print(f"總電費: {costs.sum():.2f} 元")
+print(f"Total Usage: {df['usage'].sum():.2f} kWh")
+print(f"總用電: {df['usage'].sum():.2f} 度")
+print(f"Average per kWh: {costs.sum() / df['usage'].sum():.2f} TWD")
+print(f"平均每度: {costs.sum() / df['usage'].sum():.2f} 元")
 ```
+
+---
 
 ## Calculation Logic & Background (基本計算邏輯)
 
