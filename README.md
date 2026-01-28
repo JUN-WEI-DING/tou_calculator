@@ -146,7 +146,46 @@ Common plans:
 
 ---
 
-### Step 3: Calculate Costs (計算電費)
+### Step 3: Check Rate Period (判斷費率时段)
+
+Before calculating costs, you might want to know what rate period applies at a specific time.
+在計算電費之前，妳可能想知道某個時間點屬於哪個費率時段。
+
+```python
+from datetime import datetime
+
+# Check period type at a specific time
+# 查詢特定時間的時段類型
+dt = datetime(2025, 7, 15, 14, 0)  # July 15, 2025, 2:00 PM (summer weekday afternoon)
+
+period = tou.period_at(dt, "residential_simple_2_tier")
+print(f"Period: {period}")  # Output: PeriodType.PEAK (尖峰)
+
+# Check if it's a holiday
+# 檢查是否為國定假日
+is_holiday = tou.is_holiday(dt)
+print(f"Is Holiday: {is_holiday}")  # Output: False
+
+# Get pricing context (rate + more details)
+# 取得費率資訊（費率 + 更多細節）
+ctx = tou.pricing_context(dt, "residential_simple_2_tier")
+print(f"Season: {ctx['season']}")   # summer (夏月)
+print(f"Day Type: {ctx['day_type']}")  # weekday (平日)
+print(f"Period: {ctx['period']}")   # peak (尖峰)
+print(f"Rate: {ctx['rate']} TWD/kWh")  # 5.16 TWD/kWh
+```
+
+**Common Period Types (常見時段類型):**
+
+| Period Type | 時段 | Description |
+|-------------|------|-------------|
+| `PEAK` | 尖峰 | Highest rate, usually weekday afternoons in summer |
+| `SEMIPPEAK` | 半尖峰 | Medium rate, usually Saturday or weekday evenings |
+| `OFF_PEAK` | 離峰 | Lowest rate, nights, Sundays, and holidays |
+
+---
+
+### Step 4: Calculate Costs (計算電費)
 
 #### Basic Calculation: Energy Cost Only (基礎計算：只算電能費)
 
@@ -198,7 +237,7 @@ print(bill)
 
 ---
 
-### Step 4: View Detailed Report (查看詳細報表)
+### Step 5: View Detailed Report (查看詳細報表)
 
 ```python
 # View monthly statistics
@@ -212,7 +251,7 @@ print(report)
 
 ---
 
-### Step 5: Export Results (匯出結果)
+### Step 6: Export Results (匯出結果)
 
 ```python
 # Save results to CSV
