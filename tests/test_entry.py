@@ -72,13 +72,13 @@ def test_entry_calendar_and_tariffs(tmp_path) -> None:
     assert helper_calendar.is_holiday(date(2024, 1, 1))
 
     tariffs = TaipowerTariffs(calendar)
-    profile = tariffs.get_residential_simple_two_stage()
+    profile = tariffs.get_residential_simple_2_tier()
     assert isinstance(profile, TariffProfile)
 
-    helper_plan = tou.residential_simple_two_stage_plan(calendar)
+    helper_plan = tou.residential_simple_2_tier_plan(calendar)
     assert isinstance(helper_plan, TariffPlan)
 
-    named_plan = tou.plan("residential_simple_two_stage", calendar_instance=calendar)
+    named_plan = tou.plan("residential_simple_2_tier", calendar_instance=calendar)
     assert isinstance(named_plan, TariffPlan)
 
 
@@ -108,10 +108,10 @@ def test_entry_named_helpers(tmp_path) -> None:
     cache_file = tmp_path / "2025.json"
     cache_file.write_text("[]", encoding="utf-8")
 
-    assert "high_voltage_two_stage" in tou.available_plans()
+    assert "high_voltage_2_tier" in tou.available_plans()
     assert tou.period_at(
         datetime(2025, 7, 15, 10, 0),
-        "residential_simple_two_stage",
+        "residential_simple_2_tier",
         cache_dir=tmp_path,
     ) in {PeriodType.PEAK, PeriodType.OFF_PEAK, PeriodType.SEMI_PEAK}
 
@@ -119,7 +119,7 @@ def test_entry_named_helpers(tmp_path) -> None:
         [1.0, 2.0],
         index=pd.to_datetime(["2025-07-15 09:00", "2025-07-15 10:00"]),
     )
-    costs = tou.costs(usage, "high_voltage_two_stage", cache_dir=tmp_path)
+    costs = tou.costs(usage, "high_voltage_2_tier", cache_dir=tmp_path)
     assert (costs >= 0).all()
 
 

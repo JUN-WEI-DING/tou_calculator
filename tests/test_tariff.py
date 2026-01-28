@@ -20,9 +20,9 @@ def _calendar_with_cache(tmp_path) -> TaiwanCalendar:
     return TaiwanCalendar(cache_dir=tmp_path)
 
 
-def test_residential_simple_two_stage_periods(tmp_path) -> None:
+def test_residential_simple_2_tier_periods(tmp_path) -> None:
     calendar = _calendar_with_cache(tmp_path)
-    plan = TaipowerTariffs(calendar).get_residential_simple_two_stage_plan()
+    plan = TaipowerTariffs(calendar).get_residential_simple_2_tier_plan()
 
     dt_peak = datetime(2025, 7, 15, 10, 0)
     dt_off_peak = datetime(2025, 7, 13, 10, 0)
@@ -31,9 +31,9 @@ def test_residential_simple_two_stage_periods(tmp_path) -> None:
     assert get_period(dt_off_peak, plan.profile) == PeriodType.OFF_PEAK
 
 
-def test_high_voltage_plan_costs(tmp_path) -> None:
+def test_high_voltage_2_tier_plan_costs(tmp_path) -> None:
     calendar = _calendar_with_cache(tmp_path)
-    plan = TaipowerTariffs(calendar).get_high_voltage_two_stage_plan()
+    plan = TaipowerTariffs(calendar).get_high_voltage_2_tier_plan()
 
     usage = pd.Series(
         [1.0, 2.0],
@@ -55,7 +55,7 @@ def test_monthly_breakdown_tou(tmp_path) -> None:
     usage = pd.Series([1.0, 2.0], index=index)
     result = monthly_breakdown(
         usage,
-        "residential_simple_two_stage",
+        "residential_simple_2_tier",
         calendar_instance=calendar,
     )
 
@@ -63,7 +63,7 @@ def test_monthly_breakdown_tou(tmp_path) -> None:
     assert result["usage_kwh"].sum() == usage.sum()
     result_with_shares = monthly_breakdown(
         usage,
-        "residential_simple_two_stage",
+        "residential_simple_2_tier",
         include_shares=True,
         calendar_instance=calendar,
     )
@@ -102,7 +102,7 @@ def test_period_context_details(tmp_path) -> None:
     dt = datetime(2025, 7, 15, 10, 0)
     context = period_context(
         dt,
-        "residential_simple_two_stage",
+        "residential_simple_2_tier",
         calendar_instance=calendar,
     )
 
@@ -114,7 +114,7 @@ def test_period_context_details(tmp_path) -> None:
 def test_plan_details_schema(tmp_path) -> None:
     calendar = _calendar_with_cache(tmp_path)
     details = plan_details(
-        "residential_simple_two_stage",
+        "residential_simple_2_tier",
         calendar_instance=calendar,
     )
 
@@ -129,7 +129,7 @@ def test_pricing_context_single_basic(tmp_path) -> None:
     dt = datetime(2025, 7, 15, 10, 0)
     result = pricing_context(
         dt,
-        "residential_simple_two_stage",
+        "residential_simple_2_tier",
         usage=1.0,
         calendar_instance=calendar,
     )
@@ -145,7 +145,7 @@ def test_pricing_context_details(tmp_path) -> None:
     dt = datetime(2025, 7, 15, 10, 0)
     result = pricing_context(
         dt,
-        "residential_simple_two_stage",
+        "residential_simple_2_tier",
         include_details=True,
         calendar_instance=calendar,
     )
@@ -166,7 +166,7 @@ def test_pricing_context_index_basic(tmp_path) -> None:
     usage = pd.Series([1.0, 2.0], index=index)
     result = pricing_context(
         index,
-        "residential_simple_two_stage",
+        "residential_simple_2_tier",
         usage=usage,
         calendar_instance=calendar,
     )

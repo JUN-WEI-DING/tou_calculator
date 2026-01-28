@@ -988,7 +988,7 @@
       ]
     },
     {
-      "id": "low_voltage_two_stage",
+      "id": "low_voltage_2_tier",
       "name": "低壓電力-二段式時間電價",
       "type": "TOU",
       "category": "low_voltage",
@@ -1837,7 +1837,7 @@
       }
     },
     {
-      "id": "high_voltage_two_stage",
+      "id": "high_voltage_2_tier",
       "name": "高壓電力-二段式時間電價",
       "type": "TOU",
       "category": "high_voltage",
@@ -2893,7 +2893,7 @@
       }
     },
     {
-      "id": "extra_high_voltage_two_stage",
+      "id": "extra_high_voltage_2_tier",
       "name": "特高壓電力-二段式時間電價",
       "type": "TOU",
       "category": "extra_high_voltage",

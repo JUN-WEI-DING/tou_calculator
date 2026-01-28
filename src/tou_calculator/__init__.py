@@ -71,27 +71,27 @@ def is_holiday(
     return calendar_instance.is_holiday(target)
 
 
-def residential_simple_two_stage_plan(
+def residential_simple_2_tier_plan(
     calendar_instance: TaiwanCalendar | None = None,
     cache_dir: Path | None = None,
     api_timeout: int = 10,
 ) -> TariffPlan:
-    """Backward compatibility wrapper for residential_simple_two_stage plan."""
+    """Create a residential simple 2-tier TOU plan."""
     return plan(
-        "residential_simple_two_stage",
+        "residential_simple_2_tier",
         calendar_instance,
         cache_dir,
         api_timeout,
     )
 
 
-def high_voltage_two_stage_plan(
+def high_voltage_2_tier_plan(
     calendar_instance: TaiwanCalendar | None = None,
     cache_dir: Path | None = None,
     api_timeout: int = 10,
 ) -> TariffPlan:
-    """Backward compatibility wrapper for high_voltage_two_stage plan."""
-    return plan("high_voltage_two_stage", calendar_instance, cache_dir, api_timeout)
+    """Create a high voltage 2-tier TOU plan."""
+    return plan("high_voltage_2_tier", calendar_instance, cache_dir, api_timeout)
 
 
 def residential_non_tou_plan(
@@ -99,7 +99,7 @@ def residential_non_tou_plan(
     cache_dir: Path | None = None,
     api_timeout: int = 10,
 ) -> TariffPlan:
-    """Backward compatibility wrapper for residential_non_tou plan."""
+    """Create a residential non-TOU tiered plan."""
     return plan("residential_non_tou", calendar_instance, cache_dir, api_timeout)
 
 
@@ -116,7 +116,7 @@ def plan(
 ) -> TariffPlan:
     """Get a tariff plan by name.
 
-    This function now uses the data-driven TariffFactory to create plans.
+    This function uses the data-driven TariffFactory to create plans.
     Any plan defined in plans.json can be loaded.
 
     Args:
@@ -131,19 +131,11 @@ def plan(
     Raises:
         ValueError: If plan name is not found
     """
-    # Backward compatibility aliases for old plan names
-    _PLAN_ALIASES = {
-        "residential_simple_two_stage": "residential_simple_2_tier",
-    }
-
-    # Apply alias mapping
-    plan_id = _PLAN_ALIASES.get(name, name)
-
     calendar = calendar_instance or taiwan_calendar(
         cache_dir=cache_dir, api_timeout=api_timeout
     )
     try:
-        return TariffFactory.create(plan_id, calendar=calendar)
+        return TariffFactory.create(name, calendar=calendar)
     except KeyError as exc:
         raise ValueError(f"Unsupported plan name: {name}") from exc
 
@@ -238,9 +230,9 @@ __all__ = [
     "get_context",
     "get_period",
     "is_holiday",
-    "high_voltage_two_stage_plan",
+    "high_voltage_2_tier_plan",
     "residential_non_tou_plan",
-    "residential_simple_two_stage_plan",
+    "residential_simple_2_tier_plan",
     "period_at",
     "period_context",
     "pricing_context",

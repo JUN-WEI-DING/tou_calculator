@@ -53,7 +53,7 @@ def main() -> None:
         power_factor=82,
     )
     print("advanced_bill_demand:")
-    print(tou.calculate_bill(usage, "high_voltage_two_stage", inputs=inputs))
+    print(tou.calculate_bill(usage, "high_voltage_2_tier", inputs=inputs))
 
     print("breakdown:")
     breakdown = tou.calculate_bill_breakdown(usage, "residential_simple_2_tier")

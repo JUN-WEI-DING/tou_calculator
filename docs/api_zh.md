@@ -18,8 +18,8 @@
   - 功能：建立方案工廠 `TaipowerTariffs`（可用自訂行事曆）。
 - `plan(name, calendar_instance=None, cache_dir=None, api_timeout=10)`
   - 功能：用方案名稱取得 `TariffPlan`。
-- `residential_simple_two_stage_plan(...)`
-- `high_voltage_two_stage_plan(...)`
+- `residential_simple_2_tier_plan(...)`
+- `high_voltage_2_tier_plan(...)`
 - `residential_non_tou_plan(...)`
   - 功能：直接取得對應方案的 `TariffPlan`。
 

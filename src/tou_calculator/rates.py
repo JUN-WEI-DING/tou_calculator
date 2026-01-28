@@ -79,7 +79,7 @@ class TariffJSONLoader:
         except (KeyError, TypeError):
             return TariffRate(period_costs={})
 
-    def get_high_voltage_two_stage_rate(self) -> TariffRate:
+    def get_high_voltage_2_tier_rate(self) -> TariffRate:
         return TariffRate(period_costs={})
 
     def get_plan_data(self, plan_id: str) -> dict[str, Any]:

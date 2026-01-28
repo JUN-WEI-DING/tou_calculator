@@ -595,7 +595,7 @@ _res_simple_two_stage_nonsummer_weekday = DaySchedule(
 )
 
 
-def _create_residential_simple_two_stage(calendar: Any) -> TariffProfile:
+def _create_residential_simple_2_tier(calendar: Any) -> TariffProfile:
     return TariffProfile(
         name="Residential-Simple-Two-Stage",
         season_strategy=TaiwanSeasonStrategy(
@@ -699,20 +699,20 @@ class TaipowerTariffs:
         self.calendar = calendar
         self._loader = TariffJSONLoader()
 
-    def get_residential_simple_two_stage(self) -> TariffProfile:
-        return _create_residential_simple_two_stage(self.calendar)
+    def get_residential_simple_2_tier(self) -> TariffProfile:
+        return _create_residential_simple_2_tier(self.calendar)
 
-    def get_residential_simple_two_stage_plan(self) -> TariffPlan:
-        profile = self.get_residential_simple_two_stage()
+    def get_residential_simple_2_tier_plan(self) -> TariffPlan:
+        profile = self.get_residential_simple_2_tier()
         rate = self._loader.get_residential_simple_rate()
         return TariffPlan(profile, rate)
 
-    def get_high_voltage_two_stage(self) -> TariffProfile:
+    def get_high_voltage_2_tier(self) -> TariffProfile:
         return _create_high_voltage_two_stage(self.calendar)
 
-    def get_high_voltage_two_stage_plan(self) -> TariffPlan:
-        profile = self.get_high_voltage_two_stage()
-        rate = self._loader.get_high_voltage_two_stage_rate()
+    def get_high_voltage_2_tier_plan(self) -> TariffPlan:
+        profile = self.get_high_voltage_2_tier()
+        rate = self._loader.get_high_voltage_2_tier_rate()
         return TariffPlan(profile, rate)
 
     def get_residential_non_tou(self) -> TariffProfile:
