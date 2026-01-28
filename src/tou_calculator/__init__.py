@@ -103,6 +103,15 @@ def residential_non_tou_plan(
     return plan("residential_non_tou", calendar_instance, cache_dir, api_timeout)
 
 
+def available_plan_ids() -> tuple[str, ...]:
+    """Return list of all available plan IDs (internal use).
+
+    For user-friendly display, use `available_plans()` which returns
+    bilingual names.
+    """
+    return TariffFactory().list_plans()
+
+
 def available_plans() -> list[str]:
     """Return list of all available plans with bilingual (EN/ZH) names."""
     store = PlanStore()
@@ -254,6 +263,7 @@ __all__ = [
     "custom_calendar",
     "taipower_tariffs",
     "available_plans",
+    "available_plan_ids",
     "calculate_costs",
     "get_context",
     "get_period",
