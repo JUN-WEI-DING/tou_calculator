@@ -42,7 +42,7 @@ Documentation = "https://github.com/JUN-WEI-DING/tou_calculator#readme"
 [project.optional-dependencies]
 test = ["pytest"]
 dev = ["pre-commit", "ruff", "mypy"]
-lunar = ["lunarcalendar>=2.0.0"]
+lunar = ["zhdate>=0.1.0"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

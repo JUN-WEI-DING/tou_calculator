@@ -19,7 +19,7 @@ except ImportError:
     pd = None
 
 try:
-    from lunarcalendar import Converter, Solar, Lunar
+    from zhdate import ZhDate
     LUNAR_AVAILABLE = True
 except ImportError:
     LUNAR_AVAILABLE = False
@@ -88,9 +88,8 @@ class _HolidayParser:
         if not LUNAR_AVAILABLE:
             return None
         try:
-            lunar = Lunar(year, month, day, False)
-            solar = Converter.lunar2solar(lunar)
-            return date(solar.year, solar.month, solar.day)
+            zh_date = ZhDate(year, month, day)
+            return zh_date.to_datetime().date()
         except Exception:
             return None
 
