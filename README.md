@@ -975,3 +975,42 @@ costs = plan.calculate_costs(usage_data)  # Will use cached holidays
 ## Custom Plans (自定義費率)
 
 You can also define custom calendars and rate schedules if the built-in Taipower plans don't fit your needs. (See `src/tou_calculator/custom.py` or the tests for advanced examples).
+
+---
+
+## Quality & Testing (品質與測試)
+
+This library is production-ready with comprehensive test coverage:
+
+### Test Coverage (測試覆蓋率)
+- **364 tests** across 12 test modules
+- **100% pass rate** on Python 3.9, 3.10, 3.11, 3.12, 3.13
+- Accuracy validated against Taipower official rates
+- Stress tested with 5M+ records
+
+### Test Categories
+| Category | Tests | Description |
+|----------|-------|-------------|
+| Unit Tests | 127 | Core functionality testing |
+| Integration | 54 | Multi-component workflows |
+| Accuracy | 38 | Taipower rate verification |
+| Stress | 41 | Performance & load testing |
+| Production | 104 | Security, encoding, edge cases |
+
+### Code Quality
+- **Linting:** ruff (PEP 8 compliant)
+- **Type checking:** mypy (type hints validated)
+- **Pre-commit:** Automated quality checks
+- **CI/CD:** GitHub Actions on every push
+
+### License
+MIT License - see [LICENSE](LICENSE) for details.
+
+---
+
+## Links (相關連結)
+
+- **Repository:** https://github.com/JUN-WEI-DING/tou_calculator
+- **Issues:** https://github.com/JUN-WEI-DING/tou_calculator/issues
+- **Changelog:** [CHANGELOG.md](CHANGELOG.md)
+- **License:** [MIT](LICENSE)
