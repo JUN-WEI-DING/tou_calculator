@@ -125,6 +125,54 @@ usage_series = df["用電"]
 
 ---
 
+### Step 1.5: No-Pandas Convenience Functions (無需 Pandas 的便利函式)
+
+**Don't want to deal with pandas?** We provide convenience functions that accept plain Python lists or dictionaries!
+**不想處理 pandas？** 我們提供接受純 Python list 或 dict 的便利函式！
+
+#### Using List (使用 list)
+
+```python
+import tou_calculator as tou
+
+# For regularly-spaced data, just pass a list of values
+# 對於固定間隔的資料，只需傳入數值列表
+result = tou.calculate_bill_from_list(
+    usage=[1.5, 2.3, 1.8, 2.0, 1.6],  # kWh values
+    plan_id="簡易型二段式",              # Flexible name matching
+    start="2025-07-15 09:00",          # Start datetime
+    freq="1h",                          # Frequency: 15min, 1h, 1D, etc.
+)
+print(f"Total: {result['total'].iloc[0]:.2f} TWD")
+```
+
+#### Using Dictionary (使用 dict)
+
+```python
+# For irregularly-spaced data, use a dictionary
+# 對於不規則間隔的資料，使用字典
+result = tou.calculate_bill_from_dict(
+    usage={
+        "2025-07-15 09:00": 1.5,
+        "2025-07-15 10:00": 2.3,
+        "2025-07-15 11:00": 1.8,
+        "2025-07-15 14:30": 2.0,  # Irregular interval allowed
+    },
+    plan_id="residential_simple_2_tier",
+)
+print(f"Total: {result['total'].iloc[0]:.2f} TWD")
+```
+
+#### Comparison (對比)
+
+| Method | Best For | Example Input |
+|--------|----------|---------------|
+| `calculate_bill` | pandas users, large datasets | `pd.Series` with DatetimeIndex |
+| `calculate_bill_from_list` | Regular intervals (hourly, daily) | `[1.0, 1.5, 2.0]` + start + freq |
+| `calculate_bill_from_dict` | Irregular intervals | `{"2025-07-15 09:00": 1.0, ...}` |
+
+---
+
 ### Step 2: Choose Your Tariff Plan (選擇你的電價方案)
 
 Taipower has many plans. Let's see what's available:
@@ -709,6 +757,8 @@ Quick index of all public entry points exported by `tou_calculator`.
 - `calculate_bill(usage, plan_name, inputs)` full bill DataFrame
 - `calculate_bill_breakdown(usage, plan_name, inputs)` bill + line items
 - `calculate_bill_simple(usage, plan_name)` minimal bill calculation
+- `calculate_bill_from_list(usage, plan_id, start, freq, ...)` calculate from list values (no pandas needed)
+- `calculate_bill_from_dict(usage, plan_id, ...)` calculate from timestamp dict (no pandas needed)
 
 ### Calendar & tariff access (日曆與費率)
 - `taiwan_calendar(...)` cached Taiwan holiday calendar
@@ -783,6 +833,10 @@ inputs = BillingInputs(contract_capacities={"regular": 200}, power_factor=95.0)
 print(tou.calculate_bill(usage, "high_voltage_2_tier", inputs=inputs))
 print(tou.calculate_bill_breakdown(usage, "high_voltage_2_tier", inputs=inputs))
 print(tou.calculate_bill_simple(usage, "high_voltage_2_tier"))
+
+# Convenience functions - no pandas required
+print(tou.calculate_bill_from_list([1.0, 1.5, 2.0], "residential_simple_2_tier", start="2025-07-15", freq="1h"))
+print(tou.calculate_bill_from_dict({"2025-07-15 09:00": 1.0, "2025-07-15 10:00": 1.5}, "residential_simple_2_tier"))
 ```
 
 ### Calendar & tariff access (日曆與費率)
