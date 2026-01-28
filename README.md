@@ -191,7 +191,6 @@ print(f"Is Holiday: {is_holiday}")  # Output: False
 # 取得費率資訊（費率 + 更多細節）
 ctx = tou.pricing_context(dt, "residential_simple_2_tier")
 print(f"Season: {ctx['season']}")   # summer (夏月)
-print(f"Day Type: {ctx['day_type']}")  # weekday (平日)
 print(f"Period: {ctx['period']}")   # peak (尖峰)
 print(f"Rate: {ctx['rate']} TWD/kWh")  # 5.16 TWD/kWh
 ```
@@ -215,22 +214,20 @@ print(f"Rate: {ctx['rate']} TWD/kWh")  # 5.16 TWD/kWh
 # 取得方案物件
 plan = tou.plan("residential_simple_2_tier")
 
-# Calculate costs for each time period
-# 計算每個時段的電費
+# Calculate costs (returns monthly aggregated costs)
+# 計算電費（返回按月匯總的電費）
 costs = plan.calculate_costs(usage_series)
 
 # View results
 # 看結果
-print(f"Total Cost: {costs.sum():.2f} TWD")  # 總電費
-print(f"總電費: {costs.sum():.2f} 元")
-
-# View cost per time period
-# 看每個時段的電費
+print(f"Total Cost: {costs.iloc[0]:.2f} TWD")  # 總電費
 print(costs)
-# 2025-07-15 09:00:00    7.74  (1.5 kWh × 5.16 TWD/kWh)
-# 2025-07-15 10:00:00   11.87
-# 2025-07-15 11:00:00    9.29
+# 2025-07-01    28.90
+# Name: cost, dtype: float64
 ```
+
+**Note:** `calculate_costs()` returns monthly aggregated costs by default.
+**說明：** `calculate_costs()` 預設返回按月匯總的電費。
 
 #### Advanced Calculation: With Basic Fee and Penalty (進階計算：包含基本費和違約金)
 
@@ -265,9 +262,8 @@ print(bill)
 # 查看每月統計
 report = plan.monthly_breakdown(usage_series)
 print(report)
-#    month  season    period  usage_kwh     cost
-# 0      7  summer      peak      45.20  233.23
-# 1      7  summer  off_peak      12.50   25.75
+#         month  season period  usage_kwh     cost
+# 0 2025-07-01  summer   peak        5.6  28.90
 ```
 
 ---
@@ -526,8 +522,8 @@ plan_obj = tou.plan(plan)
 context = plan_obj.profile.engine.evaluate(
     pd.DatetimeIndex([dt])
 )
-print(f"Season: {context['season'].iloc[0]}")
-print(f"Period: {context['period'].iloc[0]}")
+print(f"Season: {context['season'].iloc[0]}")  # SeasonType.SUMMER
+print(f"Period: {context['period'].iloc[0]}")  # PeriodType.PEAK
 ```
 
 **Get Pricing for a Timepoint:**
