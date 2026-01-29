@@ -32,8 +32,7 @@ class TariffJSONLoader:
             return resources.open_text(self._package, self._filename)
         except (ImportError, FileNotFoundError) as exc:
             raise FileNotFoundError(
-                f"Tariff file not found in package (legacy): "
-                f"{self._package}/{self._filename}"
+                f"Tariff file not found: {self._package}/{self._filename}"
             ) from exc
         except ModuleNotFoundError as exc:
             raise FileNotFoundError(
