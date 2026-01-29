@@ -488,12 +488,12 @@ class TestAPICompatibility:
         assert plan2 is not None
 
     def test_available_plans_consistency(self):
-        """Test that available_plans() is consistent."""
+        """Test that available_plans() and available_plan_ids() are consistent."""
         plans1 = tou.available_plans()
-        plan_ids1 = tou.available_plans()
+        plan_ids1 = tou.available_plan_ids()
 
         plans2 = tou.available_plans()
-        plan_ids2 = tou.available_plans()
+        plan_ids2 = tou.available_plan_ids()
 
         # Should be consistent across calls
         assert plans1 == plans2
@@ -892,16 +892,24 @@ class TestDocumentationExamples:
         assert bill["total"].iloc[0] > 0
 
     def test_plan_id_consistency_in_readme(self):
-        """Test that available_plans() returns plan IDs only."""
-        plans = tou.available_plans()
-        assert len(plans) == 20
-        # All should be plan IDs (lowercase with underscores)
-        for pid in plans:
+        """Test that available_plans() returns bilingual names and available_plan_ids() returns IDs."""
+        # available_plans() returns bilingual display names
+        display_names = tou.available_plans()
+        assert len(display_names) == 20
+        # Should contain Chinese characters
+        assert any(any("\u4e00" <= c <= "\u9fff" for c in name)
+                   for name in display_names)
+        # First one should be residential non-TOU with bilingual name
+        assert "表燈非時間電價" in display_names[0]
+
+        # available_plan_ids() returns plan IDs for code
+        plan_ids = tou.available_plan_ids()
+        assert len(plan_ids) == 20
+        # All should be lowercase with underscores
+        for pid in plan_ids:
             assert pid.replace("_", "").islower()
         # First one should be residential_non_tou
-        assert plans[0] == "residential_non_tou"
-        # Common plans should be in the list
-        assert "residential_simple_2_tier" in plans
+        assert plan_ids[0] == "residential_non_tou"
 
 
 # =============================================================================
@@ -1412,7 +1420,7 @@ class TestFuzzingAndRandomInput:
     def test_random_plan_from_available(self):
         """Test that all available plans work with random data."""
         random.seed(42)
-        plan_ids = tou.available_plans()
+        plan_ids = tou.available_plan_ids()
 
         for plan_id in random.sample(list(plan_ids), min(10, len(plan_ids))):
             dates = pd.date_range("2024-01-01", periods=100, freq="h")
@@ -1473,6 +1481,7 @@ class TestInstallationAndIntegration:
         """Test that all public API functions exist."""
         public_api = [
             "available_plans",
+            "available_plan_ids",
             "plan",
             "plan_details",
             "is_holiday",
