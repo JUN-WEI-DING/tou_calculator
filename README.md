@@ -254,7 +254,7 @@ plan = tou.plan("簡易型二段式")
 
 ### Step 3: Check Rate Period (判斷費率時段)
 
-Before calculating costs, you might want to know what rate period applies at a specific time.
+Before calculating costs, you might want to know what rate period applies at a specific time.  
 在計算電費之前，你可能想知道某個時間點屬於哪個費率時段。
 
 ```python
