@@ -186,11 +186,19 @@ Taipower has many plans. Let's see what's available:
 ```python
 import tou_calculator as tou
 
-# List all available plan IDs
-# 列出所有可用的 plan ID
+# List all available plans (bilingual display names)
+# 列出所有可用方案（雙語顯示名稱）
 print(tou.available_plans())
-# ['residential_non_tou', 'lighting_non_business_tiered',
-#  'residential_simple_2_tier', 'residential_simple_3_tier', ...]
+# 表燈非時間電價 Residential Non-TOU
+# 表燈非時間-住宅非營業 Non-Business Tiered
+# 簡易型二段式 Simple 2-Tier
+# ... (20 plans total)
+
+# Get plan IDs for use in code
+# 取得程式碼中使用的 plan ID
+ids = tou.available_plan_ids()
+# ('residential_non_tou', 'lighting_non_business_tiered',
+#  'residential_simple_2_tier', ...)
 ```
 
 Common plans:
@@ -700,7 +708,8 @@ print(result["adjustment_details"])  # Specific adjustments (e.g., PF discount a
 Quick index of all public entry points exported by `tou_calculator`.
 
 ### Core helpers (核心入口)
-- `available_plans()` list available plan IDs for use in code
+- `available_plans()` list supported plans with bilingual (EN/ZH) display names
+- `available_plan_ids()` list plan IDs for use in code
 - `plan(name, ...)` get a `TariffPlan` by plan ID
 - `plan_details(name, ...)` return structured plan schema
 - `period_at(target, plan_name, ...)` return period enum at timepoint
