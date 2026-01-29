@@ -71,7 +71,7 @@ def main():
 
     check_times = [
         datetime(2025, 7, 15, 14, 0),  # Weekday afternoon
-        datetime(2025, 7, 15, 2, 0),   # Weekday night
+        datetime(2025, 7, 15, 2, 0),  # Weekday night
         datetime(2025, 7, 13, 14, 0),  # Sunday afternoon
     ]
 
@@ -79,7 +79,11 @@ def main():
         period = tou.period_at(dt, "residential_simple_2_tier")
         ctx = tou.pricing_context(dt, "residential_simple_2_tier", usage=1.0)
         is_hol = tou.is_holiday(dt)
-        print(f"{dt.strftime('%Y-%m-%d %H:%M')} | {'Holiday' if is_hol else 'Weekday':7} | {period:10} | {ctx['rate']:.2f} TWD/kWh")
+        day_type = "Holiday" if is_hol else "Weekday"
+        print(
+            f"{dt.strftime('%Y-%m-%d %H:%M')} | {day_type:7} | {period:10} | "
+            f"{ctx['rate']:.2f} TWD/kWh"
+        )
     print()
 
     # =============================================================================
@@ -104,7 +108,7 @@ def main():
     print("Example 5: Plan Comparison")
     print("=" * 60)
 
-    dates = pd.date_range("2025-07-01", periods=24*30, freq="h")  # July
+    dates = pd.date_range("2025-07-01", periods=24 * 30, freq="h")  # July
     usage = pd.Series([2.0] * len(dates), index=dates)
 
     plans_to_compare = [

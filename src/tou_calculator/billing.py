@@ -269,8 +269,7 @@ def _validate_billing_inputs(
     # 1. Check contract capacity requirement (critical - always enforced)
     if requirements.requires_contract_capacity:
         has_capacity = (
-            inputs.contract_capacity_kw is not None
-            or inputs.contract_capacities
+            inputs.contract_capacity_kw is not None or inputs.contract_capacities
         )
         if not has_capacity:
             raise MissingRequiredInput(
@@ -283,8 +282,7 @@ def _validate_billing_inputs(
     # 2. Validate basic_fee_inputs keys
     if inputs.basic_fee_inputs:
         unknown_keys = (
-            set(inputs.basic_fee_inputs.keys())
-            - requirements.valid_basic_fee_labels
+            set(inputs.basic_fee_inputs.keys()) - requirements.valid_basic_fee_labels
         )
         if unknown_keys:
             if strict:
@@ -1465,9 +1463,7 @@ def _normalize_usage_to_series(
         try:
             index = pd.to_datetime(list(usage.keys()))
         except Exception as e:
-            raise InvalidUsageInput(
-                f"Cannot convert dict keys to datetime: {e}"
-            )
+            raise InvalidUsageInput(f"Cannot convert dict keys to datetime: {e}")
         return pd.Series(list(usage.values()), index=index)
 
     raise InvalidUsageInput(

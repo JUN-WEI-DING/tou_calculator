@@ -71,7 +71,7 @@ def create_realistic_household_usage(
             night_load = 0.2
 
         # Air conditioning (summer only)
-        ac_load = 0
+        ac_load = 0.0
         if include_ac and is_summer:
             if ac_hours_start <= hour < ac_hours_end:
                 if is_weekend:
@@ -80,7 +80,14 @@ def create_realistic_household_usage(
                     ac_load = 2.5  # Weekday AC use (higher temp)
 
         # Total hourly usage
-        total = base_load + morning_load + daytime_load + evening_load + night_load + ac_load
+        total = (
+            base_load
+            + morning_load
+            + daytime_load
+            + evening_load
+            + night_load
+            + ac_load
+        )
         usage_values.append(total)
 
     return pd.Series(usage_values, index=dates)
@@ -122,8 +129,12 @@ def show_consumption_analysis(usage: pd.Series) -> None:
     print(f"Total Monthly Usage:      {total_kwh:8.2f} kWh")
     print(f"Daily Average:            {daily_avg:8.2f} kWh/day")
     print()
-    print(f"Peak Hours (9AM-12AM):     {peak_usage:8.2f} kWh ({peak_usage/total_kwh*100:5.1f}%)")
-    print(f"Off-Peak (12AM-9AM):       {off_peak_usage:8.2f} kWh ({off_peak_usage/total_kwh*100:5.1f}%)")
+    peak_pct = peak_usage / total_kwh * 100
+    off_peak_pct = off_peak_usage / total_kwh * 100
+    print(f"Peak Hours (9AM-12AM):     {peak_usage:8.2f} kWh ({peak_pct:5.1f}%)")
+    # Line too long - split into two
+    print(f"Off-Peak (12AM-9AM):       {off_peak_usage:8.2f} kWh")
+    print(f"                           ({off_peak_pct:5.1f}%)")
     print()
     print(f"Weekday Usage:            {weekday_usage:8.2f} kWh")
     print(f"Weekend Usage:            {weekend_usage:8.2f} kWh")
@@ -151,13 +162,16 @@ def show_appliance_breakdown(usage: pd.Series) -> None:
     # Other usage
     other_kwh = total_kwh - base_load_kwh - ac_kwh
 
-    print(f"Base Load (24/7):        {base_load_kwh:8.2f} kWh ({base_load_kwh/total_kwh*100:5.1f}%)")
+    base_pct = base_load_kwh / total_kwh * 100
+    print(f"Base Load (24/7):        {base_load_kwh:8.2f} kWh ({base_pct:5.1f}%)")
     print("  - Refrigerator, WiFi, standby")
     print()
-    print(f"Air Conditioning:         {ac_kwh:8.2f} kWh ({ac_kwh/total_kwh*100:5.1f}%)")
+    ac_pct = ac_kwh / total_kwh * 100
+    print(f"Air Conditioning:         {ac_kwh:8.2f} kWh ({ac_pct:5.1f}%)")
     print(f"  - ~{ac_hours_count} hours at ~2 kW")
     print()
-    print(f"Other Appliances:        {other_kwh:8.2f} kWh ({other_kwh/total_kwh*100:5.1f}%)")
+    other_pct = other_kwh / total_kwh * 100
+    print(f"Other Appliances:        {other_kwh:8.2f} kWh ({other_pct:5.1f}%)")
     print("  - Cooking, shower, TV, lights")
     print("=" * 70)
     print()
@@ -169,9 +183,6 @@ def suggest_cost_saving_tips(usage: pd.Series, bill: pd.DataFrame) -> None:
     print("Money-Saving Tips")
     print("=" * 70)
 
-    total_cost = bill["total"].iloc[0]
-    energy_cost = bill["energy_cost"].iloc[0]
-
     # Calculate potential savings from shifting usage
     peak_hours = usage.index.hour.isin(range(9, 24))
     peak_usage = usage[peak_hours].sum()
@@ -182,7 +193,8 @@ def suggest_cost_saving_tips(usage: pd.Series, bill: pd.DataFrame) -> None:
     summer_off_peak_rate = 2.06
     potential_savings = shifted_kwh * (summer_peak_rate - summer_off_peak_rate)
 
-    print(f"💡 Shift 20% of peak usage to off-peak: Save ~{potential_savings:.2f} TWD/month")
+    print("💡 Shift 20% of peak usage to off-peak:")
+    print(f"    Save ~{potential_savings:.2f} TWD/month")
     print("   - Run dishwasher/washing machine at night")
     print("   - Set AC timer to cool room before peak hours")
     print()
@@ -213,6 +225,7 @@ def suggest_cost_saving_tips(usage: pd.Series, bill: pd.DataFrame) -> None:
 # =============================================================================
 # Main demonstration
 # =============================================================================
+
 
 def main() -> None:
     print("Household Electricity Cost Calculator")

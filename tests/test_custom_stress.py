@@ -34,16 +34,18 @@ from tou_calculator.tariff import TaiwanSeasonStrategy
 # TEST 1: Extreme Calendar Configurations
 # =============================================================================
 
+
 def test_extreme_calendar_configurations():
     """Test with extreme calendar configurations."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("CUSTOM STRESS TEST 1: Extreme Calendar Configurations")
-    print("="*70)
+    print("=" * 70)
 
     test_cases = [
-        ("大量假日", list(
-            pd.date_range("2024-01-01", "2024-12-31").to_pydatetime().tolist()
-        )),
+        (
+            "大量假日",
+            list(pd.date_range("2024-01-01", "2024-12-31").to_pydatetime().tolist()),
+        ),
         ("空假日", []),
         ("單一假日", [date(2024, 7, 15)]),
         ("未來假日", [date(2099, 12, 31), date(2100, 1, 1)]),
@@ -59,8 +61,10 @@ def test_extreme_calendar_configurations():
 
     for name, config in test_cases:
         try:
-            if isinstance(config, list) and len(config) > 0 and isinstance(
-                config[0], int
+            if (
+                isinstance(config, list)
+                and len(config) > 0
+                and isinstance(config[0], int)
             ):
                 # weekend_days
                 calendar = CustomCalendar(holidays=[], weekend_days=config)
@@ -98,11 +102,12 @@ def test_extreme_calendar_configurations():
 # TEST 2: Massive Schedule Definitions
 # =============================================================================
 
+
 def test_massive_schedule_definitions():
     """Test with massive schedule definitions."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("CUSTOM STRESS TEST 2: Massive Schedule Definitions")
-    print("="*70)
+    print("=" * 70)
 
     calendar = CustomCalendar(holidays=[], weekend_days=[5, 6])
     day_type_strategy = WeekdayDayTypeStrategy(calendar)
@@ -113,11 +118,14 @@ def test_massive_schedule_definitions():
         ("100個時段", 100),
         ("密集時段(15分鐘)", 96),  # 24 hours / 15 min = 96 slots
         ("極密集時段(5分鐘)", 288),  # 24 hours / 5 min = 288 slots
-        ("午夜跨日(23:59-00:01)", [
-            {"start": "00:00", "end": "08:00", "period": "off_peak"},
-            {"start": "08:00", "end": "18:00", "period": "peak"},
-            {"start": "23:59", "end": "24:00", "period": "off_peak"},  # Last minute
-        ]),
+        (
+            "午夜跨日(23:59-00:01)",
+            [
+                {"start": "00:00", "end": "08:00", "period": "off_peak"},
+                {"start": "08:00", "end": "18:00", "period": "peak"},
+                {"start": "23:59", "end": "24:00", "period": "off_peak"},  # Last minute
+            ],
+        ),
     ]
 
     results = []
@@ -130,19 +138,23 @@ def test_massive_schedule_definitions():
                 for i in range(config):
                     start_hour = (i * 24) // config
                     end_hour = ((i + 1) * 24) // config
-                    slots.append({
-                        "start": f"{start_hour:02d}:00",
-                        "end": f"{end_hour:02d}:00",
-                        "period": "peak" if i % 2 == 0 else "off_peak"
-                    })
+                    slots.append(
+                        {
+                            "start": f"{start_hour:02d}:00",
+                            "end": f"{end_hour:02d}:00",
+                            "period": "peak" if i % 2 == 0 else "off_peak",
+                        }
+                    )
             else:
                 slots = config
 
-            schedules = [{
-                "season": "summer",
-                "day_type": "weekday",
-                "slots": slots,
-            }]
+            schedules = [
+                {
+                    "season": "summer",
+                    "day_type": "weekday",
+                    "slots": slots,
+                }
+            ]
 
             start = time_module.time()
             profile = build_tariff_profile(
@@ -150,7 +162,7 @@ def test_massive_schedule_definitions():
                 season_strategy=season_strategy,
                 day_type_strategy=day_type_strategy,
                 schedules=schedules,
-                default_period="off_peak"
+                default_period="off_peak",
             )
             elapsed = time_module.time() - start
 
@@ -160,7 +172,7 @@ def test_massive_schedule_definitions():
                     {"season": "summer", "period": "off_peak", "cost": 1.0},
                     {"season": "summer", "period": "peak", "cost": 5.0},
                 ],
-                season_strategy=season_strategy
+                season_strategy=season_strategy,
             )
             plan = build_tariff_plan(profile, rate)
 
@@ -183,11 +195,12 @@ def test_massive_schedule_definitions():
 # TEST 3: All Season/Day/Period Combinations
 # =============================================================================
 
+
 def test_all_combinations():
     """Test all combinations of season, day type, and period."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("CUSTOM STRESS TEST 3: All Combinations")
-    print("="*70)
+    print("=" * 70)
 
     calendar = CustomCalendar(holidays=[], weekend_days=[5, 6])
     day_type_strategy = WeekdayDayTypeStrategy(calendar)
@@ -209,19 +222,23 @@ def test_all_combinations():
                 {"start": "08:00", "end": "17:00", "period": "peak"},
                 {"start": "17:00", "end": "24:00", "period": "semi_peak"},
             ]
-            schedules.append({
-                "season": season,
-                "day_type": day_type,
-                "slots": slots,
-            })
+            schedules.append(
+                {
+                    "season": season,
+                    "day_type": day_type,
+                    "slots": slots,
+                }
+            )
 
             # Add rate for each period
             for period in periods:
-                period_costs.append({
-                    "season": season,
-                    "period": period,
-                    "cost": random.uniform(1.0, 10.0),
-                })
+                period_costs.append(
+                    {
+                        "season": season,
+                        "period": period,
+                        "cost": random.uniform(1.0, 10.0),
+                    }
+                )
 
     try:
         profile = build_tariff_profile(
@@ -229,12 +246,11 @@ def test_all_combinations():
             season_strategy=season_strategy,
             day_type_strategy=day_type_strategy,
             schedules=schedules,
-            default_period="off_peak"
+            default_period="off_peak",
         )
 
         rate = build_tariff_rate(
-            period_costs=period_costs,
-            season_strategy=season_strategy
+            period_costs=period_costs, season_strategy=season_strategy
         )
         plan = build_tariff_plan(profile, rate)
 
@@ -251,7 +267,9 @@ def test_all_combinations():
                         print(f"  ❌ Failed for {dt}: {e}")
                         assert False, f"Failed for {dt}: {e}"
 
-        print(f"  ✅ All {len(seasons)} × {len(day_types)} × {len(periods)} combinations work")
+        print(
+            f"  ✅ All {len(seasons)} × {len(day_types)} × {len(periods)} combinations work"
+        )
         print(f"  ✅ Tested {test_count} datetime queries")
     except Exception as e:
         print(f"  ❌ {e}")
@@ -262,11 +280,12 @@ def test_all_combinations():
 # TEST 4: Edge Cases - Time Boundaries
 # =============================================================================
 
+
 def test_custom_time_boundaries():
     """Test custom plans at time boundaries."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("CUSTOM STRESS TEST 4: Time Boundary Edge Cases")
-    print("="*70)
+    print("=" * 70)
 
     calendar = CustomCalendar(holidays=[], weekend_days=[5, 6])
     day_type_strategy = WeekdayDayTypeStrategy(calendar)
@@ -275,40 +294,54 @@ def test_custom_time_boundaries():
     # Edge case schedules
     edge_cases = [
         ("午夜00:00", [{"start": "00:00", "end": "01:00", "period": "midnight"}]),
-        ("跨日23:59-00:01", [
-            {"start": "23:59", "end": "24:00", "period": "night"},
-            {"start": "00:00", "end": "00:01", "period": "early"},
-        ]),
-        ("全日覆蓋", [
-            {"start": "00:00", "end": "24:00", "period": "all_day"},
-        ]),
-        ("間隙時段", [
-            {"start": "00:00", "end": "06:00", "period": "gap1"},
-            {"start": "12:00", "end": "18:00", "period": "gap2"},
-            # 06:00-12:00 and 18:00-24:00 should use default
-        ]),
-        ("重疊邊界", [
-            {"start": "00:00", "end": "12:00", "period": "first"},
-            {"start": "12:00", "end": "23:59", "period": "second"},
-        ]),
+        (
+            "跨日23:59-00:01",
+            [
+                {"start": "23:59", "end": "24:00", "period": "night"},
+                {"start": "00:00", "end": "00:01", "period": "early"},
+            ],
+        ),
+        (
+            "全日覆蓋",
+            [
+                {"start": "00:00", "end": "24:00", "period": "all_day"},
+            ],
+        ),
+        (
+            "間隙時段",
+            [
+                {"start": "00:00", "end": "06:00", "period": "gap1"},
+                {"start": "12:00", "end": "18:00", "period": "gap2"},
+                # 06:00-12:00 and 18:00-24:00 should use default
+            ],
+        ),
+        (
+            "重疊邊界",
+            [
+                {"start": "00:00", "end": "12:00", "period": "first"},
+                {"start": "12:00", "end": "23:59", "period": "second"},
+            ],
+        ),
     ]
 
     results = []
 
     for name, slots in edge_cases:
         try:
-            schedules = [{
-                "season": "summer",
-                "day_type": "weekday",
-                "slots": slots,
-            }]
+            schedules = [
+                {
+                    "season": "summer",
+                    "day_type": "weekday",
+                    "slots": slots,
+                }
+            ]
 
             profile = build_tariff_profile(
                 name=f"edge_{name}",
                 season_strategy=season_strategy,
                 day_type_strategy=day_type_strategy,
                 schedules=schedules,
-                default_period="default"
+                default_period="default",
             )
 
             rate = build_tariff_rate(
@@ -323,7 +356,7 @@ def test_custom_time_boundaries():
                     {"season": "summer", "period": "second", "cost": 8.0},
                     {"season": "summer", "period": "default", "cost": 0.5},
                 ],
-                season_strategy=season_strategy
+                season_strategy=season_strategy,
             )
             plan = build_tariff_plan(profile, rate)
 
@@ -352,39 +385,117 @@ def test_custom_time_boundaries():
 # TEST 5: Tiered Rate Extremes
 # =============================================================================
 
+
 def test_tiered_rate_extremes():
     """Test tiered rates with extreme values."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("CUSTOM STRESS TEST 5: Tiered Rate Extremes")
-    print("="*70)
+    print("=" * 70)
 
     tier_cases = [
-        ("單一tier", [
-            {"start_kwh": 0, "end_kwh": float("inf"), "summer_cost": 1.0, "non_summer_cost": 0.8},
-        ]),
-        ("標準3段", [
-            {"start_kwh": 0, "end_kwh": 400, "summer_cost": 1.2, "non_summer_cost": 1.0},
-            {"start_kwh": 400, "end_kwh": 1000, "summer_cost": 2.4, "non_summer_cost": 2.0},
-            {"start_kwh": 1000, "end_kwh": float("inf"), "summer_cost": 3.6, "non_summer_cost": 3.0},
-        ]),
-        ("細分100段", [
-            {"start_kwh": i*10, "end_kwh": (i+1)*10 if i < 99 else float("inf"),
-             "summer_cost": 1.0 + i*0.1, "non_summer_cost": 0.8 + i*0.1}
-            for i in range(100)
-        ]),
-        ("極小間隔", [
-            {"start_kwh": 0, "end_kwh": 0.1, "summer_cost": 10.0, "non_summer_cost": 8.0},
-            {"start_kwh": 0.1, "end_kwh": 0.2, "summer_cost": 20.0, "non_summer_cost": 18.0},
-            {"start_kwh": 0.2, "end_kwh": float("inf"), "summer_cost": 30.0, "non_summer_cost": 28.0},
-        ]),
-        ("極大費率", [
-            {"start_kwh": 0, "end_kwh": 100, "summer_cost": 9999.99, "non_summer_cost": 8888.88},
-            {"start_kwh": 100, "end_kwh": float("inf"), "summer_cost": 0.01, "non_summer_cost": 0.001},
-        ]),
-        ("零費率", [
-            {"start_kwh": 0, "end_kwh": 100, "summer_cost": 0.0, "non_summer_cost": 0.0},
-            {"start_kwh": 100, "end_kwh": float("inf"), "summer_cost": 5.0, "non_summer_cost": 4.0},
-        ]),
+        (
+            "單一tier",
+            [
+                {
+                    "start_kwh": 0,
+                    "end_kwh": float("inf"),
+                    "summer_cost": 1.0,
+                    "non_summer_cost": 0.8,
+                },
+            ],
+        ),
+        (
+            "標準3段",
+            [
+                {
+                    "start_kwh": 0,
+                    "end_kwh": 400,
+                    "summer_cost": 1.2,
+                    "non_summer_cost": 1.0,
+                },
+                {
+                    "start_kwh": 400,
+                    "end_kwh": 1000,
+                    "summer_cost": 2.4,
+                    "non_summer_cost": 2.0,
+                },
+                {
+                    "start_kwh": 1000,
+                    "end_kwh": float("inf"),
+                    "summer_cost": 3.6,
+                    "non_summer_cost": 3.0,
+                },
+            ],
+        ),
+        (
+            "細分100段",
+            [
+                {
+                    "start_kwh": i * 10,
+                    "end_kwh": (i + 1) * 10 if i < 99 else float("inf"),
+                    "summer_cost": 1.0 + i * 0.1,
+                    "non_summer_cost": 0.8 + i * 0.1,
+                }
+                for i in range(100)
+            ],
+        ),
+        (
+            "極小間隔",
+            [
+                {
+                    "start_kwh": 0,
+                    "end_kwh": 0.1,
+                    "summer_cost": 10.0,
+                    "non_summer_cost": 8.0,
+                },
+                {
+                    "start_kwh": 0.1,
+                    "end_kwh": 0.2,
+                    "summer_cost": 20.0,
+                    "non_summer_cost": 18.0,
+                },
+                {
+                    "start_kwh": 0.2,
+                    "end_kwh": float("inf"),
+                    "summer_cost": 30.0,
+                    "non_summer_cost": 28.0,
+                },
+            ],
+        ),
+        (
+            "極大費率",
+            [
+                {
+                    "start_kwh": 0,
+                    "end_kwh": 100,
+                    "summer_cost": 9999.99,
+                    "non_summer_cost": 8888.88,
+                },
+                {
+                    "start_kwh": 100,
+                    "end_kwh": float("inf"),
+                    "summer_cost": 0.01,
+                    "non_summer_cost": 0.001,
+                },
+            ],
+        ),
+        (
+            "零費率",
+            [
+                {
+                    "start_kwh": 0,
+                    "end_kwh": 100,
+                    "summer_cost": 0.0,
+                    "non_summer_cost": 0.0,
+                },
+                {
+                    "start_kwh": 100,
+                    "end_kwh": float("inf"),
+                    "summer_cost": 5.0,
+                    "non_summer_cost": 4.0,
+                },
+            ],
+        ),
     ]
 
     results = []
@@ -406,19 +517,23 @@ def test_tiered_rate_extremes():
                     name=f"tiered_test_{name}",
                     season_strategy=season_strategy,
                     day_type_strategy=day_type_strategy,
-                    schedules=[{
-                        "season": "summer",
-                        "day_type": "weekday",
-                        "slots": [{"start": "00:00", "end": "24:00", "period": "flat"}],
-                    }],
-                    default_period="flat"
+                    schedules=[
+                        {
+                            "season": "summer",
+                            "day_type": "weekday",
+                            "slots": [
+                                {"start": "00:00", "end": "24:00", "period": "flat"}
+                            ],
+                        }
+                    ],
+                    default_period="flat",
                 )
 
                 plan = build_tariff_plan(profile, rate)
 
                 # Test with monthly usage
-                dates = pd.date_range("2024-07-01", periods=30*24, freq="h")
-                usage_series = pd.Series([usage / (30*24)] * len(dates), index=dates)
+                dates = pd.date_range("2024-07-01", periods=30 * 24, freq="h")
+                usage_series = pd.Series([usage / (30 * 24)] * len(dates), index=dates)
 
                 plan.calculate_costs(usage_series)
 
@@ -436,11 +551,12 @@ def test_tiered_rate_extremes():
 # TEST 6: Concurrent Custom Plan Creation
 # =============================================================================
 
+
 def test_concurrent_custom_creation():
     """Test concurrent creation of custom plans."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("CUSTOM STRESS TEST 6: Concurrent Custom Plan Creation")
-    print("="*70)
+    print("=" * 70)
 
     errors = []
     results = []
@@ -451,8 +567,7 @@ def test_concurrent_custom_creation():
         try:
             # Each worker creates a unique plan
             calendar = CustomCalendar(
-                holidays=[date(2024, 1, worker_id % 28 + 1)],
-                weekend_days=[5, 6]
+                holidays=[date(2024, 1, worker_id % 28 + 1)], weekend_days=[5, 6]
             )
             day_type_strategy = WeekdayDayTypeStrategy(calendar)
             season_strategy = TaiwanSeasonStrategy((6, 1), (9, 30))
@@ -461,30 +576,52 @@ def test_concurrent_custom_creation():
             peak_start = 8 + (worker_id % 4)
             peak_end = 18 + (worker_id % 4)
 
-            schedules = [{
-                "season": "summer",
-                "day_type": "weekday",
-                "slots": [
-                    {"start": "00:00", "end": f"{peak_start:02d}:00", "period": "off_peak"},
-                    {"start": f"{peak_start:02d}:00", "end": f"{peak_end:02d}:00", "period": "peak"},
-                    {"start": f"{peak_end:02d}:00", "end": "24:00", "period": "off_peak"},
-                ],
-            }]
+            schedules = [
+                {
+                    "season": "summer",
+                    "day_type": "weekday",
+                    "slots": [
+                        {
+                            "start": "00:00",
+                            "end": f"{peak_start:02d}:00",
+                            "period": "off_peak",
+                        },
+                        {
+                            "start": f"{peak_start:02d}:00",
+                            "end": f"{peak_end:02d}:00",
+                            "period": "peak",
+                        },
+                        {
+                            "start": f"{peak_end:02d}:00",
+                            "end": "24:00",
+                            "period": "off_peak",
+                        },
+                    ],
+                }
+            ]
 
             profile = build_tariff_profile(
                 name=f"worker_{worker_id}",
                 season_strategy=season_strategy,
                 day_type_strategy=day_type_strategy,
                 schedules=schedules,
-                default_period="off_peak"
+                default_period="off_peak",
             )
 
             rate = build_tariff_rate(
                 period_costs=[
-                    {"season": "summer", "period": "off_peak", "cost": 1.0 + worker_id * 0.1},
-                    {"season": "summer", "period": "peak", "cost": 5.0 + worker_id * 0.1},
+                    {
+                        "season": "summer",
+                        "period": "off_peak",
+                        "cost": 1.0 + worker_id * 0.1,
+                    },
+                    {
+                        "season": "summer",
+                        "period": "peak",
+                        "cost": 5.0 + worker_id * 0.1,
+                    },
                 ],
-                season_strategy=season_strategy
+                season_strategy=season_strategy,
             )
             plan = build_tariff_plan(profile, rate)
 
@@ -493,9 +630,9 @@ def test_concurrent_custom_creation():
             ctx = plan.pricing_context(dt)
 
             with lock:
-                results.append((worker_id, ctx['rate']))
+                results.append((worker_id, ctx["rate"]))
 
-            return (worker_id, ctx['rate'], None)
+            return (worker_id, ctx["rate"], None)
         except Exception as e:
             with lock:
                 errors.append((worker_id, str(e)))
@@ -532,11 +669,12 @@ def test_concurrent_custom_creation():
 # TEST 7: Invalid Input Handling
 # =============================================================================
 
+
 def test_custom_invalid_inputs():
     """Test that invalid inputs are properly rejected."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("CUSTOM STRESS TEST 7: Invalid Input Handling")
-    print("="*70)
+    print("=" * 70)
 
     invalid_cases = [
         ("空時段表", []),
@@ -560,18 +698,20 @@ def test_custom_invalid_inputs():
                 if case[0] == "空時段表":
                     schedules = case[1]
                 else:
-                    schedules = [{
-                        "season": "summer",
-                        "day_type": "weekday",
-                        "slots": [case[1]] if len(case) > 1 else [],
-                    }]
+                    schedules = [
+                        {
+                            "season": "summer",
+                            "day_type": "weekday",
+                            "slots": [case[1]] if len(case) > 1 else [],
+                        }
+                    ]
 
                 build_tariff_profile(
                     name="invalid_test",
                     season_strategy=season_strategy,
                     day_type_strategy=day_type_strategy,
                     schedules=schedules,
-                    default_period="off_peak"
+                    default_period="off_peak",
                 )
                 # Some invalid inputs might succeed, log them
                 print(f"  ⚠️  {name}: 未拒絕")
@@ -579,7 +719,9 @@ def test_custom_invalid_inputs():
                 # Test rate building
                 if "負費率" in name:
                     period_costs = [case[1]]
-                    build_tariff_rate(period_costs=period_costs, season_strategy=season_strategy)
+                    build_tariff_rate(
+                        period_costs=period_costs, season_strategy=season_strategy
+                    )
                     print(f"  ⚠️  {name}: 未拒絕")
 
             results.append((name, "not_rejected"))
@@ -598,11 +740,12 @@ def test_custom_invalid_inputs():
 # TEST 8: Massive Data Processing with Custom Plan
 # =============================================================================
 
+
 def test_custom_massive_data():
     """Test custom plan with massive datasets."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("CUSTOM STRESS TEST 8: Massive Data Processing")
-    print("="*70)
+    print("=" * 70)
 
     calendar = CustomCalendar(holidays=[], weekend_days=[5, 6])
     day_type_strategy = WeekdayDayTypeStrategy(calendar)
@@ -639,7 +782,7 @@ def test_custom_massive_data():
         season_strategy=season_strategy,
         day_type_strategy=day_type_strategy,
         schedules=schedules,
-        default_period="off_peak"
+        default_period="off_peak",
     )
 
     rate = build_tariff_rate(
@@ -647,7 +790,7 @@ def test_custom_massive_data():
             {"season": "summer", "period": "off_peak", "cost": 1.0},
             {"season": "summer", "period": "peak", "cost": 5.0},
         ],
-        season_strategy=season_strategy
+        season_strategy=season_strategy,
     )
     plan = build_tariff_plan(profile, rate)
 
@@ -671,7 +814,9 @@ def test_custom_massive_data():
             elapsed = time_module.time() - start
 
             results.append((name, size, elapsed, True, None))
-            print(f"  ✅ {name} ({size:,}條): {elapsed:.3f}秒, 每秒 {size/elapsed:,.0f} 條")
+            print(
+                f"  ✅ {name} ({size:,}條): {elapsed:.3f}秒, 每秒 {size / elapsed:,.0f} 條"
+            )
         except Exception as e:
             elapsed = time_module.time() - start
             results.append((name, size, elapsed, False, str(e)))
@@ -686,11 +831,12 @@ def test_custom_massive_data():
 # TEST 9: Custom Period Labels
 # =============================================================================
 
+
 def test_custom_period_labels():
     """Test with completely custom period labels."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("CUSTOM STRESS TEST 9: Custom Period Labels")
-    print("="*70)
+    print("=" * 70)
 
     calendar = CustomCalendar(holidays=[], weekend_days=[5, 6])
     day_type_strategy = WeekdayDayTypeStrategy(calendar)
@@ -698,17 +844,19 @@ def test_custom_period_labels():
 
     # Use completely custom period names
 
-    schedules = [{
-        "season": "summer",
-        "day_type": "weekday",
-        "slots": [
-            {"start": "00:00", "end": "06:00", "period": "deep_night"},
-            {"start": "06:00", "end": "12:00", "period": "morning"},
-            {"start": "12:00", "end": "16:00", "period": "afternoon"},
-            {"start": "16:00", "end": "20:00", "period": "super_peak"},
-            {"start": "20:00", "end": "24:00", "period": "evening"},
-        ],
-    }]
+    schedules = [
+        {
+            "season": "summer",
+            "day_type": "weekday",
+            "slots": [
+                {"start": "00:00", "end": "06:00", "period": "deep_night"},
+                {"start": "06:00", "end": "12:00", "period": "morning"},
+                {"start": "12:00", "end": "16:00", "period": "afternoon"},
+                {"start": "16:00", "end": "20:00", "period": "super_peak"},
+                {"start": "20:00", "end": "24:00", "period": "evening"},
+            ],
+        }
+    ]
 
     period_costs = [
         {"season": "summer", "period": "deep_night", "cost": 0.5},
@@ -725,12 +873,11 @@ def test_custom_period_labels():
             season_strategy=season_strategy,
             day_type_strategy=day_type_strategy,
             schedules=schedules,
-            default_period="deep_night"
+            default_period="deep_night",
         )
 
         rate = build_tariff_rate(
-            period_costs=period_costs,
-            season_strategy=season_strategy
+            period_costs=period_costs, season_strategy=season_strategy
         )
         plan = build_tariff_plan(profile, rate)
 
@@ -745,26 +892,30 @@ def test_custom_period_labels():
 
         for dt, expected_period, expected_rate in test_times:
             ctx = plan.pricing_context(dt)
-            if ctx['period'] == expected_period and ctx['rate'] == expected_rate:
-                print(f"  ✅ {dt.strftime('%H:%M')} → {expected_period} @ {expected_rate}")
+            if ctx["period"] == expected_period and ctx["rate"] == expected_rate:
+                print(
+                    f"  ✅ {dt.strftime('%H:%M')} → {expected_period} @ {expected_rate}"
+                )
             else:
-                print(f"  ❌ {dt.strftime('%H:%M')}: expected {expected_period}, got {ctx['period']}")
+                print(
+                    f"  ❌ {dt.strftime('%H:%M')}: expected {expected_period}, got {ctx['period']}"
+                )
                 assert False, f"Expected {expected_period}, got {ctx['period']}"
     except Exception as e:
         print(f"  ❌ {e}")
         assert False, str(e)
 
 
-
 # =============================================================================
 # TEST 10: Multiple Custom Plans Comparison
 # =============================================================================
 
+
 def test_multiple_custom_plans():
     """Test creating and comparing multiple custom plans."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("CUSTOM STRESS TEST 10: Multiple Custom Plans Comparison")
-    print("="*70)
+    print("=" * 70)
 
     calendar = CustomCalendar(holidays=[], weekend_days=[5, 6])
     day_type_strategy = WeekdayDayTypeStrategy(calendar)
@@ -776,22 +927,24 @@ def test_multiple_custom_plans():
         peak_rate = 3.0 + i  # 3.0, 4.0, 5.0, 6.0, 7.0
         off_peak_rate = 1.0 + i * 0.3  # 1.0, 1.3, 1.6, 1.9, 2.2
 
-        schedules = [{
-            "season": "summer",
-            "day_type": "weekday",
-            "slots": [
-                {"start": "00:00", "end": "12:00", "period": "off_peak"},
-                {"start": "12:00", "end": "18:00", "period": "peak"},
-                {"start": "18:00", "end": "24:00", "period": "off_peak"},
-            ],
-        }]
+        schedules = [
+            {
+                "season": "summer",
+                "day_type": "weekday",
+                "slots": [
+                    {"start": "00:00", "end": "12:00", "period": "off_peak"},
+                    {"start": "12:00", "end": "18:00", "period": "peak"},
+                    {"start": "18:00", "end": "24:00", "period": "off_peak"},
+                ],
+            }
+        ]
 
         profile = build_tariff_profile(
             name=f"plan_{i}",
             season_strategy=season_strategy,
             day_type_strategy=day_type_strategy,
             schedules=schedules,
-            default_period="off_peak"
+            default_period="off_peak",
         )
 
         rate = build_tariff_rate(
@@ -799,13 +952,13 @@ def test_multiple_custom_plans():
                 {"season": "summer", "period": "off_peak", "cost": off_peak_rate},
                 {"season": "summer", "period": "peak", "cost": peak_rate},
             ],
-            season_strategy=season_strategy
+            season_strategy=season_strategy,
         )
         plan = build_tariff_plan(profile, rate)
         plans.append((f"Plan_{i}_{peak_rate}", plan))
 
     # Test with same data
-    dates = pd.date_range("2024-07-15", periods=24*30, freq="h")
+    dates = pd.date_range("2024-07-15", periods=24 * 30, freq="h")
     usage = pd.Series([random.random() * 5 for _ in range(len(dates))], index=dates)
 
     print("  各方案成本比較 (相同用電資料):")
@@ -834,23 +987,24 @@ def test_multiple_custom_plans():
 # TEST 11: Custom Calendar with Holidays
 # =============================================================================
 
+
 def test_custom_calendar_holidays():
     """Test custom calendar with extensive holiday configurations."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("CUSTOM STRESS TEST 11: Custom Calendar with Holidays")
-    print("="*70)
+    print("=" * 70)
 
     # Create a calendar with many holidays
     many_holidays = [
-        date(2024, 1, 1),   # 元旦
+        date(2024, 1, 1),  # 元旦
         date(2024, 2, 10),  # 春節
         date(2024, 2, 11),
         date(2024, 2, 12),
-        date(2024, 4, 4),   # 兒童節
-        date(2024, 4, 5),   # 清明
+        date(2024, 4, 4),  # 兒童節
+        date(2024, 4, 5),  # 清明
         date(2024, 6, 10),  # 端午
         date(2024, 9, 17),  # 中秋
-        date(2024, 10, 10), # 國慶
+        date(2024, 10, 10),  # 國慶
     ]
 
     test_cases = [
@@ -866,7 +1020,9 @@ def test_custom_calendar_holidays():
     for name, holidays in test_cases:
         try:
             calendar = CustomCalendar(holidays=holidays, weekend_days=[5, 6])
-            day_type_strategy = WeekdayDayTypeStrategy(calendar, holiday_label="holiday")
+            day_type_strategy = WeekdayDayTypeStrategy(
+                calendar, holiday_label="holiday"
+            )
             season_strategy = TaiwanSeasonStrategy((6, 1), (9, 30))
 
             schedules = [
@@ -891,7 +1047,7 @@ def test_custom_calendar_holidays():
                 season_strategy=season_strategy,
                 day_type_strategy=day_type_strategy,
                 schedules=schedules,
-                default_period="weekday_rate"
+                default_period="weekday_rate",
             )
 
             rate = build_tariff_rate(
@@ -899,7 +1055,7 @@ def test_custom_calendar_holidays():
                     {"season": "summer", "period": "weekday_rate", "cost": 5.0},
                     {"season": "summer", "period": "holiday_rate", "cost": 2.0},
                 ],
-                season_strategy=season_strategy
+                season_strategy=season_strategy,
             )
             plan = build_tariff_plan(profile, rate)
 
@@ -909,7 +1065,7 @@ def test_custom_calendar_holidays():
                 ctx_hol = plan.pricing_context(
                     datetime.combine(test_holiday, time(14, 0))
                 )
-                ctx_hol['period'] == 'holiday_rate'  # Check value
+                ctx_hol["period"] == "holiday_rate"  # Check value
 
             results.append((name, True, None))
             print(f"  ✅ {name}: {len(holidays)} 偋日")
@@ -926,11 +1082,12 @@ def test_custom_calendar_holidays():
 # TEST 12: Rapid Plan Switching
 # =============================================================================
 
+
 def test_rapid_plan_switching():
     """Test rapid switching between different custom plans."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("CUSTOM STRESS TEST 12: Rapid Plan Switching")
-    print("="*70)
+    print("=" * 70)
 
     # Create multiple plans
     plans = []
@@ -939,22 +1096,24 @@ def test_rapid_plan_switching():
     season_strategy = TaiwanSeasonStrategy((6, 1), (9, 30))
 
     for i in range(10):
-        schedules = [{
-            "season": "summer",
-            "day_type": "weekday",
-            "slots": [
-                {"start": "00:00", "end": "12:00", "period": "off_peak"},
-                {"start": "12:00", "end": "12:30", "period": "peak"},
-                {"start": "12:30", "end": "24:00", "period": "off_peak"},
-            ],
-        }]
+        schedules = [
+            {
+                "season": "summer",
+                "day_type": "weekday",
+                "slots": [
+                    {"start": "00:00", "end": "12:00", "period": "off_peak"},
+                    {"start": "12:00", "end": "12:30", "period": "peak"},
+                    {"start": "12:30", "end": "24:00", "period": "off_peak"},
+                ],
+            }
+        ]
 
         profile = build_tariff_profile(
             name=f"switch_{i}",
             season_strategy=season_strategy,
             day_type_strategy=day_type_strategy,
             schedules=schedules,
-            default_period="off_peak"
+            default_period="off_peak",
         )
 
         peak_cost = 2.0 + i * 0.5
@@ -963,7 +1122,7 @@ def test_rapid_plan_switching():
                 {"season": "summer", "period": "off_peak", "cost": 1.0},
                 {"season": "summer", "period": "peak", "cost": peak_cost},
             ],
-            season_strategy=season_strategy
+            season_strategy=season_strategy,
         )
         plan = build_tariff_plan(profile, rate)
         plans.append(plan)
@@ -988,7 +1147,7 @@ def test_rapid_plan_switching():
 
     print(f"  執行 {iterations} 次方案切換:")
     print(f"  耗時: {elapsed:.3f}秒")
-    print(f"  平均每次: {elapsed/iterations*1000:.2f}ms")
+    print(f"  平均每次: {elapsed / iterations * 1000:.2f}ms")
     print(f"  錯誤: {len(errors)}")
 
     assert not errors, f"Errors occurred: {errors[:3]}"
@@ -1000,12 +1159,13 @@ def test_rapid_plan_switching():
 # Main Test Runner
 # =============================================================================
 
+
 def run_all_custom_stress_tests():
     """Run all custom stress tests and report results."""
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("臺灣時間電價計算器 - 客製化功能極限壓力測試套件")
     print("Taiwan TOU Calculator - Custom Feature Stress Test Suite")
-    print("="*70)
+    print("=" * 70)
 
     tests = [
         ("極限行事曆配置", test_extreme_calendar_configurations),
@@ -1032,9 +1192,9 @@ def run_all_custom_stress_tests():
             results[name] = False
 
     # Summary
-    print("\n" + "="*70)
+    print("\n" + "=" * 70)
     print("客製化壓力測試摘要 (Custom Stress Test Summary)")
-    print("="*70)
+    print("=" * 70)
 
     passed = sum(1 for v in results.values() if v)
     total = len(results)

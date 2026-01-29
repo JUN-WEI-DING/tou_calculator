@@ -17,7 +17,7 @@ import tou_calculator as tou
 
 def create_sample_csv(filename: str = "sample_usage.csv") -> None:
     """Create a sample CSV file for demonstration."""
-    dates = pd.date_range("2025-07-01", periods=24*7, freq="h")  # 1 week
+    dates = pd.date_range("2025-07-01", periods=24 * 7, freq="h")  # 1 week
     data = {
         "timestamp": dates.strftime("%Y-%m-%d %H:%M"),
         "usage_kwh": [1.0 + (i % 3) * 0.5 for i in range(len(dates))],
@@ -71,7 +71,9 @@ def import_from_csv_format_c(filename: str) -> pd.Series:
     return usage
 
 
-def calculate_and_show(usage: pd.Series, plan_name: str = "residential_simple_2_tier") -> None:
+def calculate_and_show(
+    usage: pd.Series, plan_name: str = "residential_simple_2_tier"
+) -> None:
     """Calculate and display electricity costs."""
     print("=" * 60)
     print("Electricity Cost Calculation")
@@ -89,7 +91,9 @@ def calculate_and_show(usage: pd.Series, plan_name: str = "residential_simple_2_
 
     # Display results
     print(f"Plan: {plan.name}")
-    print(f"Period: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}")
+    print(
+        f"Period: {start_date.strftime('%Y-%m-%d')} to {end_date.strftime('%Y-%m-%d')}"
+    )
     print()
 
     print(f"Total Usage: {usage.sum():.2f} kWh")
@@ -102,13 +106,17 @@ def calculate_and_show(usage: pd.Series, plan_name: str = "residential_simple_2_
     print()
 
 
-def export_to_csv(usage: pd.Series, costs: pd.Series, filename: str = "result.csv") -> None:
+def export_to_csv(
+    usage: pd.Series, costs: pd.Series, filename: str = "result.csv"
+) -> None:
     """Export results to CSV file."""
-    result = pd.DataFrame({
-        "timestamp": usage.index.strftime("%Y-%m-%d %H:%M"),
-        "usage_kwh": usage.values,
-        "cost_twd": costs.values,
-    })
+    result = pd.DataFrame(
+        {
+            "timestamp": usage.index.strftime("%Y-%m-%d %H:%M"),
+            "usage_kwh": usage.values,
+            "cost_twd": costs.values,
+        }
+    )
     result.to_csv(filename, index=False, encoding="utf-8-sig")
     print(f"Results exported to: {filename}")
 
@@ -116,6 +124,7 @@ def export_to_csv(usage: pd.Series, costs: pd.Series, filename: str = "result.cs
 # =============================================================================
 # Main demonstration
 # =============================================================================
+
 
 def main() -> None:
     print("CSV Import Example")

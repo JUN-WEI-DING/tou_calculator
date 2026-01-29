@@ -50,6 +50,7 @@ from tou_calculator import (
 # CATEGORY 1: Security & Input Validation Tests
 # =============================================================================
 
+
 class TestSecurityAndInputValidation:
     """Test security aspects and input validation."""
 
@@ -69,7 +70,7 @@ class TestSecurityAndInputValidation:
             # Should not crash or execute arbitrary code
             try:
                 result = tou.plan(malicious_input)
-                # If it returns a valid plan, it's a false positive but not a security issue
+                # A valid result is a false positive but not a security issue
                 if result is not None:
                     pass  # Acceptable - input matched a plan pattern
             except (TariffError, ValueError, KeyError, AttributeError):
@@ -172,7 +173,7 @@ class TestSecurityAndInputValidation:
 
         for homoglyph in homoglyphs:
             try:
-                result = tou.plan(homoglyph)
+                _ = tou.plan(homoglyph)
                 # May or may not find a match
                 assert True  # No crash
             except Exception:
@@ -182,6 +183,7 @@ class TestSecurityAndInputValidation:
 # =============================================================================
 # CATEGORY 2: Multilingual & Encoding Tests
 # =============================================================================
+
 
 class TestMultilingualAndEncoding:
     """Test multilingual input handling and encoding."""
@@ -202,7 +204,7 @@ class TestMultilingualAndEncoding:
             try:
                 plan = tou.plan(name)
                 if plan is not None:
-                    assert hasattr(plan, 'calculate_costs')
+                    assert hasattr(plan, "calculate_costs")
             except TariffError:
                 pass  # Some names may not match
 
@@ -218,7 +220,7 @@ class TestMultilingualAndEncoding:
             try:
                 plan = tou.plan(name)
                 if plan is not None:
-                    assert hasattr(plan, 'calculate_costs')
+                    assert hasattr(plan, "calculate_costs")
             except (TariffError, ValueError, KeyError):
                 pass  # Expected for some variations
 
@@ -233,7 +235,7 @@ class TestMultilingualAndEncoding:
 
         for mixed in mixed_inputs:
             try:
-                result = tou.plan(mixed)
+                _ = tou.plan(mixed)
                 assert True  # Should not crash
             except Exception:
                 assert True  # No crash is acceptable
@@ -256,16 +258,12 @@ class TestMultilingualAndEncoding:
 
     def test_encoding_preservation(self):
         """Test that string encoding is preserved correctly."""
-        # Create usage with Chinese characters in metadata
-        dates = pd.date_range("2024-01-01", periods=24, freq="h")
-        usage = pd.Series([1.0] * 24, index=dates)
-
         # Chinese date should work
         chinese_date = datetime(2024, 1, 1, 12, 0)
         ctx = tou.pricing_context(chinese_date, "residential_simple_2_tier", usage=1.0)
 
         assert ctx is not None
-        assert 'rate' in ctx
+        assert "rate" in ctx
 
     def test_fullwidth_characters(self):
         """Test fullwidth character inputs."""
@@ -277,7 +275,7 @@ class TestMultilingualAndEncoding:
 
         for fullwidth in fullwidth_inputs:
             try:
-                result = tou.plan(fullwidth)
+                _ = tou.plan(fullwidth)
                 assert True  # Should handle
             except Exception:
                 assert True  # Graceful failure acceptable
@@ -286,6 +284,7 @@ class TestMultilingualAndEncoding:
 # =============================================================================
 # CATEGORY 3: Extreme Scenario Tests
 # =============================================================================
+
 
 class TestExtremeScenarios:
     """Test extreme and unusual scenarios."""
@@ -298,7 +297,7 @@ class TestExtremeScenarios:
         # Valid Feb 29 dates
         for year in leap_years:
             dt = datetime(year, 2, 29, 12, 0)
-            is_hol = tou.is_holiday(dt)
+            _ = tou.is_holiday(dt)
             period = tou.period_at(dt, "residential_simple_2_tier")
             assert period is not None
 
@@ -347,7 +346,7 @@ class TestExtremeScenarios:
         """Test calculation works regardless of external temperature."""
         # This is a sanity check - the calculator shouldn't depend on
         # external weather data
-        dates = pd.date_range("2024-01-01", periods=24*365, freq="h")
+        dates = pd.date_range("2024-01-01", periods=24 * 365, freq="h")
         usage = pd.Series([1.0] * len(dates), index=dates)
 
         plan = tou.plan("residential_simple_2_tier")
@@ -370,23 +369,23 @@ class TestExtremeScenarios:
         ]
 
         for dt_before, dt_after in boundary_dates:
-            ctx1 = tou.pricing_context(dt_before, "residential_simple_2_tier", usage=1.0)
+            ctx1 = tou.pricing_context(
+                dt_before, "residential_simple_2_tier", usage=1.0
+            )
             ctx2 = tou.pricing_context(dt_after, "residential_simple_2_tier", usage=1.0)
             assert ctx1 is not None and ctx2 is not None
 
     def test_dec_31_to_jan_1_transition(self):
         """Test year-end billing transition."""
-        dates = pd.date_range("2023-12-30", periods=24*4, freq="h")
+        dates = pd.date_range("2023-12-30", periods=24 * 4, freq="h")
         usage = pd.Series([1.0] * len(dates), index=dates)
 
-        inputs = BillingInputs.for_residential(
-            phase="single", voltage=110, ampere=20
-        )
+        inputs = BillingInputs.for_residential(phase="single", voltage=110, ampere=20)
         bill = calculate_bill(usage, "residential_simple_2_tier", inputs=inputs)
 
         # Should handle the year transition
         assert len(bill) >= 1
-        assert all(bill['total'] > 0)
+        assert all(bill["total"] > 0)
 
     def test_holiday_surrounded_by_weekdays(self):
         """Test holidays that fall between weekdays."""
@@ -398,12 +397,13 @@ class TestExtremeScenarios:
         for dt in [day_before, independence_day, day_after]:
             ctx = tou.pricing_context(dt, "residential_simple_2_tier", usage=1.0)
             assert ctx is not None
-            assert 'period' in ctx
+            assert "period" in ctx
 
 
 # =============================================================================
 # CATEGORY 4: Data Type Compatibility Tests
 # =============================================================================
+
 
 class TestDataTypeCompatibility:
     """Test compatibility with various data types."""
@@ -530,6 +530,7 @@ class TestDataTypeCompatibility:
 # CATEGORY 5: API Compatibility Tests
 # =============================================================================
 
+
 class TestAPICompatibility:
     """Test API compatibility and future-proofing."""
 
@@ -611,7 +612,7 @@ class TestAPICompatibility:
         ctx = tou.pricing_context(dt, "residential_simple_2_tier", usage=10.0)
 
         assert isinstance(ctx, dict)
-        assert 'rate' in ctx
+        assert "rate" in ctx
 
     def test_backward_compatible_imports(self):
         """Test that old import patterns still work."""
@@ -621,6 +622,7 @@ class TestAPICompatibility:
             InvalidUsageInput,
             calculate_bill,
         )
+
         assert callable(calculate_bill)
         assert BillingInputs is not None
         assert InvalidUsageInput is not None
@@ -630,19 +632,23 @@ class TestAPICompatibility:
 # CATEGORY 6: Concurrency & Race Condition Tests
 # =============================================================================
 
+
 class TestConcurrencyAndRaceConditions:
     """Test concurrent access and race conditions."""
 
     def test_concurrent_plan_creation(self):
         """Test creating plans from multiple threads."""
-        plan_ids = ["residential_simple_2_tier", "high_voltage_2_tier",
-                    "residential_simple_3_tier"]
+        plan_ids = [
+            "residential_simple_2_tier",
+            "high_voltage_2_tier",
+            "residential_simple_3_tier",
+        ]
         results = []
         errors = []
 
         def create_plan(plan_id):
             try:
-                plan = tou.plan(plan_id)
+                _ = tou.plan(plan_id)
                 results.append(plan_id)
                 return plan_id
             except Exception as e:
@@ -650,9 +656,8 @@ class TestConcurrencyAndRaceConditions:
                 return None
 
         with ThreadPoolExecutor(max_workers=10) as executor:
-            futures = [executor.submit(create_plan, pid)
-                      for pid in plan_ids * 10]
-            completed = [f for f in as_completed(futures) if f.result()]
+            futures = [executor.submit(create_plan, pid) for pid in plan_ids * 10]
+            _ = [f for f in as_completed(futures) if f.result()]
 
         assert len(errors) == 0, f"Errors: {errors}"
 
@@ -666,8 +671,9 @@ class TestConcurrencyAndRaceConditions:
 
         def calculate(n):
             try:
-                usage = pd.Series([random.random() * 5 for _ in range(1000)],
-                                 index=dates)
+                usage = pd.Series(
+                    [random.random() * 5 for _ in range(1000)], index=dates
+                )
                 cost = plan.calculate_costs(usage).sum()
                 results.append(cost)
                 return cost
@@ -704,16 +710,17 @@ class TestConcurrencyAndRaceConditions:
                 return None
 
         with ThreadPoolExecutor(max_workers=30) as executor:
-            futures = [executor.submit(check_holiday, dt)
-                      for dt in test_dates * 20]
+            futures = [executor.submit(check_holiday, dt) for dt in test_dates * 20]
             list(as_completed(futures))
 
         assert len(errors) == 0, f"Errors: {errors}"
 
     def test_multiprocess_plan_creation(self):
         """Test plan creation in multiple processes."""
+
         def create_and_use(plan_id):
             import tou_calculator as tou_mp
+
             plan = tou_mp.plan(plan_id)
             dates = pd.date_range("2024-01-01", periods=100, freq="h")
             usage = pd.Series([1.0] * 100, index=dates)
@@ -734,19 +741,16 @@ class TestConcurrencyAndRaceConditions:
 
     def test_race_condition_in_billing(self):
         """Test for race conditions in billing calculations."""
-        dates = pd.date_range("2024-01-01", periods=24*30, freq="h")
+        dates = pd.date_range("2024-01-01", periods=24 * 30, freq="h")
         usage = pd.Series([2.0] * len(dates), index=dates)
 
-        inputs = BillingInputs.for_residential(
-            phase="single", voltage=110, ampere=20
-        )
+        inputs = BillingInputs.for_residential(phase="single", voltage=110, ampere=20)
 
         results = []
 
         def calculate_bill_thread():
-            bill = calculate_bill(usage, "residential_simple_2_tier",
-                                 inputs=inputs)
-            results.append(bill['total'].iloc[0])
+            bill = calculate_bill(usage, "residential_simple_2_tier", inputs=inputs)
+            results.append(bill["total"].iloc[0])
             return bill
 
         with ThreadPoolExecutor(max_workers=10) as executor:
@@ -759,6 +763,7 @@ class TestConcurrencyAndRaceConditions:
     def test_concurrent_calendar_cache_writes(self):
         """Test concurrent cache writes don't corrupt data."""
         import tempfile
+
         with tempfile.TemporaryDirectory() as tmpdir:
             cache_path = Path(tmpdir) / "cache"
 
@@ -767,8 +772,9 @@ class TestConcurrencyAndRaceConditions:
                 return cal.is_holiday(date(2024, 1, 1))
 
             with ThreadPoolExecutor(max_workers=20) as executor:
-                futures = [executor.submit(create_calendar_with_cache, i)
-                          for i in range(50)]
+                futures = [
+                    executor.submit(create_calendar_with_cache, i) for i in range(50)
+                ]
                 results = [f.result() for f in as_completed(futures)]
 
             # All should agree Jan 1 is a holiday
@@ -778,6 +784,7 @@ class TestConcurrencyAndRaceConditions:
 # =============================================================================
 # CATEGORY 7: Resource Management Tests
 # =============================================================================
+
 
 class TestResourceManagement:
     """Test memory and resource management."""
@@ -796,7 +803,7 @@ class TestResourceManagement:
     def test_calendar_cleanup(self):
         """Test that calendar objects are properly cleaned up."""
         cal = tou.taiwan_calendar()
-        weak_ref = weakref.ref(cal)
+        _ = weakref.ref(cal)
 
         del cal
         gc.collect()
@@ -807,6 +814,7 @@ class TestResourceManagement:
     def test_no_file_handle_leaks(self):
         """Test that file handles are properly closed."""
         import tempfile
+
         with tempfile.TemporaryDirectory() as tmpdir:
             cache_dir = Path(tmpdir) / "cache"
             cache_dir.mkdir()
@@ -819,6 +827,7 @@ class TestResourceManagement:
             # Check for open file handles
             try:
                 import psutil
+
                 process = psutil.Process()
                 open_files = process.open_files()
 
@@ -841,12 +850,13 @@ class TestResourceManagement:
             initial_mem = process.memory_info().rss / 1024 / 1024  # MB
 
             # Create and process large dataset
-            dates = pd.date_range("2020-01-01", periods=24*365*5, freq="h")
-            usage = pd.Series([random.random() * 3 for _ in range(len(dates))],
-                             index=dates)
+            dates = pd.date_range("2020-01-01", periods=24 * 365 * 5, freq="h")
+            usage = pd.Series(
+                [random.random() * 3 for _ in range(len(dates))], index=dates
+            )
 
             plan = tou.plan("residential_simple_2_tier")
-            costs = plan.calculate_costs(usage)
+            _ = plan.calculate_costs(usage)
 
             gc.collect()
             final_mem = process.memory_info().rss / 1024 / 1024  # MB
@@ -896,12 +906,14 @@ class TestResourceManagement:
 # CATEGORY 8: Documentation & Examples Tests
 # =============================================================================
 
+
 class TestDocumentationExamples:
     """Test that examples in documentation actually work."""
 
     def test_basic_import(self):
         """Test basic import patterns."""
         import tou_calculator
+
         assert tou_calculator.__version__ is not None
 
     def test_available_plans_example(self):
@@ -942,12 +954,12 @@ class TestDocumentationExamples:
         """Test pricing_context example."""
         dt = datetime(2024, 7, 15, 14, 0)
         ctx = tou.pricing_context(dt, "residential_simple_2_tier", usage=5.0)
-        assert ctx['rate'] > 0
-        assert ctx['cost'] == 5.0 * ctx['rate']
+        assert ctx["rate"] > 0
+        assert ctx["cost"] == 5.0 * ctx["rate"]
 
     def test_monthly_breakdown_example(self):
         """Test monthly breakdown example."""
-        dates = pd.date_range("2024-07-01", periods=24*30, freq="h")
+        dates = pd.date_range("2024-07-01", periods=24 * 30, freq="h")
         usage = pd.Series([2.0] * len(dates), index=dates)
 
         plan = tou.plan("residential_simple_2_tier")
@@ -959,21 +971,20 @@ class TestDocumentationExamples:
 
     def test_calculate_bill_example(self):
         """Test calculate_bill example."""
-        dates = pd.date_range("2024-07-01", periods=24*30, freq="h")
+        dates = pd.date_range("2024-07-01", periods=24 * 30, freq="h")
         usage = pd.Series([2.0] * len(dates), index=dates)
 
-        inputs = BillingInputs.for_residential(
-            phase="single", voltage=110, ampere=20
-        )
+        inputs = BillingInputs.for_residential(phase="single", voltage=110, ampere=20)
         bill = calculate_bill(usage, "residential_simple_2_tier", inputs=inputs)
 
         assert len(bill) == 1
-        assert bill['total'].iloc[0] > 0
+        assert bill["total"].iloc[0] > 0
 
 
 # =============================================================================
 # CATEGORY 9: Boundary Value Tests
 # =============================================================================
+
 
 class TestBoundaryValues:
     """Test boundary and extreme values."""
@@ -1001,7 +1012,7 @@ class TestBoundaryValues:
 
     def test_maximum_reasonable_usage(self):
         """Test with high but reasonable usage."""
-        dates = pd.date_range("2024-01-01", periods=24*30, freq="h")
+        dates = pd.date_range("2024-01-01", periods=24 * 30, freq="h")
         # Large factory usage
         usage = pd.Series([10000.0] * len(dates), index=dates)
 
@@ -1033,7 +1044,7 @@ class TestBoundaryValues:
 
     def test_exactly_one_month(self):
         """Test with exactly 30 days."""
-        dates = pd.date_range("2024-01-01", periods=24*30, freq="h")
+        dates = pd.date_range("2024-01-01", periods=24 * 30, freq="h")
         usage = pd.Series([1.0] * len(dates), index=dates)
 
         plan = tou.plan("residential_simple_2_tier")
@@ -1043,7 +1054,7 @@ class TestBoundaryValues:
 
     def test_exactly_one_year(self):
         """Test with exactly 365 days."""
-        dates = pd.date_range("2024-01-01", periods=24*365, freq="h")
+        dates = pd.date_range("2024-01-01", periods=24 * 365, freq="h")
         usage = pd.Series([1.0] * len(dates), index=dates)
 
         plan = tou.plan("residential_simple_2_tier")
@@ -1083,11 +1094,11 @@ class TestBoundaryValues:
         for dt in transition_times:
             ctx = tou.pricing_context(dt, "residential_simple_2_tier", usage=1.0)
             assert ctx is not None
-            assert 'period' in ctx
+            assert "period" in ctx
 
     def test_very_long_date_range(self):
         """Test with very long date range (10 years)."""
-        dates = pd.date_range("2020-01-01", periods=24*365*10, freq="h")
+        dates = pd.date_range("2020-01-01", periods=24 * 365 * 10, freq="h")
         usage = pd.Series([1.0] * len(dates), index=dates)
 
         plan = tou.plan("residential_simple_2_tier")
@@ -1099,6 +1110,7 @@ class TestBoundaryValues:
 # =============================================================================
 # CATEGORY 10: Error Recovery Tests
 # =============================================================================
+
 
 class TestErrorRecovery:
     """Test error recovery and resilience."""
@@ -1143,7 +1155,7 @@ class TestErrorRecovery:
 
     def test_partial_date_range_recalculation(self):
         """Test recalculation after partial failure."""
-        dates = pd.date_range("2024-01-01", periods=24*30, freq="h")
+        dates = pd.date_range("2024-01-01", periods=24 * 30, freq="h")
 
         # Create usage with some problematic values
         usage_values = [1.0] * (24 * 30)
@@ -1178,6 +1190,7 @@ class TestErrorRecovery:
 # CATEGORY 11: Performance Benchmark Tests
 # =============================================================================
 
+
 class TestPerformanceBenchmarks:
     """Test performance characteristics."""
 
@@ -1198,7 +1211,7 @@ class TestPerformanceBenchmarks:
     def test_medium_calculation_performance(self):
         """Test performance with medium dataset."""
         plan = tou.plan("residential_simple_2_tier")
-        dates = pd.date_range("2024-01-01", periods=24*30, freq="h")
+        dates = pd.date_range("2024-01-01", periods=24 * 30, freq="h")
         usage = pd.Series([1.0] * len(dates), index=dates)
 
         start = time.time()
@@ -1213,7 +1226,7 @@ class TestPerformanceBenchmarks:
         """Test plan creation performance."""
         start = time.time()
         for _ in range(100):
-            plan = tou.plan("residential_simple_2_tier")
+            _ = tou.plan("residential_simple_2_tier")
         elapsed = time.time() - start
 
         # Should create 100 plans quickly
@@ -1263,6 +1276,7 @@ class TestPerformanceBenchmarks:
 # CATEGORY 12: Version Compatibility Tests
 # =============================================================================
 
+
 class TestVersionCompatibility:
     """Test compatibility with different versions."""
 
@@ -1273,20 +1287,22 @@ class TestVersionCompatibility:
     def test_pandas_version_compatibility(self):
         """Test with current pandas version."""
         import pandas as pd
+
         # Should work with pandas >= 1.5.0
-        version = tuple(map(int, pd.__version__.split('.')[:2]))
+        version = tuple(map(int, pd.__version__.split(".")[:2]))
         assert version >= (1, 5)
 
     def test_numpy_version_compatibility(self):
         """Test with current numpy version."""
         import numpy as np
+
         # Should work with numpy >= 1.21.0
-        version = tuple(map(int, np.__version__.split('.')[:2]))
+        version = tuple(map(int, np.__version__.split(".")[:2]))
         assert version >= (1, 21)
 
     def test_version_attribute(self):
         """Test that version attribute is available."""
-        assert hasattr(tou, '__version__')
+        assert hasattr(tou, "__version__")
         assert isinstance(tou.__version__, str)
 
     def test_future_proof_datetime(self):
@@ -1326,6 +1342,7 @@ class TestVersionCompatibility:
 # CATEGORY 13: Timezone & Localization Tests
 # =============================================================================
 
+
 class TestTimezoneAndLocalization:
     """Test timezone and localization handling."""
 
@@ -1344,8 +1361,7 @@ class TestTimezoneAndLocalization:
 
     def test_taipei_timezone(self):
         """Test with Asia/Taipei timezone."""
-        dates = pd.date_range("2024-01-01", periods=24, freq="h",
-                             tz="Asia/Taipei")
+        dates = pd.date_range("2024-01-01", periods=24, freq="h", tz="Asia/Taipei")
         usage = pd.Series([1.0] * 24, index=dates)
 
         plan = tou.plan("residential_simple_2_tier")
@@ -1395,6 +1411,7 @@ class TestTimezoneAndLocalization:
 # CATEGORY 14: Fuzzing & Random Input Tests
 # =============================================================================
 
+
 class TestFuzzingAndRandomInput:
     """Test with random and fuzzed inputs."""
 
@@ -1402,8 +1419,7 @@ class TestFuzzingAndRandomInput:
         """Test with completely random usage values."""
         random.seed(42)
         dates = pd.date_range("2024-01-01", periods=10000, freq="h")
-        usage = pd.Series([random.random() * 100 for _ in range(10000)],
-                         index=dates)
+        usage = pd.Series([random.random() * 100 for _ in range(10000)], index=dates)
 
         plan = tou.plan("residential_simple_2_tier")
         costs = plan.calculate_costs(usage)
@@ -1417,14 +1433,14 @@ class TestFuzzingAndRandomInput:
 
         for _ in range(100):
             # Generate random string
-            random_name = ''.join(
-                random.choices('abcdefghijklmnopqrstuvwxyz_0123456789', k=20)
+            random_name = "".join(
+                random.choices("abcdefghijklmnopqrstuvwxyz_0123456789", k=20)
             )
 
             try:
                 result = tou.plan(random_name)
                 # If it returns a result, it matched something
-                assert result is None or hasattr(result, 'calculate_costs')
+                assert result is None or hasattr(result, "calculate_costs")
             except (TariffError, ValueError, KeyError):
                 pass  # Expected for random names
             except Exception as e:
@@ -1477,8 +1493,7 @@ class TestFuzzingAndRandomInput:
 
         for plan_id in random.sample(list(plan_ids), min(10, len(plan_ids))):
             dates = pd.date_range("2024-01-01", periods=100, freq="h")
-            usage = pd.Series([random.random() * 10 for _ in range(100)],
-                             index=dates)
+            usage = pd.Series([random.random() * 10 for _ in range(100)], index=dates)
 
             plan = tou.plan(plan_id)
             try:
@@ -1491,6 +1506,7 @@ class TestFuzzingAndRandomInput:
 # =============================================================================
 # CATEGORY 15: Installation & Integration Tests
 # =============================================================================
+
 
 class TestInstallationAndIntegration:
     """Test installation and integration aspects."""
@@ -1511,6 +1527,7 @@ class TestInstallationAndIntegration:
         """Test that entry points are accessible."""
         # Should be able to import main module
         import tou_calculator
+
         assert tou_calculator is not None
 
     def test_data_files_accessible(self):
@@ -1524,6 +1541,7 @@ class TestInstallationAndIntegration:
         except Exception:
             # Fallback: check package path
             import tou_calculator
+
             pkg_path = Path(tou_calculator.__file__).parent
             data_path = pkg_path / "data"
             assert data_path.exists()
@@ -1580,7 +1598,7 @@ class TestInstallationAndIntegration:
         plan_func = getattr(tou, "plan")
         assert plan_func.__doc__ is not None
 
-        available_plans_func = getattr(tou, "available_plans")
+        _ = getattr(tou, "available_plans")
         # Docstring may be None, that's okay
         assert True
 
@@ -1596,10 +1614,11 @@ class TestInstallationAndIntegration:
         """Test that lunar calendar is optional."""
         # Should work without zhdate
         try:
-            import zhdate
-            has_lunar = True
+            import zhdate  # noqa: F401
+
+            _ = True
         except ImportError:
-            has_lunar = False
+            _ = False
 
         # Package should work regardless
         cal = tou.taiwan_calendar()
@@ -1609,6 +1628,7 @@ class TestInstallationAndIntegration:
 # =============================================================================
 # Final Summary Test Runner
 # =============================================================================
+
 
 def run_all_production_tests():
     """Run all production readiness tests and generate summary."""
@@ -1662,8 +1682,9 @@ def run_all_production_tests():
                 skipped_tests.append((category_name, method_name))
                 print(f"  ⏭️  {method_name}: Skipped")
             except Exception as e:
-                failed_tests.append((category_name, method_name,
-                                  f"{type(e).__name__}: {e}"))
+                failed_tests.append(
+                    (category_name, method_name, f"{type(e).__name__}: {e}")
+                )
                 print(f"  ❌ {method_name}: {type(e).__name__}: {e}")
 
     # Summary
@@ -1671,7 +1692,7 @@ def run_all_production_tests():
     print("PRODUCTION READINESS TEST SUMMARY")
     print("=" * 70)
     print(f"Total Tests:  {total_tests}")
-    print(f"Passed:       {passed_tests} ({passed_tests/total_tests*100:.1f}%)")
+    print(f"Passed:       {passed_tests} ({passed_tests / total_tests * 100:.1f}%)")
     print(f"Failed:       {len(failed_tests)}")
     print(f"Skipped:      {len(skipped_tests)}")
 

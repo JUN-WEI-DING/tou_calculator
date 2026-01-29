@@ -58,14 +58,16 @@ def compare_residential_plans(usage: pd.Series) -> pd.DataFrame:
             total_kwh = usage.sum()
             avg_rate = total_cost / total_kwh
 
-            results.append({
-                "plan_id": plan_id,
-                "name": plan.name,
-                "total_cost": total_cost,
-                "total_kwh": total_kwh,
-                "avg_rate": avg_rate,
-                "rank": 0,  # Will be filled
-            })
+            results.append(
+                {
+                    "plan_id": plan_id,
+                    "name": plan.name,
+                    "total_cost": total_cost,
+                    "total_kwh": total_kwh,
+                    "avg_rate": avg_rate,
+                    "rank": 0,  # Will be filled
+                }
+            )
         except Exception as e:
             print(f"Error calculating {plan_id}: {e}")
 
@@ -96,11 +98,13 @@ def compare_business_plans(usage: pd.Series) -> pd.DataFrame:
             costs = plan.calculate_costs(usage)
             total_cost = costs.sum()
 
-            results.append({
-                "plan_id": plan_id,
-                "name": plan.name,
-                "total_cost": total_cost,
-            })
+            results.append(
+                {
+                    "plan_id": plan_id,
+                    "name": plan.name,
+                    "total_cost": total_cost,
+                }
+            )
         except Exception as e:
             print(f"Error calculating {plan_id}: {e}")
 
@@ -158,7 +162,11 @@ def compare_summer_vs_winter() -> None:
         diff = summer_cost - winter_cost
         diff_pct = (diff / winter_cost) * 100
 
-        print(f"{plan.name:<30} {summer_cost:10.2f} TWD  {winter_cost:10.2f} TWD  {diff:+7.2f} ({diff_pct:+.1f}%)")
+        line = (
+            f"{plan.name:<30} {summer_cost:10.2f} TWD  {winter_cost:10.2f} TWD  "
+            f"{diff:+7.2f} ({diff_pct:+.1f}%)"
+        )
+        print(line)
 
     print("=" * 80)
 
@@ -177,7 +185,12 @@ def show_time_of_day_breakdown(usage: pd.Series, plan_id: str) -> None:
 
     for _, row in breakdown.iterrows():
         period_short = str(row["period"])[:12]
-        print(f"{period_short:<15} {row['usage_kwh']:13.2f}  {row['cost']:13.2f}  {row['cost_share']*100:8.1f}%")
+        cost_share = row["cost_share"] * 100
+        # Break long line into multiple parts
+        print(
+            f"{period_short:<15} {row['usage_kwh']:13.2f}  {row['cost']:13.2f}  "
+            f"{cost_share:8.1f}%"
+        )
 
     print("=" * 80)
 
@@ -185,6 +198,7 @@ def show_time_of_day_breakdown(usage: pd.Series, plan_id: str) -> None:
 # =============================================================================
 # Main demonstration
 # =============================================================================
+
 
 def main() -> None:
     print("Plan Comparison Example")
@@ -208,7 +222,8 @@ def main() -> None:
     # Show recommended plan
     cheapest = df_residential.iloc[0]
     print(f"💡 Recommendation: {cheapest['name']}")
-    print(f"    Saves {(df_residential['total_cost'].iloc[-1] - cheapest['total_cost']):.2f} TWD vs most expensive")
+    savings = df_residential["total_cost"].iloc[-1] - cheapest["total_cost"]
+    print(f"    Saves {savings:.2f} TWD vs most expensive")
     print()
 
     # Time of day breakdown

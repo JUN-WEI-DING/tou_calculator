@@ -4,7 +4,6 @@ These tests simulate complete user journeys from raw data to final bills,
 covering typical use cases for different customer types.
 """
 
-
 import pandas as pd
 
 import tou_calculator as tou
@@ -14,11 +13,12 @@ from tou_calculator import BillingInputs, calculate_bill
 # E2E Scenario 1: Household with Smart Meter Data
 # =============================================================================
 
+
 def test_e2e_household_smart_meter_analysis():
     """Scenario: Homeowner analyzes smart meter data to compare plans."""
     # Simulate importing smart meter data (CSV-like)
     # User has 1 month of 15-minute interval data
-    dates = pd.date_range("2024-07-01", periods=96*30, freq="15min")
+    dates = pd.date_range("2024-07-01", periods=96 * 30, freq="15min")
 
     # Realistic household consumption pattern
     hour = dates.hour
@@ -43,7 +43,8 @@ def test_e2e_household_smart_meter_analysis():
 
         # Add some randomness
         import random
-        base *= (0.9 + random.random() * 0.2)
+
+        base *= 0.9 + random.random() * 0.2
         usage.append(base)
 
     usage = pd.Series(usage, index=dates)
@@ -61,10 +62,10 @@ def test_e2e_household_smart_meter_analysis():
 
     # Peak period should have higher cost share than usage share
     # (because peak rates are higher)
-    peak_row = breakdown[breakdown['period'] == 'peak']
+    peak_row = breakdown[breakdown["period"] == "peak"]
     if len(peak_row) > 0:
         # Peak is more expensive
-        assert peak_row['cost'].iloc[0] > 0
+        assert peak_row["cost"].iloc[0] > 0
 
     # Step 3: Get detailed bill with all charges
     inputs = BillingInputs.for_residential(
@@ -75,17 +76,18 @@ def test_e2e_household_smart_meter_analysis():
     bill = calculate_bill(usage, "residential_simple_2_tier", inputs=inputs)
 
     assert len(bill) == 1
-    assert bill['total'].iloc[0] > 0
+    assert bill["total"].iloc[0] > 0
 
 
 # =============================================================================
 # E2E Scenario 2: Factory Energy Cost Analysis
 # =============================================================================
 
+
 def test_e2e_factory_peak_shaving_analysis():
     """Scenario: Factory analyzes costs to determine value of peak shaving."""
     # Factory has 15-minute demand data for a summer month
-    dates = pd.date_range("2024-07-01", periods=96*30, freq="15min")
+    dates = pd.date_range("2024-07-01", periods=96 * 30, freq="15min")
     hour = dates.hour
     day_of_week = dates.dayofweek
 
@@ -121,11 +123,11 @@ def test_e2e_factory_peak_shaving_analysis():
 
     # Verify bill is calculated
     assert len(bill) == 1
-    assert bill['total'].iloc[0] > 0
+    assert bill["total"].iloc[0] > 0
 
     # Factory owner can see the total cost breakdown
-    assert bill['energy_cost'].iloc[0] > 0
-    assert bill['basic_cost'].iloc[0] > 0
+    assert bill["energy_cost"].iloc[0] > 0
+    assert bill["basic_cost"].iloc[0] > 0
 
     # Get monthly breakdown to see when energy is used
     plan = tou.plan("high_voltage_2_tier")
@@ -140,6 +142,7 @@ def test_e2e_factory_peak_shaving_analysis():
 # E2E Scenario 3: EV Owner Charging Schedule Optimization
 # =============================================================================
 
+
 def test_e2e_ev_charging_schedule_comparison():
     """Scenario: EV owner compares charging schedules to minimize cost."""
     # User charges EV (7kW charger) for 4 hours = 28 kWh
@@ -148,8 +151,8 @@ def test_e2e_ev_charging_schedule_comparison():
     dates = pd.date_range("2024-07-15", periods=24, freq="h")
     charging_scenarios = {
         "off_peak_night": [0] * 6 + [0] * 18,  # Charge 12am-6am (off-peak)
-        "morning_peak": [7] * 4 + [0] * 20,     # Charge 8am-12pm (peak)
-        "evening": [0] * 19 + [7] * 5,          # Charge 7pm-12am
+        "morning_peak": [7] * 4 + [0] * 20,  # Charge 8am-12pm (peak)
+        "evening": [0] * 19 + [7] * 5,  # Charge 7pm-12am
     }
 
     plan = tou.plan("residential_simple_2_tier")
@@ -170,10 +173,11 @@ def test_e2e_ev_charging_schedule_comparison():
 # E2E Scenario 4: Small Shop Owner Choosing Rate Plan
 # =============================================================================
 
+
 def test_e2e_small_shop_plan_selection():
     """Scenario: Small shop compares different rate plans."""
     # Small retail shop has business-hour usage
-    dates = pd.date_range("2024-07-01", periods=24*30, freq="h")
+    dates = pd.date_range("2024-07-01", periods=24 * 30, freq="h")
     hour = dates.hour
     day_of_week = dates.dayofweek
 
@@ -214,6 +218,7 @@ def test_e2e_small_shop_plan_selection():
 # E2E Scenario 5: Data Analyst Processing Multiple Buildings
 # =============================================================================
 
+
 def test_e2e_multi_building_analysis():
     """Scenario: Energy manager analyzes electricity costs for multiple buildings."""
     # Define different building types
@@ -238,7 +243,7 @@ def test_e2e_multi_building_analysis():
         },
     }
 
-    dates = pd.date_range("2024-07-01", periods=24*30, freq="h")
+    dates = pd.date_range("2024-07-01", periods=24 * 30, freq="h")
     hour = dates.hour
 
     results = {}
@@ -275,6 +280,7 @@ def test_e2e_multi_building_analysis():
 # E2E Scenario 6: Quarterly Bill Reconciliation
 # =============================================================================
 
+
 def test_e2e_quarterly_bill_reconciliation():
     """Scenario: Accountant reconciles quarterly electricity bills."""
     # User has 3 months of data and wants to match utility bills
@@ -286,7 +292,7 @@ def test_e2e_quarterly_bill_reconciliation():
 
     monthly_bills = []
     for start_date, days in months:
-        dates = pd.date_range(start_date, periods=24*days, freq="h")
+        dates = pd.date_range(start_date, periods=24 * days, freq="h")
         usage = pd.Series([2.5] * len(dates), index=dates)
 
         inputs = BillingInputs.for_residential(
@@ -296,19 +302,21 @@ def test_e2e_quarterly_bill_reconciliation():
         )
 
         bill = calculate_bill(usage, "residential_simple_2_tier", inputs=inputs)
-        monthly_bills.append({
-            "month": start_date[:7],
-            "total": bill['total'].iloc[0],
-            "energy": bill['energy_cost'].iloc[0],
-            "basic": bill['basic_cost'].iloc[0],
-        })
+        monthly_bills.append(
+            {
+                "month": start_date[:7],
+                "total": bill["total"].iloc[0],
+                "energy": bill["energy_cost"].iloc[0],
+                "basic": bill["basic_cost"].iloc[0],
+            }
+        )
 
     # June (summer) should have different rate structure than April/May
     # Verify the bills are calculated correctly
     for bill_info in monthly_bills:
-        assert bill_info['total'] > 0
-        assert bill_info['energy'] > 0
-        assert bill_info['basic'] > 0
+        assert bill_info["total"] > 0
+        assert bill_info["energy"] > 0
+        assert bill_info["basic"] > 0
 
     # Accountant can now reconcile with actual utility bills
 
@@ -317,10 +325,11 @@ def test_e2e_quarterly_bill_reconciliation():
 # E2E Scenario 7: Year-over-Year Cost Comparison
 # =============================================================================
 
+
 def test_e2e_year_over_year_comparison():
     """Scenario: Business compares electricity costs year over year."""
     # Same usage pattern for two years (same dates to avoid holiday differences)
-    dates = pd.date_range("2024-07-01", periods=24*30, freq="h")
+    dates = pd.date_range("2024-07-01", periods=24 * 30, freq="h")
 
     usage = pd.Series([2.0] * len(dates), index=dates)
 
@@ -338,11 +347,12 @@ def test_e2e_year_over_year_comparison():
 # E2E Scenario 8: Solar Panel Owner Analysis
 # =============================================================================
 
+
 def test_e2e_solar_panel_net_metering_analysis():
     """Scenario: Solar panel owner analyzes net metering benefits."""
     # User has solar panels and wants to know value of exported energy
 
-    dates = pd.date_range("2024-07-01", periods=24*30, freq="h")
+    dates = pd.date_range("2024-07-01", periods=24 * 30, freq="h")
     hour = dates.hour
 
     # Net usage = consumption - solar generation
@@ -354,6 +364,7 @@ def test_e2e_solar_panel_net_metering_analysis():
         if 6 <= h <= 18:
             # Solar generation (bell curve peaking at noon)
             import math
+
             solar_peak = 3.0
             solar = solar_peak * math.exp(-((h - 12) ** 2) / 20)
         else:
@@ -386,29 +397,35 @@ def test_e2e_solar_panel_net_metering_analysis():
 # E2E Scenario 9: Tenant Pro-Rata Billing
 # =============================================================================
 
+
 def test_e2e_tenant_pro_rata_billing():
     """Scenario: Landlord allocates electricity costs to multiple tenants."""
     # Building has 3 tenants with different usage patterns
 
-    dates = pd.date_range("2024-07-01", periods=24*30, freq="h")
+    dates = pd.date_range("2024-07-01", periods=24 * 30, freq="h")
 
     # Tenant 1: Restaurant (high daytime usage)
-    tenant1_usage = pd.Series([
-        5 if 10 <= h < 22 else 1  # kWh
-        for h in dates.hour
-    ], index=dates)
+    tenant1_usage = pd.Series(
+        [
+            5 if 10 <= h < 22 else 1  # kWh
+            for h in dates.hour
+        ],
+        index=dates,
+    )
 
     # Tenant 2: Office (business hours)
-    tenant2_usage = pd.Series([
-        8 if 9 <= h < 18 else 0.5
-        for h in dates.hour
-    ], index=dates)
+    tenant2_usage = pd.Series(
+        [8 if 9 <= h < 18 else 0.5 for h in dates.hour], index=dates
+    )
 
     # Tenant 3: 24/7 convenience store
-    tenant3_usage = pd.Series([
-        3  # Constant
-        for _ in dates
-    ], index=dates)
+    tenant3_usage = pd.Series(
+        [
+            3  # Constant
+            for _ in dates
+        ],
+        index=dates,
+    )
 
     # Total building usage
     total_usage = tenant1_usage + tenant2_usage + tenant3_usage
@@ -431,14 +448,15 @@ def test_e2e_tenant_pro_rata_billing():
 # E2E Scenario 10: Budget Planning with Forecast
 # =============================================================================
 
+
 def test_e2e_budget_planning_forecast():
     """Scenario: Business forecasts annual electricity budget."""
     # Generate monthly usage data for a full year
     monthly_forecasts = []
 
     for month in range(1, 13):
-        days = 31 if month in [1,3,5,7,8,10,12] else (30 if month != 2 else 29)
-        dates = pd.date_range(f"2024-{month:02d}-01", periods=24*days, freq="h")
+        days = 31 if month in [1, 3, 5, 7, 8, 10, 12] else (30 if month != 2 else 29)
+        dates = pd.date_range(f"2024-{month:02d}-01", periods=24 * days, freq="h")
 
         # Seasonal variation: higher in summer
         base = 100  # kW
@@ -452,11 +470,13 @@ def test_e2e_budget_planning_forecast():
         plan = tou.plan("high_voltage_2_tier")
         cost = plan.calculate_costs(usage).iloc[0]
 
-        monthly_forecasts.append({
-            "month": f"2024-{month:02d}",
-            "usage_kwh": usage.sum(),
-            "cost_twd": cost,
-        })
+        monthly_forecasts.append(
+            {
+                "month": f"2024-{month:02d}",
+                "usage_kwh": usage.sum(),
+                "cost_twd": cost,
+            }
+        )
 
     total_annual_cost = sum(m["cost_twd"] for m in monthly_forecasts)
 
@@ -465,11 +485,13 @@ def test_e2e_budget_planning_forecast():
 
     # Summer months (Jun-Sep) should be most expensive
     summer_months = [
-        m for m in monthly_forecasts
+        m
+        for m in monthly_forecasts
         if m["month"] in ["2024-06", "2024-07", "2024-08", "2024-09"]
     ]
     other_months = [
-        m for m in monthly_forecasts
+        m
+        for m in monthly_forecasts
         if m["month"] not in ["2024-06", "2024-07", "2024-08", "2024-09"]
     ]
 

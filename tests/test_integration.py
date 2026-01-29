@@ -19,6 +19,7 @@ from tou_calculator import BillingInputs, calculate_bill
 # Integration: Calendar + Tariff
 # =============================================================================
 
+
 def test_calendar_tariff_integration():
     """Test that calendar correctly drives tariff period selection."""
     # Create calendar with specific holiday
@@ -40,9 +41,9 @@ def test_calendar_tariff_integration():
     )
 
     # Off-peak rate should be lower than peak rate
-    assert ctx_sun['rate'] < ctx_mon['rate']
-    assert ctx_sun['period'] == 'off_peak'
-    assert ctx_mon['period'] == 'peak'
+    assert ctx_sun["rate"] < ctx_mon["rate"]
+    assert ctx_sun["period"] == "off_peak"
+    assert ctx_mon["period"] == "peak"
 
 
 def test_multiple_plans_share_calendar():
@@ -61,12 +62,13 @@ def test_multiple_plans_share_calendar():
         dt = datetime(2024, 7, 15, 14, 0)
         ctx = plan.pricing_context(dt)
         assert ctx is not None
-        assert 'rate' in ctx
+        assert "rate" in ctx
 
 
 # =============================================================================
 # Integration: Filesystem + Calendar Cache
 # =============================================================================
+
 
 def test_calendar_cache_persistence(tmp_path):
     """Test that calendar cache persists across instances."""
@@ -108,14 +110,15 @@ def test_calendar_fallback_on_api_failure(tmp_path):
 # Integration: Full Billing Pipeline
 # =============================================================================
 
+
 def test_full_billing_pipeline_residential():
     """Test complete billing pipeline for residential user."""
     # Simulate real usage data
-    dates = pd.date_range("2024-06-01", periods=24*30, freq="h")  # 1 month hourly
+    dates = pd.date_range("2024-06-01", periods=24 * 30, freq="h")  # 1 month hourly
     # Typical residential usage pattern: higher in morning/evening
     hour_of_day = dates.hour
-    usage_pattern = 2 + 3 * ( (hour_of_day >= 7) & (hour_of_day < 9) )  # Morning peak
-    usage_pattern += 4 * ( (hour_of_day >= 18) & (hour_of_day < 22) )  # Evening peak
+    usage_pattern = 2 + 3 * ((hour_of_day >= 7) & (hour_of_day < 9))  # Morning peak
+    usage_pattern += 4 * ((hour_of_day >= 18) & (hour_of_day < 22))  # Evening peak
     usage_pattern += 1 * (hour_of_day < 6)  # Base night usage
     usage = pd.Series(usage_pattern, index=dates)
 
@@ -129,21 +132,21 @@ def test_full_billing_pipeline_residential():
 
     # Verify structure
     assert len(bill) == 1  # 1 month
-    assert 'energy_cost' in bill.columns
-    assert 'basic_cost' in bill.columns
-    assert 'total' in bill.columns
+    assert "energy_cost" in bill.columns
+    assert "basic_cost" in bill.columns
+    assert "total" in bill.columns
 
     # Sanity checks
-    assert bill['energy_cost'].iloc[0] > 0
-    assert bill['basic_cost'].iloc[0] > 0
-    assert bill['total'].iloc[0] > 0
-    assert bill['total'].iloc[0] >= bill['energy_cost'].iloc[0]
+    assert bill["energy_cost"].iloc[0] > 0
+    assert bill["basic_cost"].iloc[0] > 0
+    assert bill["total"].iloc[0] > 0
+    assert bill["total"].iloc[0] >= bill["energy_cost"].iloc[0]
 
 
 def test_full_billing_pipeline_high_voltage():
     """Test complete billing pipeline for high voltage industrial user."""
     # 2 months of 15-minute data
-    dates = pd.date_range("2024-06-01", periods=96*30*2, freq="15min")
+    dates = pd.date_range("2024-06-01", periods=96 * 30 * 2, freq="15min")
 
     # Industrial usage pattern: steady daytime usage
     hour_of_day = dates.hour
@@ -169,17 +172,17 @@ def test_full_billing_pipeline_high_voltage():
     assert len(bill) == 2
 
     # Verify all components present
-    assert all(bill['energy_cost'] > 0)
-    assert all(bill['basic_cost'] > 0)
+    assert all(bill["energy_cost"] > 0)
+    assert all(bill["basic_cost"] > 0)
     # Surcharge may be zero if under threshold
-    assert all(bill['total'] >= 0)
+    assert all(bill["total"] >= 0)
 
 
 def test_billing_pipeline_spanning_seasons():
     """Test billing that crosses summer/non-summer boundary."""
     # 3 months: May (non-summer), June (summer), July (summer)
     # Use same number of days for fair comparison
-    dates = pd.date_range("2024-05-01", periods=24*30*3, freq="h")
+    dates = pd.date_range("2024-05-01", periods=24 * 30 * 3, freq="h")
     usage = pd.Series([2.0] * len(dates), index=dates)
 
     inputs = BillingInputs.for_residential(
@@ -196,9 +199,9 @@ def test_billing_pipeline_spanning_seasons():
     # June/July (summer) should have different rates than May (non-summer)
     # Note: May has 31 days vs 30 days for Jun/Jul in our test data
     # So compare average daily cost
-    may_daily = bill.iloc[0]['energy_cost'] / 30
-    jun_daily = bill.iloc[1]['energy_cost'] / 30
-    jul_daily = bill.iloc[2]['energy_cost'] / 30
+    may_daily = bill.iloc[0]["energy_cost"] / 30
+    jun_daily = bill.iloc[1]["energy_cost"] / 30
+    jul_daily = bill.iloc[2]["energy_cost"] / 30
 
     # Verify all monthly bills are calculated
     assert may_daily > 0
@@ -210,10 +213,11 @@ def test_billing_pipeline_spanning_seasons():
 # Integration: API Workflow Tests
 # =============================================================================
 
+
 def test_complete_api_workflow():
     """Test typical user workflow using high-level API."""
     # User has hourly usage data for a month
-    dates = pd.date_range("2024-07-01", periods=24*30, freq="h")
+    dates = pd.date_range("2024-07-01", periods=24 * 30, freq="h")
     usage = pd.Series([1.5] * len(dates), index=dates)
 
     # Step 1: Check available plans
@@ -240,13 +244,13 @@ def test_complete_api_workflow():
 
     # Step 5: Query specific time
     ctx = tou.pricing_context(dates[100], "residential_simple_2_tier", usage=5.0)
-    assert ctx['cost'] == 5.0 * ctx['rate']
+    assert ctx["cost"] == 5.0 * ctx["rate"]
 
 
 def test_multi_plan_comparison_workflow():
     """Test workflow for comparing multiple tariff plans."""
     # User wants to compare plans for their usage
-    dates = pd.date_range("2024-07-01", periods=24*30, freq="h")
+    dates = pd.date_range("2024-07-01", periods=24 * 30, freq="h")
     usage = pd.Series([2.0] * len(dates), index=dates)
 
     # Compare residential plans
@@ -269,8 +273,7 @@ def test_multi_plan_comparison_workflow():
     # Simple 2-tier and 3-tier should be similar for low usage
     # (they have similar rates for the first tier)
     diff = abs(
-        results["residential_simple_2_tier"]
-        - results["residential_simple_3_tier"]
+        results["residential_simple_2_tier"] - results["residential_simple_3_tier"]
     )
     assert diff < 1000
 
@@ -278,6 +281,7 @@ def test_multi_plan_comparison_workflow():
 # =============================================================================
 # Integration: Error Handling Across Modules
 # =============================================================================
+
 
 def test_error_propagation_from_calendar():
     """Test that calendar errors properly propagate through API."""
@@ -299,10 +303,11 @@ def test_error_propagation_from_tariff():
 # Integration: Period Analysis Workflow
 # =============================================================================
 
+
 def test_period_analysis_workflow():
     """Test workflow for analyzing usage by time period."""
     # Generate usage data with clear period patterns
-    dates = pd.date_range("2024-07-15", periods=24*7, freq="h")  # 1 week
+    dates = pd.date_range("2024-07-15", periods=24 * 7, freq="h")  # 1 week
     hour = dates.hour
 
     # Higher usage during peak hours
@@ -322,13 +327,14 @@ def test_period_analysis_workflow():
     assert len(breakdown) > 1
 
     # Verify shares sum to 1
-    assert abs(breakdown['usage_share'].sum() - 1.0) < 0.01
-    assert abs(breakdown['cost_share'].sum() - 1.0) < 0.01
+    assert abs(breakdown["usage_share"].sum() - 1.0) < 0.01
+    assert abs(breakdown["cost_share"].sum() - 1.0) < 0.01
 
 
 # =============================================================================
 # Integration: Seasonal Analysis
 # =============================================================================
+
 
 def test_seasonal_rate_comparison():
     """Test comparing rates across seasons."""
@@ -357,9 +363,10 @@ def test_seasonal_rate_comparison():
 # Integration: Billing Breakdown
 # =============================================================================
 
+
 def test_bill_breakdown_completeness():
     """Test that bill breakdown contains all expected components."""
-    dates = pd.date_range("2024-06-01", periods=24*30, freq="h")
+    dates = pd.date_range("2024-06-01", periods=24 * 30, freq="h")
     usage = pd.Series([2.0] * len(dates), index=dates)
 
     inputs = BillingInputs.for_residential(
@@ -375,17 +382,18 @@ def test_bill_breakdown_completeness():
     assert "energy_cost" in bill.columns
     assert "basic_cost" in bill.columns
     assert "total" in bill.columns
-    assert all(bill['total'] > 0)
+    assert all(bill["total"] > 0)
 
 
 # =============================================================================
 # Integration: Cross-Year Data
 # =============================================================================
 
+
 def test_multi_year_billing():
     """Test billing that spans multiple calendar years."""
     # Dec 2023 to Feb 2024
-    dates = pd.date_range("2023-12-01", periods=24*30*3, freq="h")
+    dates = pd.date_range("2023-12-01", periods=24 * 30 * 3, freq="h")
     usage = pd.Series([2.0] * len(dates), index=dates)
 
     inputs = BillingInputs.for_residential(
@@ -400,4 +408,4 @@ def test_multi_year_billing():
     assert len(bill) == 3
 
     # Each month should have valid billing
-    assert all(bill['total'] > 0)
+    assert all(bill["total"] > 0)

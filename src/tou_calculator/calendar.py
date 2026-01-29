@@ -20,6 +20,7 @@ except ImportError:
 
 try:
     from zhdate import ZhDate
+
     LUNAR_AVAILABLE = True
 except ImportError:
     LUNAR_AVAILABLE = False
@@ -121,11 +122,11 @@ class _HolidayParser:
 
         # Fixed solar holidays
         fixed_solar = [
-            (1, 1),   # New Year's Day
+            (1, 1),  # New Year's Day
             (2, 28),  # Peace Memorial Day
-            (4, 4),   # Tomb Sweeping Day (Children's Day)
-            (5, 1),   # Labor Day
-            (10, 10), # National Day
+            (4, 4),  # Tomb Sweeping Day (Children's Day)
+            (5, 1),  # Labor Day
+            (10, 10),  # National Day
         ]
         for month, day in fixed_solar:
             holidays.add(date(year, month, day))

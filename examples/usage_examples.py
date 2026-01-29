@@ -19,7 +19,7 @@ def _sample_usage(start: datetime, periods: int, freq_minutes: int) -> pd.Series
 def main() -> None:
     cache_dir = Path(".cache")
 
-    # taiwan_calendar: 建立台灣假日行事曆，cache_dir 可指定快取位置
+    # taiwan_calendar: 建立臺灣假日行事曆，cache_dir 可指定快取位置
     # api_timeout 可調整 API 請求超時秒數
     calendar = tou.taiwan_calendar(cache_dir=cache_dir)
     # is_holiday: 判斷日期是否為假日（可傳 date 或 datetime）
@@ -41,21 +41,19 @@ def main() -> None:
     plan_by_name = tou.plan("residential_simple_2_tier", calendar_instance=calendar)
     print("plan name:", plan_by_name.profile.name)
 
-    # period_at: 以方案名稱取得時間點的時段類型
+    # period_at: 以方案名稱取得時間點的時段型別
     dt = datetime(2025, 7, 15, 10, 0)
     print(
         "period_at:",
         tou.period_at(dt, "residential_simple_2_tier", calendar_instance=calendar),
     )
-    # get_period: 直接用 profile 查時段類型
+    # get_period: 直接用 profile 查時段型別
     print("get_period:", tou.get_period(dt, simple_plan.profile))
 
     # period_context: 回傳 season/day_type/period
     print(
         "period_context:",
-        tou.period_context(
-            dt, "residential_simple_2_tier", calendar_instance=calendar
-        ),
+        tou.period_context(dt, "residential_simple_2_tier", calendar_instance=calendar),
     )
 
     # pricing_context: 回傳 season/period/rate/cost
@@ -103,7 +101,7 @@ def main() -> None:
             usage, "residential_simple_2_tier", calendar_instance=calendar
         ),
     )
-    # monthly_breakdown + include_shares: 附上各時段占比
+    # monthly_breakdown + include_shares: 附上各時段佔比
     print(
         "monthly_breakdown_shares:\n",
         tou.monthly_breakdown(
@@ -127,9 +125,7 @@ def main() -> None:
 
     # 直接使用工廠方法取得 profile 或 plan
     print("tariff factory profile:", tariffs.get_high_voltage_2_tier().name)
-    print(
-        "tariff factory plan:", tariffs.get_high_voltage_2_tier_plan().profile.name
-    )
+    print("tariff factory plan:", tariffs.get_high_voltage_2_tier_plan().profile.name)
 
     # Non-TOU（分級電價）範例
     non_tou_usage = _sample_usage(
@@ -142,9 +138,7 @@ def main() -> None:
     window = pd.date_range(start, start + timedelta(hours=6), freq="2H")
     print(
         "period_context_index:\n",
-        tou.period_context(
-            window, "high_voltage_2_tier", calendar_instance=calendar
-        ),
+        tou.period_context(window, "high_voltage_2_tier", calendar_instance=calendar),
     )
 
     # 自訂方案範例：自訂行事曆 + 自訂時段 + 自訂費率
