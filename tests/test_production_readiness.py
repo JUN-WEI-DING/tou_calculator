@@ -895,37 +895,33 @@ class TestDocumentationExamples:
         """Test that README examples use consistent plan ID format.
 
         This test ensures that:
-        1. Plan IDs use underscore format (e.g., residential_simple_2_tier)
-        2. available_plans() returns plan IDs (not display names)
-        3. What you see is what you use
+        1. available_plans() returns bilingual display names
+        2. available_plan_ids() returns plan IDs for code
+        3. plan() only accepts plan IDs
         """
-        # Common plan IDs referenced in README table
-        common_plan_ids = [
-            "residential_simple_2_tier",
-            "residential_simple_3_tier",
-            "low_voltage_2_tier",
-            "high_voltage_2_tier",
-            "high_voltage_three_stage",
-        ]
+        # available_plans() returns bilingual display names
+        display_names = tou.available_plans()
+        assert len(display_names) == 20
+        # Should contain Chinese characters
+        assert any(any("\u4e00" <= c <= "\u9fff" for c in name)
+                   for name in display_names)
+        # First one should be residential non-TOU
+        assert "表燈非時間電價" in display_names[0]
 
-        for plan_id in common_plan_ids:
-            plan = tou.plan(plan_id)
-            assert plan is not None
-            # Verify the plan has the expected structure
-            assert hasattr(plan, "profile")
-            assert hasattr(plan, "rates")
+        # available_plan_ids() returns plan IDs for code
+        plan_ids = tou.available_plan_ids()
+        assert len(plan_ids) == 20
+        # All should be lowercase with underscores
+        for pid in plan_ids:
+            assert pid.replace("_", "").islower()
 
-        # Verify available_plans() returns plan IDs
-        plans = tou.available_plans()
-        assert len(plans) == 20  # Should have exactly 20 plans
-        assert all(isinstance(p, str) for p in plans)
-        # All should be valid plan IDs (lowercase with underscores)
-        for p in plans:
-            assert p.islower() or "_" in p or "_" in p
-        # First plan should be residential_non_tou
-        assert plans[0] == "residential_non_tou"
-        # Common plans should be in the list
-        assert "residential_simple_2_tier" in plans
+        # plan() only accepts plan IDs
+        plan = tou.plan("residential_simple_2_tier")
+        assert plan is not None
+
+        # Chinese display names should NOT work
+        with pytest.raises(ValueError):
+            tou.plan("簡易型二段式")
 
 
 # =============================================================================
