@@ -190,11 +190,12 @@ class TestMultilingualAndEncoding:
 
     def test_invalid_plan_name_errors(self):
         """Test that invalid plan names raise appropriate errors."""
-        # Chinese names should not work anymore
-        with pytest.raises(ValueError):
-            tou.plan("簡易型二段式")
+        # Chinese names now work with fuzzy matching
+        plan = tou.plan("簡易型二段式")
+        assert plan is not None
+        assert plan.name is not None
 
-        # Invalid English ID
+        # Invalid English ID still raises error
         with pytest.raises(ValueError):
             tou.plan("invalid_plan_name")
 
