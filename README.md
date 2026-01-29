@@ -208,7 +208,7 @@ Common plans:
 | `high_voltage_2_tier` | 高壓電力二段式 |
 | `high_voltage_three_stage` | 高壓電力三段式 |
 
-**Use the Plan ID** (e.g., `residential_simple_2_tier`) in your code.
+**Use the Plan ID** (e.g., `residential_simple_2_tier`) in your code.  
 **在程式碼中使用 Plan ID**（如 `residential_simple_2_tier`）。
 
 ---
@@ -272,7 +272,7 @@ print(costs)
 # Name: cost, dtype: float64
 ```
 
-**Note:** `calculate_costs()` returns monthly aggregated costs by default.
+**Note:** `calculate_costs()` returns monthly aggregated costs by default.  
 **說明：** `calculate_costs()` 預設返回按月匯總的電費。
 
 #### Advanced Calculation: With Basic Fee and Penalty (進階計算：包含基本費和違約金)
@@ -482,12 +482,12 @@ PF Adjustment = Basic Fee × (Base PF% - Actual PF%) × 0.1%
 
 | Item | Calculation | Amount (TWD) |
 |------|-------------|--------------|
-| **Energy Cost** | Peak: 10,000 kWh × $5.16 | 51,600 |
-| | Off-peak: 20,000 kWh × $2.06 | 41,200 |
-| | **Subtotal** | **92,800** |
-| **Basic Fee** | 200 kW × $236.20 | 47,240 |
-| **Penalty** | (230-200) kW × $236.20 × 2 | 14,172 |
-| **PF Discount** | -47,240 × 1.5% | -709 |
+| Energy Cost (Peak) | 10,000 kWh × $5.16 | 51,600 |
+| Energy Cost (Off-peak) | 20,000 kWh × $2.06 | 41,200 |
+| **Energy Cost (Subtotal)** | | **92,800** |
+| Basic Fee | 200 kW × $236.20 | 47,240 |
+| Penalty | (230-200) kW × $236.20 × 2 | 14,172 |
+| PF Discount | -47,240 × 1.5% | -709 |
 | **Total** | | **153,503** |
 
 ---
