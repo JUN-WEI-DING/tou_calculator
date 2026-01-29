@@ -9,9 +9,11 @@ from typing import Any, Protocol
 
 try:
     import numpy as np
+    import numpy.typing as npt
     import pandas as pd
 except ImportError:
     np: Any = None  # type: ignore
+    npt: Any = None  # type: ignore
     pd: Any = None  # type: ignore
 
 from tou_calculator.errors import InvalidUsageInput, TariffError
@@ -199,7 +201,7 @@ class _TariffEngine:
         self._period_map_rev = {pt: i for i, pt in enumerate(self._period_types)}
 
         shape = (len(self.seasons), len(self.day_types), 1440)
-        self._lookup_table = np.zeros(shape, dtype=np.int8)
+        self._lookup_table: npt.NDArray[np.int8] = np.zeros(shape, dtype=np.int8)
 
         for (season, day_type), schedule in self.profile.schedules.items():
             s_idx = self._season_map.get(season)
