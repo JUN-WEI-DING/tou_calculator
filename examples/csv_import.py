@@ -107,7 +107,9 @@ def calculate_and_show(
 
 
 def export_to_csv(
-    usage: pd.Series, plan_id: str = "residential_simple_2_tier", filename: str = "result.csv"
+    usage: pd.Series,
+    plan_id: str = "residential_simple_2_tier",
+    filename: str = "result.csv",
 ) -> None:
     """Export hourly results to CSV file."""
     # Calculate hourly costs by multiplying usage by rate at each timepoint
