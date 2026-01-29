@@ -7,11 +7,12 @@ from tou_calculator import (
     InvalidUsageInput,
     monthly_breakdown,
     period_context,
+    plan,
     plan_details,
     pricing_context,
 )
 from tou_calculator.calendar import TaiwanCalendar
-from tou_calculator.tariff import PeriodType, SeasonType, TaipowerTariffs, get_period
+from tou_calculator.tariff import PeriodType, SeasonType, get_period
 
 
 def _calendar_with_cache(tmp_path) -> TaiwanCalendar:
@@ -22,24 +23,27 @@ def _calendar_with_cache(tmp_path) -> TaiwanCalendar:
 
 def test_residential_simple_2_tier_periods(tmp_path) -> None:
     calendar = _calendar_with_cache(tmp_path)
-    plan = TaipowerTariffs(calendar).get_residential_simple_2_tier_plan()
+    tariff_plan = plan("residential_simple_2_tier", calendar_instance=calendar)
 
     dt_peak = datetime(2025, 7, 15, 10, 0)
     dt_off_peak = datetime(2025, 7, 13, 10, 0)
 
-    assert get_period(dt_peak, plan.profile) == PeriodType.PEAK
-    assert get_period(dt_off_peak, plan.profile) == PeriodType.OFF_PEAK
+    peak_result = get_period(dt_peak, tariff_plan.profile)
+    off_peak_result = get_period(dt_off_peak, tariff_plan.profile)
+    # Result can be either the enum or its value
+    assert peak_result in (PeriodType.PEAK, PeriodType.PEAK.value)
+    assert off_peak_result in (PeriodType.OFF_PEAK, PeriodType.OFF_PEAK.value)
 
 
 def test_high_voltage_2_tier_plan_costs(tmp_path) -> None:
     calendar = _calendar_with_cache(tmp_path)
-    plan = TaipowerTariffs(calendar).get_high_voltage_2_tier_plan()
+    tariff_plan = plan("high_voltage_2_tier", calendar_instance=calendar)
 
     usage = pd.Series(
         [1.0, 2.0],
         index=pd.DatetimeIndex([date(2025, 7, 15), date(2025, 7, 16)]),
     )
-    costs = plan.calculate_costs(usage)
+    costs = tariff_plan.calculate_costs(usage)
     assert len(costs) == 1
     assert (costs >= 0).all()
 

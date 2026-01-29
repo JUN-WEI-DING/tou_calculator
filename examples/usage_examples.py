@@ -25,8 +25,6 @@ def main() -> None:
     # is_holiday: 判斷日期是否為假日（可傳 date 或 datetime）
     print("is_holiday:", tou.is_holiday(datetime(2025, 7, 13), calendar=calendar))
 
-    # taipower_tariffs: 方案工廠，使用指定 calendar 的假日規則
-    tariffs = tou.taipower_tariffs(calendar)
     # available_plans: 取得支援方案名稱列表
     print("available_plans:", tou.available_plans())
 
@@ -122,10 +120,6 @@ def main() -> None:
             calendar_instance=calendar,
         ),
     )
-
-    # 直接使用工廠方法取得 profile 或 plan
-    print("tariff factory profile:", tariffs.get_high_voltage_2_tier().name)
-    print("tariff factory plan:", tariffs.get_high_voltage_2_tier_plan().profile.name)
 
     # Non-TOU（分級電價）範例
     non_tou_usage = _sample_usage(

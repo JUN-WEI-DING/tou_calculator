@@ -10,7 +10,6 @@ from tou_calculator.tariff import (
     DaySchedule,
     PeriodType,
     SeasonType,
-    TaipowerTariffs,
     TaiwanDayTypeStrategy,
     TaiwanSeasonStrategy,
     TariffPlan,
@@ -70,10 +69,6 @@ def test_entry_calendar_and_tariffs(tmp_path) -> None:
 
     helper_calendar = tou.taiwan_calendar(cache_dir=tmp_path)
     assert helper_calendar.is_holiday(date(2024, 1, 1))
-
-    tariffs = TaipowerTariffs(calendar)
-    profile = tariffs.get_residential_simple_2_tier()
-    assert isinstance(profile, TariffProfile)
 
     helper_plan = tou.residential_simple_2_tier_plan(calendar)
     assert isinstance(helper_plan, TariffPlan)

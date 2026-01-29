@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import functools
-import warnings
 from datetime import date, datetime, time
 from typing import Any, Protocol
 
@@ -26,7 +25,6 @@ from tou_calculator.models import (
     TimeSlot,
     _label_value,
 )
-from tou_calculator.rates import TariffJSONLoader
 
 
 class SeasonStrategy(Protocol):
@@ -108,7 +106,6 @@ class TaiwanDayTypeStrategy:
 
     def get_all_day_types(self) -> list[str]:
         return ["weekday", "saturday", "sunday_holiday"]
-
 
 class TariffProfile:
     def __init__(
@@ -620,165 +617,6 @@ def _validate_usage_series(usage_kwh: pd.Series) -> None:
         raise InvalidUsageInput("usage timestamps must be ordered")
 
 
-def _make_slot(start_h: int, end_h: int, ptype: PeriodType) -> TimeSlot:
-    start = time(start_h, 0) if start_h < 24 else time(0, 0)
-    end = time(end_h, 0) if end_h < 24 else time(0, 0)
-    return TimeSlot(start, end, ptype)
-
-
-_ALL_DAY_OFF_PEAK = DaySchedule(
-    slots=[TimeSlot(time(0, 0), time(0, 0), PeriodType.OFF_PEAK)]
-)
-
-_RESIDENTIAL_SUMMER_START = (6, 1)
-_RESIDENTIAL_SUMMER_END = (9, 30)
-
-_res_simple_two_stage_summer_weekday = DaySchedule(
-    slots=[
-        _make_slot(0, 9, PeriodType.OFF_PEAK),
-        _make_slot(9, 0, PeriodType.PEAK),
-    ]
-)
-
-_res_simple_two_stage_nonsummer_weekday = DaySchedule(
-    slots=[
-        _make_slot(0, 6, PeriodType.OFF_PEAK),
-        _make_slot(6, 11, PeriodType.PEAK),
-        _make_slot(11, 14, PeriodType.OFF_PEAK),
-        _make_slot(14, 0, PeriodType.PEAK),
-    ]
-)
-
-
-def _create_residential_simple_2_tier(calendar: Any) -> TariffProfile:
-    return TariffProfile(
-        name="Residential-Simple-Two-Stage",
-        season_strategy=TaiwanSeasonStrategy(
-            _RESIDENTIAL_SUMMER_START, _RESIDENTIAL_SUMMER_END
-        ),
-        day_type_strategy=TaiwanDayTypeStrategy(calendar),
-        schedules={
-            (SeasonType.SUMMER, "weekday"): _res_simple_two_stage_summer_weekday,
-            (SeasonType.SUMMER, "saturday"): _ALL_DAY_OFF_PEAK,
-            (SeasonType.SUMMER, "sunday_holiday"): _ALL_DAY_OFF_PEAK,
-            (SeasonType.NON_SUMMER, "weekday"): _res_simple_two_stage_nonsummer_weekday,
-            (SeasonType.NON_SUMMER, "saturday"): _ALL_DAY_OFF_PEAK,
-            (SeasonType.NON_SUMMER, "sunday_holiday"): _ALL_DAY_OFF_PEAK,
-        },
-    )
-
-
-def _create_residential_non_tou(calendar: Any) -> TariffProfile:
-    return TariffProfile(
-        name="Residential-Non-TOU",
-        season_strategy=TaiwanSeasonStrategy(
-            _RESIDENTIAL_SUMMER_START, _RESIDENTIAL_SUMMER_END
-        ),
-        day_type_strategy=TaiwanDayTypeStrategy(calendar),
-        schedules={
-            (SeasonType.SUMMER, "weekday"): _ALL_DAY_OFF_PEAK,
-            (SeasonType.SUMMER, "saturday"): _ALL_DAY_OFF_PEAK,
-            (SeasonType.SUMMER, "sunday_holiday"): _ALL_DAY_OFF_PEAK,
-            (SeasonType.NON_SUMMER, "weekday"): _ALL_DAY_OFF_PEAK,
-            (SeasonType.NON_SUMMER, "saturday"): _ALL_DAY_OFF_PEAK,
-            (SeasonType.NON_SUMMER, "sunday_holiday"): _ALL_DAY_OFF_PEAK,
-        },
-    )
-
-
-_HIGH_VOLTAGE_SUMMER_START = (5, 16)
-_HIGH_VOLTAGE_SUMMER_END = (10, 15)
-
-_hv_two_stage_summer_weekday = DaySchedule(
-    slots=[
-        _make_slot(0, 9, PeriodType.OFF_PEAK),
-        _make_slot(9, 0, PeriodType.PEAK),
-    ]
-)
-_hv_two_stage_nonsummer_weekday = DaySchedule(
-    slots=[
-        _make_slot(0, 6, PeriodType.OFF_PEAK),
-        _make_slot(6, 11, PeriodType.PEAK),
-        _make_slot(11, 14, PeriodType.OFF_PEAK),
-        _make_slot(14, 0, PeriodType.PEAK),
-    ]
-)
-
-_hv_two_stage_summer_saturday = DaySchedule(
-    slots=[
-        _make_slot(0, 9, PeriodType.OFF_PEAK),
-        _make_slot(9, 0, PeriodType.SEMI_PEAK),
-    ]
-)
-_hv_two_stage_nonsummer_saturday = DaySchedule(
-    slots=[
-        _make_slot(0, 6, PeriodType.OFF_PEAK),
-        _make_slot(6, 11, PeriodType.SEMI_PEAK),
-        _make_slot(11, 14, PeriodType.OFF_PEAK),
-        _make_slot(14, 0, PeriodType.SEMI_PEAK),
-    ]
-)
-
-
-def _create_high_voltage_two_stage(calendar: Any) -> TariffProfile:
-    return TariffProfile(
-        name="High-Voltage-Two-Stage",
-        season_strategy=TaiwanSeasonStrategy(
-            _HIGH_VOLTAGE_SUMMER_START, _HIGH_VOLTAGE_SUMMER_END
-        ),
-        day_type_strategy=TaiwanDayTypeStrategy(calendar),
-        schedules={
-            (SeasonType.SUMMER, "weekday"): _hv_two_stage_summer_weekday,
-            (SeasonType.SUMMER, "saturday"): _hv_two_stage_summer_saturday,
-            (SeasonType.SUMMER, "sunday_holiday"): _ALL_DAY_OFF_PEAK,
-            (SeasonType.NON_SUMMER, "weekday"): _hv_two_stage_nonsummer_weekday,
-            (SeasonType.NON_SUMMER, "saturday"): _hv_two_stage_nonsummer_saturday,
-            (SeasonType.NON_SUMMER, "sunday_holiday"): _ALL_DAY_OFF_PEAK,
-        },
-    )
-
-
-class TaipowerTariffs:
-    """Deprecated: Use TariffFactory instead.
-
-    This class is kept for backward compatibility only.
-    New code should use tou_calculator.factory.TariffFactory.
-    """
-
-    def __init__(self, calendar: Any) -> None:
-        warnings.warn(
-            "TaipowerTariffs is deprecated. Use TariffFactory instead.",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        self.calendar = calendar
-        self._loader = TariffJSONLoader()
-
-    def get_residential_simple_2_tier(self) -> TariffProfile:
-        return _create_residential_simple_2_tier(self.calendar)
-
-    def get_residential_simple_2_tier_plan(self) -> TariffPlan:
-        profile = self.get_residential_simple_2_tier()
-        rate = self._loader.get_residential_simple_rate()
-        return TariffPlan(profile, rate)
-
-    def get_high_voltage_2_tier(self) -> TariffProfile:
-        return _create_high_voltage_two_stage(self.calendar)
-
-    def get_high_voltage_2_tier_plan(self) -> TariffPlan:
-        profile = self.get_high_voltage_2_tier()
-        rate = self._loader.get_high_voltage_2_tier_rate()
-        return TariffPlan(profile, rate)
-
-    def get_residential_non_tou(self) -> TariffProfile:
-        return _create_residential_non_tou(self.calendar)
-
-    def get_residential_non_tou_plan(self) -> TariffPlan:
-        profile = self.get_residential_non_tou()
-        rate = self._loader.get_residential_non_tou_rate()
-        return TariffPlan(profile, rate)
-
-
 __all__ = [
     "ConsumptionTier",
     "DaySchedule",
@@ -787,7 +625,6 @@ __all__ = [
     "TariffPlan",
     "TariffProfile",
     "TariffRate",
-    "TaipowerTariffs",
     "TaiwanDayTypeStrategy",
     "TaiwanSeasonStrategy",
     "TimeSlot",

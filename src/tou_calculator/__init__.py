@@ -35,7 +35,6 @@ from tou_calculator.factory import PlanRequirements, PlanStore, TariffFactory
 from tou_calculator.tariff import (
     PeriodType,
     SeasonType,
-    TaipowerTariffs,
     TaiwanDayTypeStrategy,
     TaiwanSeasonStrategy,
     TariffPlan,
@@ -45,18 +44,6 @@ from tou_calculator.tariff import (
 )
 
 __version__ = "0.1.0"
-
-
-def taipower_tariffs(
-    calendar_instance: TaiwanCalendar | None = None,
-    cache_dir: Path | None = None,
-    api_timeout: int = 10,
-) -> TaipowerTariffs:
-    calendar_value = calendar_instance or taiwan_calendar(
-        cache_dir=cache_dir,
-        api_timeout=api_timeout,
-    )
-    return TaipowerTariffs(calendar_value)
 
 
 def calculate_costs(usage: Any, plan: TariffPlan) -> Any:
@@ -629,7 +616,6 @@ def get_plan_requirements(plan_name: str) -> dict[str, Any]:
 __all__ = [
     "TaiwanCalendar",
     "CustomCalendar",
-    "TaipowerTariffs",
     "TariffPlan",
     "TariffProfile",
     "PeriodType",
@@ -638,7 +624,6 @@ __all__ = [
     "TaiwanSeasonStrategy",
     "taiwan_calendar",
     "custom_calendar",
-    "taipower_tariffs",
     "available_plans",
     "available_plan_ids",
     "calculate_costs",
