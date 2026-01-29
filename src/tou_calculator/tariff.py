@@ -17,6 +17,7 @@ except ImportError:
 
 from tou_calculator.errors import InvalidUsageInput, TariffError
 from tou_calculator.models import (
+    BillingCycleType,
     ConsumptionTier,
     DaySchedule,
     PeriodType,
@@ -337,9 +338,15 @@ if pd is not None:
 
 
 class TariffPlan:
-    def __init__(self, profile: TariffProfile, rates: TariffRate) -> None:
+    def __init__(
+        self,
+        profile: TariffProfile,
+        rates: TariffRate,
+        billing_cycle_type: BillingCycleType = BillingCycleType.MONTHLY,
+    ) -> None:
         self.profile = profile
         self.rates = rates
+        self.billing_cycle_type = billing_cycle_type
 
     @property
     def name(self) -> str:
@@ -460,20 +467,26 @@ class TariffPlan:
 
     def _calculate_tiered_costs(self, usage_kwh: pd.Series) -> pd.Series:
         context = self.profile.evaluate(usage_kwh.index)
-        monthly_costs: dict[pd.Timestamp, float] = {}
-        month_index = _month_group_index(usage_kwh.index)
-        monthly_groups = usage_kwh.groupby(month_index.to_period("M"))
+        billing_costs: dict[pd.Timestamp, float] = {}
+
+        # Use billing period grouping instead of monthly grouping
+        period_groups = usage_kwh.groupby(
+            _billing_period_group_index(usage_kwh.index, self.billing_cycle_type)
+        )
 
         sorted_tiers = sorted(self.rates.tiered_rates, key=lambda x: x.start_kwh)
 
-        for month, month_usage in monthly_groups:
-            total_usage_kwh = month_usage.sum()
+        # For bimonthly billing, tier limits are doubled
+        tier_multiplier = 2 if self.billing_cycle_type != BillingCycleType.MONTHLY else 1
+
+        for period, period_usage in period_groups:
+            total_usage_kwh = period_usage.sum()
             if total_usage_kwh == 0:
-                monthly_costs[month.to_timestamp()] = 0.0
+                billing_costs[period.to_timestamp()] = 0.0
                 continue
 
-            month_context = context.loc[month_usage.index]
-            season = month_context["season"].mode().iloc[0]
+            period_context = context.loc[period_usage.index]
+            season = period_context["season"].mode().iloc[0]
             season_label = _label_value(season)
 
             total_cost = 0.0
@@ -484,11 +497,14 @@ class TariffPlan:
                 if remaining_kwh <= 0:
                     break
 
-                tier_limit_kwh = (
-                    (tier.end_kwh - last_limit_kwh)
-                    if tier.end_kwh < 999999
-                    else float("inf")
-                )
+                # Adjust tier limits for bimonthly billing
+                tier_end = tier.end_kwh if tier.end_kwh < 999999 else float("inf")
+                tier_start = last_limit_kwh
+                tier_end = tier_end if tier_multiplier == 1 else tier_end * tier_multiplier
+
+                # Calculate usage within this tier
+                tier_limit_kwh = tier_end - tier_start
+
                 usage_in_tier_kwh = min(remaining_kwh, tier_limit_kwh)
 
                 unit_cost = (
@@ -499,13 +515,13 @@ class TariffPlan:
 
                 total_cost += usage_in_tier_kwh * unit_cost
                 remaining_kwh -= usage_in_tier_kwh
-                last_limit_kwh = tier.end_kwh
+                last_limit_kwh = tier_end
 
-            monthly_costs[month.to_timestamp()] = total_cost
+            billing_costs[period.to_timestamp()] = total_cost
 
-        monthly_series = pd.Series(monthly_costs).sort_index()
-        monthly_series.name = "cost"
-        return monthly_series
+        billing_series = pd.Series(billing_costs).sort_index()
+        billing_series.name = "cost"
+        return billing_series
 
     def monthly_breakdown(
         self,
@@ -520,11 +536,15 @@ class TariffPlan:
         context = self.profile.evaluate(usage_kwh.index)
 
         if self.rates.tiered_rates:
-            monthly_usage = usage_kwh.groupby(month_index.to_period("M")).sum()
+            # For tiered rates, use billing period grouping (bimonthly for non-monthly cycles)
+            billing_period_index = _billing_period_group_index(
+                usage_kwh.index, self.billing_cycle_type
+            )
+            monthly_usage = usage_kwh.groupby(billing_period_index).sum()
             monthly_costs = self._calculate_tiered_costs(usage_kwh)
             month_seasons = (
                 context["season"]
-                .groupby(month_index.to_period("M"))
+                .groupby(billing_period_index)
                 .agg(lambda x: _label_value(x.mode().iloc[0]))
             )
             records = []
@@ -603,6 +623,148 @@ def _month_group_index(index: pd.DatetimeIndex) -> pd.DatetimeIndex:
     if index.tz is None:
         return index
     return index.tz_localize(None)
+
+
+def _apportion_usage_by_season(
+    usage_kwh: pd.Series,
+    season_change_month: int,
+    season_change_day: int,
+) -> dict[str, pd.Series]:
+    """將抄表期間的用電按季節變動日分攤到不同季節
+
+    當抄表期間橫跨夏月/非夏月變動時（如 6/30），按日數比例將度數分配到不同季節。
+
+    Args:
+        usage_kwh: 用電資料
+        season_change_month: 季節變動月份 (如 6)
+        season_change_day: 季節變動日期 (如 30)
+
+    Returns:
+        {"before": 季節變動前的用電 Series, "after": 季節變動後的用電 Series}
+    """
+    if len(usage_kwh) == 0:
+        return {"before": pd.Series([], dtype=float), "after": pd.Series([], dtype=float)}
+
+    # Create change date timestamp
+    year = usage_kwh.index.year[0] if hasattr(usage_kwh.index.year, '__getitem__') else usage_kwh.index.year
+    change_date = pd.Timestamp(year, season_change_month, season_change_day)
+
+    # Filter usage before and after change date
+    before_mask = usage_kwh.index < change_date
+    after_mask = usage_kwh.index >= change_date
+
+    # Calculate total days in billing period
+    period_start = usage_kwh.index.min()
+    period_end = usage_kwh.index.max()
+    total_days = (period_end - period_start).days + 1
+
+    # Days before and after rate change
+    if change_date >= period_start and change_date <= period_end:
+        days_before = (change_date - period_start).days
+        days_after = total_days - days_before
+    elif change_date < period_start:
+        # Entire period is after change date
+        days_before = 0
+        days_after = total_days
+    else:
+        # Entire period is before change date
+        days_before = total_days
+        days_after = 0
+
+    # Calculate total usage
+    total_usage = usage_kwh.sum()
+
+    # Apportion usage based on days
+    if days_before == 0:
+        # All usage is in "after" period
+        return {
+            "before": pd.Series([], dtype=float),
+            "after": usage_kwh,
+        }
+    elif days_after == 0:
+        # All usage is in "before" period
+        return {
+            "before": usage_kwh,
+            "after": pd.Series([], dtype=float),
+        }
+
+    # Apportion usage by day ratio
+    apportioned_before = total_usage * days_before / total_days
+    apportioned_after = total_usage * days_after / total_days
+
+    # Create apportioned series maintaining original index structure
+    before_indices = usage_kwh.index[before_mask]
+    after_indices = usage_kwh.index[after_mask]
+
+    # Create weights for apportionment
+    if len(before_indices) > 0:
+        before_weights = pd.Series(
+            apportioned_before * usage_kwh[before_indices] / usage_kwh[before_indices].sum(),
+            index=before_indices,
+        )
+    else:
+        before_weights = pd.Series([], dtype=float, index=[])
+
+    if len(after_indices) > 0:
+        after_weights = pd.Series(
+            apportioned_after * usage_kwh[after_indices] / usage_kwh[after_indices].sum(),
+            index=after_indices,
+        )
+    else:
+        after_weights = pd.Series([], dtype=float, index=[])
+
+    return {"before": before_weights, "after": after_weights}
+
+
+def _billing_period_group_index(
+    index: pd.DatetimeIndex,
+    cycle_type: BillingCycleType,
+) -> pd.PeriodIndex:
+    """根據抄表週期生成分組索引
+
+    Args:
+        index: 使用量資料的 DatetimeIndex
+        cycle_type: 抄表週期型別
+
+    Returns:
+        分組用的 PeriodIndex
+    """
+    if cycle_type == BillingCycleType.MONTHLY:
+        return index.to_period("M")
+
+    # For bimonthly billing, we need to group pairs of months
+    months = index.to_period("M")
+    year = months.year.to_numpy()
+    month = months.month.to_numpy()
+
+    if cycle_type == BillingCycleType.ODD_MONTH:
+        # Odd-month billing: meters read in odd months (1,3,5,7,9,11)
+        # Billing periods: (12,1)->1, (2,3)->3, (4,5)->5, (6,7)->7, (8,9)->9, (10,11)->11
+        # Group key is the odd month (meter reading month)
+        # For month 1: group 1 (Jan meter reading for Dec-Jan period)
+        # For months 2,3: group 3 (Mar meter reading for Feb-Mar period)
+        # For months 4,5: group 5, etc.
+        # For month 12: group 1 of next year (Dec belongs to Jan period of next year)
+        dec_mask = month == 12
+        # Use floor division to round down to even, then add 1
+        # This gives: 2->2->3, 3->2->3, 4->4->5, 5->4->5, 6->6->7, etc.
+        group = (month // 2) * 2 + 1
+        # Month 1 should map to group 1, not 2
+        group = np.where(month == 1, 1, group)
+        # December maps to group 1 of next year
+        group = np.where(dec_mask, 1, group)
+        year = np.where(dec_mask, year + 1, year)
+    else:  # EVEN_MONTH
+        # Even-month billing: meters read in even months (2,4,6,8,10,12)
+        # Billing periods: (1,2)->2, (3,4)->4, (5,6)->6, (7,8)->8, (9,10)->10, (11,12)->12
+        # Group key is the even month (meter reading month)
+        # No year-crossing for even-month billing (Jan+Feb are together, not Dec+Jan)
+        # Formula: ceiling division to even number: ((month + 1) // 2) * 2
+        group = ((month + 1) // 2) * 2
+
+    # Build PeriodIndex by creating period strings and converting
+    period_strs = [f"{int(y)}-{int(g)}" for y, g in zip(year, group)]
+    return pd.PeriodIndex(period_strs, freq="M")
 
 
 def _validate_usage_series(usage_kwh: pd.Series) -> None:

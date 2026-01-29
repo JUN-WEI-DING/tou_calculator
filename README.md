@@ -62,18 +62,20 @@ In tiered rate plans, electricity cost is calculated based on **total monthly us
 ```
 Example: Residential Non-TOU (表燈非時間電價)
 Non-Summer (非夏月):
-  0 - 120 kWh:    3.10 TWD/kWh
-  121 - 330 kWh:  3.60 TWD/kWh
-  331 - 500 kWh:  4.50 TWD/kWh
-  501 - 700 kWh:  5.90 TWD/kWh
-  701+ kWh:       7.00 TWD/kWh
+  0 - 120 kWh:    1.78 TWD/kWh
+  121 - 330 kWh:  2.26 TWD/kWh
+  331 - 500 kWh:  3.13 TWD/kWh
+  501 - 700 kWh:  4.24 TWD/kWh
+  701 - 1000 kWh: 5.27 TWD/kWh
+  1001+ kWh:      7.03 TWD/kWh
 
 Summer (夏月，6-9月):
-  0 - 120 kWh:    3.30 TWD/kWh
-  121 - 330 kWh:  3.90 TWD/kWh
-  331 - 500 kWh:  4.80 TWD/kWh
-  501 - 700 kWh:  6.20 TWD/kWh
-  701+ kWh:       7.50 TWD/kWh
+  0 - 120 kWh:    1.78 TWD/kWh
+  121 - 330 kWh:  2.55 TWD/kWh
+  331 - 500 kWh:  3.80 TWD/kWh
+  501 - 700 kWh:  5.14 TWD/kWh
+  701 - 1000 kWh: 6.44 TWD/kWh
+  1001+ kWh:      8.86 TWD/kWh
 ```
 
 ### Basic Example (基本範例)
@@ -95,14 +97,14 @@ plan = tou.plan("residential_non_tou")
 costs = plan.calculate_costs(monthly_usage)
 
 print(f"Annual Total: {costs.sum():.2f} TWD")
-# Output: Annual Total: 25845.60 TWD (example value)
+# Output: Annual Total: 7940.90 TWD
 
 # View monthly breakdown
 # 檢視每月明細
 for month, cost in costs.items():
     print(f"{month.strftime('%Y-%m')}: {cost:.2f} TWD")
-# 2025-01: 1748.40 TWD
-# 2025-02: 2075.40 TWD
+# 2025-01: 575.20 TWD
+# 2025-02: 665.60 TWD
 # ...
 ```
 
@@ -113,39 +115,44 @@ for month, cost in costs.items():
 # 檢視每個月的計算明細
 report = plan.monthly_breakdown(monthly_usage)
 print(report)
-#         month    season period  usage_kwh     cost
-# 0  2025-01-01  non_summer   flat      280.0  1748.40
-# 1  2025-02-01  non_summer   flat      320.0  2075.40
+#         month    season period  usage_kwh   cost
+# 0  2025-01-01  non_summer  tiered      280.0  575.2
+# 1  2025-02-01  non_summer  tiered      320.0  665.6
 # ...
 ```
 
 ### Using List/Dict (使用 List 或 Dict)
 
-For tiered rates, data typically represents monthly readings:
-累進費率的資料通常代表每月抄表：
+**Note:** For tiered rate plans, it's recommended to use `plan.calculate_costs()` directly. The convenience functions below are primarily designed for time-of-use plans.
+累進費率方案建議直接使用 `plan.calculate_costs()` 方法。
 
 ```python
-# Simple list of monthly readings
-# 簡單的每月抄表列表
-result = tou.calculate_bill_from_list(
-    usage=[280, 320, 250, 310],  # Monthly kWh readings
-    plan_id="residential_non_tou",
-    start="2025-01-01",
-    freq="1MS",  # 1 Month Start frequency
-)
-print(f"4-Month Total: {result['total'].sum():.2f} TWD")
+# For tiered rates, use plan.calculate_costs() with pandas Series
+# 累進費率建議使用 pandas Series + plan.calculate_costs()
+import pandas as pd
+import tou_calculator as tou
 
-# Or use dictionary with specific dates
-# 或使用指定日期的字典
-result = tou.calculate_bill_from_dict(
-    usage={
-        "2025-01-01": 280,
-        "2025-02-01": 320,
-        "2025-03-01": 250,
-    },
-    plan_id="表燈非時間電價",  # Supports Chinese name
-)
-print(result)
+usage = [280, 320, 250, 310]  # Monthly kWh readings
+dates = pd.date_range("2025-01-01", periods=len(usage), freq="MS")
+series = pd.Series(usage, index=dates)
+
+plan = tou.plan("residential_non_tou")
+costs = plan.calculate_costs(series)
+print(f"4-Month Total: {costs.sum():.2f} TWD")
+```
+
+If you prefer using list/dict for tiered rates, specify `billing_cycle_months=1`:
+如果一定要用 list/dict 計算累進費率，需要指定 `billing_cycle_months=1`：
+
+```python
+from tou_calculator import calculate_bill, BillingInputs
+
+dates = pd.date_range("2025-01-01", periods=4, freq="MS")
+series = pd.Series([280, 320, 250, 310], index=dates)
+
+inputs = BillingInputs(billing_cycle_months=1)
+result = calculate_bill(series, "residential_non_tou", inputs=inputs)
+print(f"4-Month Total: {result['total'].sum():.2f} TWD")
 ```
 
 ### Single Month Calculation (單月計算)
@@ -165,6 +172,104 @@ print(f"Cost: {cost:.2f} TWD")
 print(f"Average: {cost/monthly_kwh:.2f} TWD/kWh")
 ```
 
+### Two-Month Billing Cycle (隔月抄表)
+
+Taiwan Power Company (Taipower) implements **bimonthly meter reading and billing** for most residential and small business customers. This library fully supports this billing cycle with automatic tier limit doubling and rate change apportionment.
+
+臺灣對一般住宅及小商店實施 **隔月抄表收費制度**，本函式庫完整支援此抄表週期，包含級距上限加倍及電價異動分攤計算。
+
+#### Why Bimonthly Billing? (為何實施隔月抄表？)
+
+Since July 1985, Taipower has implemented bimonthly meter reading for residential and small business customers to:
+- **Reduce customer disturbance** (fewer meter reading visits)
+- **Save paper** (fewer paper bills mailed, supporting carbon reduction)
+
+自民國 74 年 7 月起，臺電對一般住宅及小商店使用者實施隔月抄表收費制度，目的在於：
+- **減少打擾使用者**（降低抄表次數）
+- **節省紙張**（減少紙本帳單郵寄，配合節能減碳政策）
+
+About half of customers are metered in **odd months** (1, 3, 5, 7, 9, 11), and the other half in **even months** (2, 4, 6, 8, 10, 12).
+
+約半數使用者係在 **單數月份** (1, 3, 5, 7, 9, 11 月) 抄表，其餘使用者則在 **雙數月份** (2, 4, 6, 8, 10, 12 月) 抄表。
+
+#### Understanding Bimonthly Billing
+
+| Meter Reading Cycle | Billing Periods (計費週期) | Meter Read Month (抄表月份) |
+|---------------------|--------------------------|---------------------------|
+| **Odd Month (奇數月抄表)** | 12月-1月, 2月-3月, 4月-5月, 6月-7月, 8月-9月, 10月-11月 | 1, 3, 5, 7, 9, 11月 |
+| **Even Month (偶數月抄表)** | 1月-2月, 3月-4月, 5月-6月, 7月-8月, 9月-10月, 11月-12月 | 2, 4, 6, 8, 10, 12月 |
+
+##### Tier Limit Doubling (級距度數加倍)
+
+> **Official Taipower Policy**: After adopting bimonthly meter reading, customer billing tier limits are **doubled** according to the tariff table.
+> **臺電官方說明**：採隔月抄表後，使用者計費之分段度數亦均依電價表之各級距度數加倍計算。
+
+For example, for residential customers:
+- **Monthly billing**: First 120 kWh at 1.68 TWD/kWh
+- **Bimonthly billing**: First 240 kWh at 1.68 TWD/kWh (tier limit doubled)
+
+例如住宅使用者：
+- **每月抄表**：120 度以內每度 1.68 元
+- **隔月抄表**：240 度以內每度 1.68 元（級距加倍）
+
+> This does **not increase** the customer's electricity burden—the tier limits simply cover a 2-month period instead of 1 month.
+> 並不會增加使用者電費負擔——級距上限只是涵蓋兩個月而非一個月。
+
+##### Rate Change Apportionment (電價異動分攤)
+
+> **Official Taipower Policy**: When usage crosses different rate periods (e.g., seasonal price changes or rate adjustments), usage is apportioned by the ratio of days before/after the change date.
+> **臺電官方說明**：用電橫跨不同電價期間時，將抄表期間的用電度數，按照電價異動前後日數佔全期用電日數之比例分攤。
+
+This **day-ratio apportionment method** is commonly adopted by power companies worldwide during rate adjustments and has been implemented in Taiwan for many years.
+
+此種 **按日數比例分攤度數方式** 向為各國電力公司在調整電價時所普遍採行，我國亦已實施多年。
+
+#### Using Bimonthly Billing
+
+```python
+import pandas as pd
+import tou_calculator as tou
+from tou_calculator import BillingCycleType
+
+# Usage for June-July (2 months)
+dates = pd.date_range("2025-06-01", "2025-07-31", freq="D")
+usage = pd.Series([5] * len(dates), index=dates)  # ~305 kWh total
+
+# Odd-month billing (meter read in July for June-July period)
+plan_odd = tou.plan("residential_non_tou", billing_cycle_type=BillingCycleType.ODD_MONTH)
+costs_odd = plan_odd.calculate_costs(usage)
+
+# Even-month billing (for May-June data, use April-May period or use appropriate dates)
+# Note: Even-month billing periods are (1,2)->2, (3,4)->4, (5,6)->6, etc.
+# For June-July data, you'd typically use odd-month billing instead
+plan_even = tou.plan("residential_non_tou", billing_cycle_type=BillingCycleType.EVEN_MONTH)
+
+# Monthly billing (default)
+plan_monthly = tou.plan("residential_non_tou")  # or BillingCycleType.MONTHLY
+
+print(f"Odd-month billing (June-July): {costs_odd.sum():.2f} TWD")
+print(f"Tier limit for 2-month period: 240 kWh (doubled from 120 kWh)")
+```
+
+#### Billing Cycle Comparison
+
+```python
+# Example: 240 kWh over 2 months
+usage_240 = pd.Series([4] * 60, index=pd.date_range("2025-06-01", periods=60, freq="D"))
+
+# Monthly: 120 kWh/month, each in tier 1 (0-120 kWh)
+plan_monthly = tou.plan("residential_non_tou")
+cost_monthly = plan_monthly.calculate_costs(usage_240)
+
+# Bimonthly: 240 kWh total, still in tier 1 (0-240 kWh for 2-month period)
+plan_odd = tou.plan("residential_non_tou", billing_cycle_type=BillingCycleType.ODD_MONTH)
+cost_bimonthly = plan_odd.calculate_costs(usage_240)
+
+# Same total cost! (tier limit doubled for bimonthly billing)
+print(f"Monthly billing total: {cost_monthly.sum():.2f} TWD")
+print(f"Bimonthly billing total: {cost_bimonthly.sum():.2f} TWD")
+```
+
 ---
 
 ## Time-of-Use Quick Start (時間電價快速入門)
@@ -177,8 +282,10 @@ This section is for **time-of-use (TOU) plans** where rates vary by time period 
 | Category | Plan IDs | 中文名稱 |
 |----------|----------|---------|
 | **Residential** | `residential_simple_2_tier`, `residential_simple_3_tier` | 簡易型二段式、三段式 |
-| **Low Voltage** | `low_voltage_2_tier`, `low_voltage_three_stage`, `low_voltage_ev` | 低壓電力二段式、三段式、EV |
-| **High Voltage** | `high_voltage_2_tier`, `high_voltage_three_stage`, `high_voltage_ev` | 高壓電力二段式、三段式、EV |
+| **Lighting** | `lighting_standard_2_tier`, `lighting_standard_3_tier` | 表燈標準二段式、三段式 |
+| **Low Voltage** | `low_voltage_2_tier`, `low_voltage_three_stage`, `low_voltage_ev`, `low_voltage_power` | 低壓電力二段式、三段式、EV、綜合 |
+| **High Voltage** | `high_voltage_2_tier`, `high_voltage_three_stage`, `high_voltage_ev`, `high_voltage_power`, `high_voltage_batch` | 高壓電力二段式、三段式、EV、綜合、包表 |
+| **Extra High Voltage** | `extra_high_voltage_2_tier`, `extra_high_voltage_three_stage`, `extra_high_voltage_power`, `extra_high_voltage_batch` | 特高壓電力二段式、三段式、綜合、包表 |
 
 ### Understanding TOU Rates (瞭解時間電價)
 
@@ -438,24 +545,25 @@ For tiered rate plans (non-TOU), energy cost is calculated based on **total mont
 Energy Cost = Σ(Tier_kWh × Tier_Rate) for each tier
 ```
 
-**Example: Residential Non-TOU (表燈非時間電價) - Non-Summer**
+**Example: Residential Non-TOU (表燈非時間電價) - Summer**
 
 | Usage Range (kWh) | Rate (TWD/kWh) | Example Calculation |
 |-------------------|----------------|---------------------|
-| 0 - 120 | 3.10 | First 120 kWh × 3.10 |
-| 121 - 330 | 3.60 | Next 210 kWh × 3.60 |
-| 331 - 500 | 4.50 | Next 170 kWh × 4.50 |
-| 501 - 700 | 5.90 | Next 200 kWh × 5.90 |
-| 701+ | 7.00 | Remaining kWh × 7.00 |
+| 0 - 120 | 1.78 | First 120 kWh × 1.78 |
+| 121 - 330 | 2.55 | Next 210 kWh × 2.55 |
+| 331 - 500 | 3.80 | Next 170 kWh × 3.80 |
+| 501 - 700 | 5.14 | Next 200 kWh × 5.14 |
+| 701 - 1000 | 6.44 | Next 300 kWh × 6.44 |
+| 1001+ | 8.86 | Remaining kWh × 8.86 |
 
-**Sample Calculation for 350 kWh in Non-Summer:**
+**Sample Calculation for 350 kWh in Summer:**
 
 | Tier | Usage | Rate | Cost |
 |------|-------|------|------|
-| 1st tier (0-120) | 120 kWh | 3.10 | 372.00 |
-| 2nd tier (121-330) | 210 kWh | 3.60 | 756.00 |
-| 3rd tier (331-500) | 20 kWh | 4.50 | 90.00 |
-| **Total** | **350 kWh** | - | **1,218.00 TWD** |
+| 1st tier (0-120) | 120 kWh | 1.78 | 213.60 |
+| 2nd tier (121-330) | 210 kWh | 2.55 | 535.50 |
+| 3rd tier (331-500) | 20 kWh | 3.80 | 76.00 |
+| **Total** | **350 kWh** | - | **825.10 TWD** |
 
 ### Factors Affecting Tiered Rates (影響累進費率的因素)
 
@@ -937,8 +1045,9 @@ calendar = tou.taiwan_calendar()
 print(calendar.is_holiday(datetime(2025, 1, 1)))
 print(tou.is_holiday(datetime(2025, 1, 1)))
 
-# custom_calendar
-custom = tou.custom_calendar(holidays={"2025-01-02"})
+# custom_calendar (requires date objects, not strings)
+from datetime import date
+custom = tou.custom_calendar(holidays=[date(2025, 1, 2)])
 print(custom.is_holiday(datetime(2025, 1, 2)))
 
 # TariffFactory

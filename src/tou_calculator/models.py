@@ -19,6 +19,19 @@ class PeriodType(Enum):
     OFF_PEAK = "off_peak"
 
 
+class BillingCycleType(Enum):
+    """抄表週期型別，用於累進費率方案的兩個月抄表計算
+
+    臺電對一般住宅及小商店實施隔月抄表收費制度：
+    - MONTHLY: 每月抄表（預設）
+    - ODD_MONTH: 奇數月抄表 (1,3,5,7,9,11月)，計費週期為 (1-2, 3-4, ..., 11-12)
+    - EVEN_MONTH: 偶數月抄表 (2,4,6,8,10,12月)，計費週期為 (2-3, 4-5, ..., 12-1)
+    """
+    MONTHLY = "monthly"
+    ODD_MONTH = "odd_month"
+    EVEN_MONTH = "even_month"
+
+
 @dataclass(frozen=True)
 class TimeSlot:
     start: time

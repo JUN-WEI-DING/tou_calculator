@@ -22,6 +22,7 @@ from tou_calculator.factory import (
     _build_tariff_plan_from_data,
     _season_strategy,
 )
+from tou_calculator.models import BillingCycleType
 
 
 @dataclass
@@ -369,11 +370,18 @@ def calculate_bill(
         usage_for_billing.index, inputs.billing_cycle_months
     )
 
+    # Convert billing_cycle_months to BillingCycleType
+    billing_cycle_type = BillingCycleType.MONTHLY
+    if inputs.billing_cycle_months and inputs.billing_cycle_months > 1:
+        # For bimonthly billing, default to odd-month cycle
+        # (can be overridden by adding logic to determine odd vs even)
+        billing_cycle_type = BillingCycleType.ODD_MONTH
+
     tariff_plan = _build_tariff_plan_from_data(
         plan_data,
         store,
         calendar,
-        billing_cycle_months=inputs.billing_cycle_months,
+        billing_cycle_type=billing_cycle_type,
     )
     context = tariff_plan.profile.evaluate(usage_for_billing.index)
     energy_costs = _calculate_energy_costs(
@@ -473,11 +481,18 @@ def calculate_bill_breakdown(
         usage_for_billing.index, inputs.billing_cycle_months
     )
 
+    # Convert billing_cycle_months to BillingCycleType
+    billing_cycle_type = BillingCycleType.MONTHLY
+    if inputs.billing_cycle_months and inputs.billing_cycle_months > 1:
+        # For bimonthly billing, default to odd-month cycle
+        # (can be overridden by adding logic to determine odd vs even)
+        billing_cycle_type = BillingCycleType.ODD_MONTH
+
     tariff_plan = _build_tariff_plan_from_data(
         plan_data,
         store,
         calendar,
-        billing_cycle_months=inputs.billing_cycle_months,
+        billing_cycle_type=billing_cycle_type,
     )
     context = tariff_plan.profile.evaluate(usage_for_billing.index)
 

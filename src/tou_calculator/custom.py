@@ -14,6 +14,7 @@ except ImportError:
 
 from tou_calculator.errors import CalendarError, TariffError
 from tou_calculator.models import (
+    BillingCycleType,
     ConsumptionTier,
     DaySchedule,
     PeriodType,
@@ -183,8 +184,12 @@ def build_tariff_rate(
     return TariffRate(period_costs=period_cost_map, tiered_rates=tiers)
 
 
-def build_tariff_plan(profile: TariffProfile, rates: TariffRate) -> TariffPlan:
-    return TariffPlan(profile, rates)
+def build_tariff_plan(
+    profile: TariffProfile,
+    rates: TariffRate,
+    billing_cycle_type: BillingCycleType = BillingCycleType.MONTHLY,
+) -> TariffPlan:
+    return TariffPlan(profile, rates, billing_cycle_type)
 
 
 def _build_slot(slot: TimeSlot | Mapping[str, Any]) -> TimeSlot:

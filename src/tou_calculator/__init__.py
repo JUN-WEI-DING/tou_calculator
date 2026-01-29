@@ -32,6 +32,7 @@ from tou_calculator.errors import (
     TariffError,
 )
 from tou_calculator.factory import PlanRequirements, PlanStore, TariffFactory
+from tou_calculator.models import BillingCycleType
 from tou_calculator.tariff import (
     PeriodType,
     SeasonType,
@@ -89,9 +90,16 @@ def residential_non_tou_plan(
     calendar_instance: TaiwanCalendar | None = None,
     cache_dir: Path | None = None,
     api_timeout: int = 10,
+    billing_cycle_type: BillingCycleType = BillingCycleType.MONTHLY,
 ) -> TariffPlan:
     """Create a residential non-TOU tiered plan."""
-    return plan("residential_non_tou", calendar_instance, cache_dir, api_timeout)
+    return plan(
+        "residential_non_tou",
+        calendar_instance,
+        cache_dir,
+        api_timeout,
+        billing_cycle_type,
+    )
 
 
 def available_plans() -> dict[str, str]:
@@ -110,6 +118,7 @@ def plan(
     calendar_instance: TaiwanCalendar | None = None,
     cache_dir: Path | None = None,
     api_timeout: int = 10,
+    billing_cycle_type: BillingCycleType = BillingCycleType.MONTHLY,
 ) -> TariffPlan:
     """Get a tariff plan by name.
 
@@ -121,6 +130,9 @@ def plan(
         calendar_instance: Optional calendar instance
         cache_dir: Optional cache directory for calendar
         api_timeout: API timeout for calendar
+        billing_cycle_type: Billing cycle type for tiered rate plans
+            (MONTHLY, ODD_MONTH, EVEN_MONTH). Default is MONTHLY.
+            Only affects tiered rate plans, not TOU plans.
 
     Returns:
         A TariffPlan instance
@@ -130,12 +142,17 @@ def plan(
 
     Example:
         >>> plan = tou.plan("residential_simple_2_tier")
+        >>> # For odd-month billing cycle (bimonthly)
+        >>> plan = tou.plan("residential_non_tou",
+        ...                 billing_cycle_type=BillingCycleType.ODD_MONTH)
     """
     calendar = calendar_instance or taiwan_calendar(
         cache_dir=cache_dir, api_timeout=api_timeout
     )
     try:
-        return TariffFactory.create(name, calendar=calendar)
+        return TariffFactory.create(
+            name, calendar=calendar, billing_cycle_type=billing_cycle_type
+        )
     except KeyError as exc:
         raise ValueError(f"Unsupported plan name: {name}") from exc
 
@@ -180,8 +197,11 @@ def monthly_breakdown(
     calendar_instance: TaiwanCalendar | None = None,
     cache_dir: Path | None = None,
     api_timeout: int = 10,
+    billing_cycle_type: BillingCycleType = BillingCycleType.MONTHLY,
 ) -> Any:
-    selected_plan = plan(plan_name, calendar_instance, cache_dir, api_timeout)
+    selected_plan = plan(
+        plan_name, calendar_instance, cache_dir, api_timeout, billing_cycle_type
+    )
     return selected_plan.monthly_breakdown(usage, include_shares=include_shares)
 
 
@@ -252,6 +272,7 @@ def get_plan_requirements(plan_name: str) -> dict[str, Any]:
 __all__ = [
     "TaiwanCalendar",
     "CustomCalendar",
+    "BillingCycleType",
     "TariffPlan",
     "TariffProfile",
     "PeriodType",

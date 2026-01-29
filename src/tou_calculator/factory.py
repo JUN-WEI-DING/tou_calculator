@@ -12,6 +12,7 @@ from tou_calculator.custom import (
     build_tariff_profile,
     build_tariff_rate,
 )
+from tou_calculator.models import BillingCycleType
 from tou_calculator.rates import TariffJSONLoader
 from tou_calculator.tariff import TaiwanDayTypeStrategy, TaiwanSeasonStrategy
 
@@ -205,13 +206,14 @@ class TariffFactory:
     def create_plan(
         self,
         plan_id: str,
-        billing_cycle_months: int | None = None,
+        billing_cycle_type: BillingCycleType = BillingCycleType.MONTHLY,
     ) -> Any:
         """Create a TariffPlan from the given plan_id.
 
         Args:
             plan_id: The plan identifier or Chinese name (flexible matching supported)
-            billing_cycle_months: Optional billing cycle duration in months
+            billing_cycle_type: Billing cycle type for tiered rate plans
+                (MONTHLY, ODD_MONTH, EVEN_MONTH). Default is MONTHLY.
 
         Returns:
             A TariffPlan instance
@@ -224,7 +226,7 @@ class TariffFactory:
             plan_data,
             self._store,
             self._calendar,
-            billing_cycle_months=billing_cycle_months,
+            billing_cycle_type=billing_cycle_type,
         )
 
     @classmethod
@@ -232,10 +234,10 @@ class TariffFactory:
         cls,
         plan_id: str,
         calendar: TaiwanCalendar | None = None,
-        billing_cycle_months: int | None = None,
+        billing_cycle_type: BillingCycleType = BillingCycleType.MONTHLY,
     ) -> Any:
         """Convenience method to create a plan without instantiating factory."""
-        return cls(calendar).create_plan(plan_id, billing_cycle_months)
+        return cls(calendar).create_plan(plan_id, billing_cycle_type)
 
     def list_plans(self) -> tuple[str, ...]:
         """Return all available plan IDs."""
@@ -274,10 +276,11 @@ def _normalize_schedules(schedules: list[dict[str, Any]]) -> list[dict[str, Any]
     return normalized
 
 
-def _normalize_tiers(
-    tiers: list[dict[str, Any]], billing_cycle_months: int | None = None
-) -> list[dict[str, Any]]:
-    """Normalize tier data from JSON, applying billing cycle scaling if needed."""
+def _normalize_tiers(tiers: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Normalize tier data from JSON.
+
+    Note: Tier scaling for bimonthly billing is handled in TariffPlan._calculate_tiered_costs()
+    """
     if not tiers:
         return []
 
@@ -286,11 +289,6 @@ def _normalize_tiers(
         start_kwh = float(item["min"])
         max_val = item.get("max")
         end_kwh = 999999.0 if max_val is None else float(max_val)
-
-        if billing_cycle_months and billing_cycle_months > 1:
-            start_kwh *= billing_cycle_months
-            if end_kwh < 999999.0:
-                end_kwh *= billing_cycle_months
 
         normalized.append(
             {
@@ -307,7 +305,7 @@ def _build_tariff_plan_from_data(
     plan_data: dict[str, Any],
     store: PlanStore,
     calendar: TaiwanCalendar,
-    billing_cycle_months: int | None = None,
+    billing_cycle_type: BillingCycleType = BillingCycleType.MONTHLY,
 ) -> Any:
     """Build a TariffPlan from raw plan data dictionary.
 
@@ -336,13 +334,11 @@ def _build_tariff_plan_from_data(
     )
 
     rates = plan_data.get("rates", [])
-    tiered = _normalize_tiers(
-        plan_data.get("tiers", []), billing_cycle_months=billing_cycle_months
-    )
+    tiered = _normalize_tiers(plan_data.get("tiers", []))
 
     rate = build_tariff_rate(
         period_costs=rates if rates else None,
         tiered_rates=tiered if tiered else None,
         season_strategy=season_strategy,
     )
-    return build_tariff_plan(profile, rate)
+    return build_tariff_plan(profile, rate, billing_cycle_type)
