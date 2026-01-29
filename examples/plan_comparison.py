@@ -9,8 +9,8 @@ This example shows how to:
 from __future__ import annotations
 
 import pandas as pd
+
 import tou_calculator as tou
-from datetime import datetime
 
 
 def create_household_usage(summer_month: bool = True) -> pd.Series:
@@ -194,9 +194,9 @@ def main() -> None:
     # Create typical household usage (July - summer)
     usage = create_household_usage(summer_month=True)
 
-    print(f"Sample Usage: July 2025 (31 days)")
+    print("Sample Usage: July 2025 (31 days)")
     print(f"  Total: {usage.sum():.1f} kWh")
-    print(f"  Pattern: Higher usage on weekday afternoons (2-5 PM)")
+    print("  Pattern: Higher usage on weekday afternoons (2-5 PM)")
     print()
 
     # Compare residential plans

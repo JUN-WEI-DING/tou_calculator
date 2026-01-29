@@ -8,9 +8,11 @@ This example shows how to:
 
 from __future__ import annotations
 
-import pandas as pd
-import tou_calculator as tou
 from pathlib import Path
+
+import pandas as pd
+
+import tou_calculator as tou
 
 
 def create_sample_csv(filename: str = "sample_usage.csv") -> None:

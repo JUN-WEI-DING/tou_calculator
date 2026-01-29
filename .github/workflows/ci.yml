@@ -5,6 +5,26 @@ on:
   pull_request:
 
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v3
+        with:
+          version: "latest"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+      - name: Create venv
+        run: uv venv
+      - name: Install local dependencies
+        run: uv pip install -e ".[dev]"
+      - name: Ruff Check
+        run: uv run ruff check .
+      - name: Ruff Format
+        run: uv run ruff format --check .
+      - name: Mypy
+        run: uv run mypy .
+
   tests:
     runs-on: ubuntu-latest
     strategy:
@@ -16,7 +36,7 @@ jobs:
         with:
           version: "latest"
           enable-cache: true
-          cache-dependency-glob: ""
+          cache-dependency-glob: "uv.lock"
       - name: Create venv
         run: uv venv --python ${{ matrix.python-version }}
       - name: Install dependencies

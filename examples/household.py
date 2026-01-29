@@ -10,8 +10,7 @@ This example simulates a realistic household scenario with:
 from __future__ import annotations
 
 import pandas as pd
-import tou_calculator as tou
-from datetime import datetime, timedelta
+
 from tou_calculator import BillingInputs, calculate_bill
 
 
@@ -153,13 +152,13 @@ def show_appliance_breakdown(usage: pd.Series) -> None:
     other_kwh = total_kwh - base_load_kwh - ac_kwh
 
     print(f"Base Load (24/7):        {base_load_kwh:8.2f} kWh ({base_load_kwh/total_kwh*100:5.1f}%)")
-    print(f"  - Refrigerator, WiFi, standby")
+    print("  - Refrigerator, WiFi, standby")
     print()
     print(f"Air Conditioning:         {ac_kwh:8.2f} kWh ({ac_kwh/total_kwh*100:5.1f}%)")
     print(f"  - ~{ac_hours_count} hours at ~2 kW")
     print()
     print(f"Other Appliances:        {other_kwh:8.2f} kWh ({other_kwh/total_kwh*100:5.1f}%)")
-    print(f"  - Cooking, shower, TV, lights")
+    print("  - Cooking, shower, TV, lights")
     print("=" * 70)
     print()
 
@@ -184,8 +183,8 @@ def suggest_cost_saving_tips(usage: pd.Series, bill: pd.DataFrame) -> None:
     potential_savings = shifted_kwh * (summer_peak_rate - summer_off_peak_rate)
 
     print(f"💡 Shift 20% of peak usage to off-peak: Save ~{potential_savings:.2f} TWD/month")
-    print(f"   - Run dishwasher/washing machine at night")
-    print(f"   - Set AC timer to cool room before peak hours")
+    print("   - Run dishwasher/washing machine at night")
+    print("   - Set AC timer to cool room before peak hours")
     print()
 
     # AC tips
@@ -194,9 +193,9 @@ def suggest_cost_saving_tips(usage: pd.Series, bill: pd.DataFrame) -> None:
     ac_pct = ac_kwh / total_kwh * 100
 
     print(f"💡 AC accounts for ~{ac_pct:.0f}% of your bill")
-    print(f"   - Set AC to 26-28°C instead of 24-25°C")
-    print(f"   - Use fan during cooler hours")
-    print(f"   - Close curtains during hot hours")
+    print("   - Set AC to 26-28°C instead of 24-25°C")
+    print("   - Use fan during cooler hours")
+    print("   - Close curtains during hot hours")
     print()
 
     # Weekend vs weekday
@@ -204,7 +203,7 @@ def suggest_cost_saving_tips(usage: pd.Series, bill: pd.DataFrame) -> None:
     weekend_avg = usage[usage.index.dayofweek >= 5].sum() / 30 / 24
 
     if weekday_avg > weekend_avg:
-        print(f"💡 Weekday usage is higher: Consider weekend activities")
+        print("💡 Weekday usage is higher: Consider weekend activities")
         print(f"   - Weekday: {weekday_avg:.2f} kWh/hour avg")
         print(f"   - Weekend: {weekend_avg:.2f} kWh/hour avg")
 

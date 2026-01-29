@@ -341,6 +341,10 @@ class TariffPlan:
         self.profile = profile
         self.rates = rates
 
+    @property
+    def name(self) -> str:
+        return self.profile.name
+
     def describe(self) -> dict[str, Any]:
         return {
             "profile": self.profile.describe(),

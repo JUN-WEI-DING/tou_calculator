@@ -25,21 +25,14 @@ from __future__ import annotations
 
 import copy
 import gc
-import json
 import math
-import multiprocessing
-import os
 import random
-import subprocess
 import sys
-import threading
 import time
-import traceback
 import weakref
 from concurrent.futures import ProcessPoolExecutor, ThreadPoolExecutor, as_completed
 from datetime import date, datetime, timedelta
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -52,7 +45,6 @@ from tou_calculator import (
     TariffError,
     calculate_bill,
 )
-from tou_calculator.errors import CalendarError
 
 # =============================================================================
 # CATEGORY 1: Security & Input Validation Tests
@@ -164,7 +156,7 @@ class TestSecurityAndInputValidation:
                 tou.plan(input_str)
             except (TariffError, ValueError):
                 pass  # Expected
-            except Exception as e:
+            except Exception:
                 # Should not crash
                 assert True
 
@@ -625,9 +617,9 @@ class TestAPICompatibility:
         """Test that old import patterns still work."""
         # These imports should work
         from tou_calculator import (
-            calculate_bill,
             BillingInputs,
             InvalidUsageInput,
+            calculate_bill,
         )
         assert callable(calculate_bill)
         assert BillingInputs is not None
@@ -736,7 +728,7 @@ class TestConcurrencyAndRaceConditions:
                 results = [f.result() for f in as_completed(futures)]
 
             assert all(r > 0 for r in results)
-        except Exception as e:
+        except Exception:
             # Multiprocessing may have issues in test environment
             assert True
 
@@ -841,8 +833,9 @@ class TestResourceManagement:
     def test_large_dataset_memory(self):
         """Test memory usage with large datasets."""
         try:
-            import psutil
             import os
+
+            import psutil
 
             process = psutil.Process(os.getpid())
             initial_mem = process.memory_info().rss / 1024 / 1024  # MB
@@ -1665,7 +1658,7 @@ def run_all_production_tests():
             except AssertionError as e:
                 failed_tests.append((category_name, method_name, str(e)))
                 print(f"  ❌ {method_name}: {e}")
-            except pytest.skip.Exception as e:
+            except pytest.skip.Exception:
                 skipped_tests.append((category_name, method_name))
                 print(f"  ⏭️  {method_name}: Skipped")
             except Exception as e:
