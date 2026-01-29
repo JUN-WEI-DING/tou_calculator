@@ -10,9 +10,6 @@ This module tests the billing cycle functionality including:
 
 from __future__ import annotations
 
-from datetime import datetime
-from pathlib import Path
-
 import pandas as pd
 import pytest
 
@@ -36,12 +33,14 @@ class TestBillingCycleGrouping:
         """Test that February and March are grouped together in ODD_MONTH billing."""
         # ODD_MONTH: meters read in odd months (1,3,5,7,9,11)
         # Billing periods: (2,3)->3 (March meter reading for Feb-Mar period)
-        index = pd.to_datetime([
-            "2025-02-15 10:00",
-            "2025-02-15 14:00",
-            "2025-03-15 10:00",
-            "2025-03-15 14:00",
-        ])
+        index = pd.to_datetime(
+            [
+                "2025-02-15 10:00",
+                "2025-02-15 14:00",
+                "2025-03-15 10:00",
+                "2025-03-15 14:00",
+            ]
+        )
         result = _billing_period_group_index(index, BillingCycleType.ODD_MONTH)
         # All should be grouped under March 2025
         assert len(result.unique()) == 1
@@ -51,12 +50,14 @@ class TestBillingCycleGrouping:
     def test_odd_month_grouping_april_may(self):
         """Test that April and May are grouped together in ODD_MONTH billing."""
         # (4,5)->5 (May meter reading for Apr-May period)
-        index = pd.to_datetime([
-            "2025-04-10 10:00",
-            "2025-04-20 14:00",
-            "2025-05-05 10:00",
-            "2025-05-25 14:00",
-        ])
+        index = pd.to_datetime(
+            [
+                "2025-04-10 10:00",
+                "2025-04-20 14:00",
+                "2025-05-05 10:00",
+                "2025-05-25 14:00",
+            ]
+        )
         result = _billing_period_group_index(index, BillingCycleType.ODD_MONTH)
         assert len(result.unique()) == 1
         assert result.unique()[0].month == 5
@@ -64,12 +65,14 @@ class TestBillingCycleGrouping:
     def test_odd_month_grouping_december_january(self):
         """Test that December and January are grouped correctly across year boundary."""
         # ODD_MONTH: December belongs to January period of next year
-        index = pd.to_datetime([
-            "2024-12-15 10:00",
-            "2024-12-20 14:00",
-            "2025-01-10 10:00",
-            "2025-01-20 14:00",
-        ])
+        index = pd.to_datetime(
+            [
+                "2024-12-15 10:00",
+                "2024-12-20 14:00",
+                "2025-01-10 10:00",
+                "2025-01-20 14:00",
+            ]
+        )
         result = _billing_period_group_index(index, BillingCycleType.ODD_MONTH)
         # December should map to group 1 of 2025, January to group 1 of 2025
         # All should be grouped under January 2025
@@ -81,10 +84,12 @@ class TestBillingCycleGrouping:
         """Test that February by itself stays in February for EVEN_MONTH billing."""
         # EVEN_MONTH: meters read in even months (2,4,6,8,10,12)
         # February is an even month and doesn't need pairing
-        index = pd.to_datetime([
-            "2025-02-05 10:00",
-            "2025-02-25 14:00",
-        ])
+        index = pd.to_datetime(
+            [
+                "2025-02-05 10:00",
+                "2025-02-25 14:00",
+            ]
+        )
         result = _billing_period_group_index(index, BillingCycleType.EVEN_MONTH)
         # Should be grouped under February 2025
         assert len(result.unique()) == 1
@@ -92,14 +97,16 @@ class TestBillingCycleGrouping:
         assert result.unique()[0].year == 2025
 
     def test_even_month_grouping_november_december(self):
-        """Test that November and December are grouped together in EVEN_MONTH billing."""
+        """Test Nov and Dec are grouped together in EVEN_MONTH billing."""
         # (11,12)->12 (December meter reading for Nov-Dec period)
-        index = pd.to_datetime([
-            "2025-11-10 10:00",
-            "2025-11-20 14:00",
-            "2025-12-05 10:00",
-            "2025-12-25 14:00",
-        ])
+        index = pd.to_datetime(
+            [
+                "2025-11-10 10:00",
+                "2025-11-20 14:00",
+                "2025-12-05 10:00",
+                "2025-12-25 14:00",
+            ]
+        )
         result = _billing_period_group_index(index, BillingCycleType.EVEN_MONTH)
         assert len(result.unique()) == 1
         assert result.unique()[0].month == 12
@@ -108,12 +115,14 @@ class TestBillingCycleGrouping:
         """Test that EVEN_MONTH billing does NOT group December with January."""
         # EVEN_MONTH: December is in period (11,12)->12, January is in period (1,2)->2
         # They should be in DIFFERENT billing periods (no year-crossing for even-month)
-        index = pd.to_datetime([
-            "2024-12-15 10:00",
-            "2024-12-20 14:00",
-            "2025-01-10 10:00",
-            "2025-01-20 14:00",
-        ])
+        index = pd.to_datetime(
+            [
+                "2024-12-15 10:00",
+                "2024-12-20 14:00",
+                "2025-01-10 10:00",
+                "2025-01-20 14:00",
+            ]
+        )
         result = _billing_period_group_index(index, BillingCycleType.EVEN_MONTH)
         # December dates should group to December 2024
         # January dates should group to February 2025
@@ -126,11 +135,13 @@ class TestBillingCycleGrouping:
 
     def test_monthly_grouping_no_change(self):
         """Test that MONTHLY billing doesn't group months together."""
-        index = pd.to_datetime([
-            "2025-02-15 10:00",
-            "2025-03-15 10:00",
-            "2025-04-15 10:00",
-        ])
+        index = pd.to_datetime(
+            [
+                "2025-02-15 10:00",
+                "2025-03-15 10:00",
+                "2025-04-15 10:00",
+            ]
+        )
         result = _billing_period_group_index(index, BillingCycleType.MONTHLY)
         # Each month should be separate
         assert len(result.unique()) == 3
@@ -179,28 +190,23 @@ class TestTierDoubling:
         assert plan.billing_cycle_type == BillingCycleType.MONTHLY
 
         # Create a new plan with ODD_MONTH billing
-        from tou_calculator.factory import PlanStore
-        store = PlanStore()
-        plan_data = store.resolve_plan("residential_non_tou")
-
-        from tou_calculator.tariff import TariffPlan, TaiwanSeasonStrategy
         from tou_calculator.models import TariffRate
+        from tou_calculator.tariff import TariffPlan
 
-        season_strat = TaiwanSeasonStrategy(summer_start=(6, 1), summer_end=(9, 30))
         rates = TariffRate(tiered_rates=plan.rates.tiered_rates)
 
         # Create plan with ODD_MONTH (tier doubling)
         plan_odd = TariffPlan(
             profile=plan.profile,
             rates=rates,
-            billing_cycle_type=BillingCycleType.ODD_MONTH
+            billing_cycle_type=BillingCycleType.ODD_MONTH,
         )
 
         # Create plan with MONTHLY (no doubling)
         plan_monthly = TariffPlan(
             profile=plan.profile,
             rates=rates,
-            billing_cycle_type=BillingCycleType.MONTHLY
+            billing_cycle_type=BillingCycleType.MONTHLY,
         )
 
         # Test 250 kWh in non-summer (February)
@@ -228,7 +234,7 @@ class TestTierDoubling:
         plan_odd = tou.tariff.TariffPlan(
             profile=plan.profile,
             rates=rates,
-            billing_cycle_type=BillingCycleType.ODD_MONTH
+            billing_cycle_type=BillingCycleType.ODD_MONTH,
         )
 
         # Test 700 kWh - should go into third tier with doubling
@@ -255,14 +261,16 @@ class TestTierDoubling:
         plan_odd = tou.tariff.TariffPlan(
             profile=plan.profile,
             rates=rates,
-            billing_cycle_type=BillingCycleType.ODD_MONTH
+            billing_cycle_type=BillingCycleType.ODD_MONTH,
         )
 
         # Feb + Mar should be grouped together
-        index = pd.to_datetime([
-            "2025-02-15 00:00",
-            "2025-03-15 00:00",
-        ])
+        index = pd.to_datetime(
+            [
+                "2025-02-15 00:00",
+                "2025-03-15 00:00",
+            ]
+        )
         usage = pd.Series([120.0, 130.0], index=index)  # 250 kWh total
 
         costs = plan_odd.calculate_costs(usage)
@@ -288,10 +296,12 @@ class TestSeasonalApportionment:
         """Test that season is correctly detected for billing periods."""
         # Create usage that spans season boundary
         # May 31 (non-summer) + June 1 (summer)
-        index = pd.to_datetime([
-            "2025-05-31 10:00",
-            "2025-06-01 10:00",
-        ])
+        index = pd.to_datetime(
+            [
+                "2025-05-31 10:00",
+                "2025-06-01 10:00",
+            ]
+        )
         usage = pd.Series([50.0, 50.0], index=index)
 
         # Check season detection via profile
@@ -300,7 +310,9 @@ class TestSeasonalApportionment:
 
         # May 31 should be non_summer, June 1 should be summer
         # SeasonType enum values need to be accessed via .value
-        seasons = [s.value if hasattr(s, 'value') else str(s) for s in context["season"]]
+        seasons = [
+            s.value if hasattr(s, "value") else str(s) for s in context["season"]
+        ]
         assert "non_summer" in seasons
         assert "summer" in seasons
 
@@ -308,16 +320,20 @@ class TestSeasonalApportionment:
         """Test that billing period can have different seasons."""
         # May (non-summer) + June (summer) - these cross the season boundary
         # Residential season: summer = June 1 - September 30
-        index = pd.to_datetime([
-            "2025-05-15 00:00",
-            "2025-06-15 00:00",
-        ])
+        index = pd.to_datetime(
+            [
+                "2025-05-15 00:00",
+                "2025-06-15 00:00",
+            ]
+        )
         usage = pd.Series([100.0, 100.0], index=index)
 
         plan = tou.plan("residential_non_tou")
         context = plan.profile.evaluate(usage.index)
 
-        season_values = [s.value if hasattr(s, 'value') else str(s) for s in context["season"]]
+        season_values = [
+            s.value if hasattr(s, "value") else str(s) for s in context["season"]
+        ]
 
         # Should have both seasons in the data
         assert "non_summer" in season_values
@@ -326,16 +342,20 @@ class TestSeasonalApportionment:
     def test_all_summer_period(self):
         """Test billing period entirely in summer."""
         # July + August (both summer)
-        index = pd.to_datetime([
-            "2025-07-15 00:00",
-            "2025-08-15 00:00",
-        ])
+        index = pd.to_datetime(
+            [
+                "2025-07-15 00:00",
+                "2025-08-15 00:00",
+            ]
+        )
         usage = pd.Series([100.0, 100.0], index=index)
 
         plan = tou.plan("residential_non_tou")
         context = plan.profile.evaluate(usage.index)
 
-        season_values = [s.value if hasattr(s, 'value') else str(s) for s in context["season"]]
+        season_values = [
+            s.value if hasattr(s, "value") else str(s) for s in context["season"]
+        ]
 
         # All should be summer
         assert all(s == "summer" for s in season_values)
@@ -343,16 +363,20 @@ class TestSeasonalApportionment:
     def test_all_non_summer_period(self):
         """Test billing period entirely in non-summer."""
         # October + November (both non-summer)
-        index = pd.to_datetime([
-            "2025-10-15 00:00",
-            "2025-11-15 00:00",
-        ])
+        index = pd.to_datetime(
+            [
+                "2025-10-15 00:00",
+                "2025-11-15 00:00",
+            ]
+        )
         usage = pd.Series([100.0, 100.0], index=index)
 
         plan = tou.plan("residential_non_tou")
         context = plan.profile.evaluate(usage.index)
 
-        season_values = [s.value if hasattr(s, 'value') else str(s) for s in context["season"]]
+        season_values = [
+            s.value if hasattr(s, "value") else str(s) for s in context["season"]
+        ]
 
         # All should be non_summer
         assert all(s == "non_summer" for s in season_values)
@@ -363,10 +387,12 @@ class TestYearCrossing:
 
     def test_odd_month_dec_january_grouping(self):
         """Test ODD_MONTH billing groups December with January of next year."""
-        index = pd.to_datetime([
-            "2024-12-15 10:00",
-            "2025-01-15 10:00",
-        ])
+        index = pd.to_datetime(
+            [
+                "2024-12-15 10:00",
+                "2025-01-15 10:00",
+            ]
+        )
 
         result = _billing_period_group_index(index, BillingCycleType.ODD_MONTH)
 
@@ -377,13 +403,15 @@ class TestYearCrossing:
         assert period.year == 2025
 
     def test_even_month_dec_january_grouping(self):
-        """Test that EVEN_MONTH billing keeps December and January in separate periods."""
+        """Test that EVEN_MONTH billing keeps Dec and Jan in separate periods."""
         # EVEN_MONTH: December is in period (11,12), January is in period (1,2)
         # They should NOT be grouped together
-        index = pd.to_datetime([
-            "2024-12-15 10:00",
-            "2025-01-15 10:00",
-        ])
+        index = pd.to_datetime(
+            [
+                "2024-12-15 10:00",
+                "2025-01-15 10:00",
+            ]
+        )
 
         result = _billing_period_group_index(index, BillingCycleType.EVEN_MONTH)
 
@@ -400,10 +428,12 @@ class TestYearCrossing:
         # December 2024 (non-summer) + January 2025 (non-summer)
         # Both non-summer, so rates are consistent
         # Note: calculate_bill uses standard tiers (no doubling)
-        index = pd.to_datetime([
-            "2024-12-15 00:00",
-            "2025-01-15 00:00",
-        ])
+        index = pd.to_datetime(
+            [
+                "2024-12-15 00:00",
+                "2025-01-15 00:00",
+            ]
+        )
         usage = pd.Series([120.0, 130.0], index=index)  # 250 kWh total
 
         result = tou.calculate_bill_simple(
@@ -425,7 +455,7 @@ class TestComparison:
     """Compare monthly vs bimonthly billing results."""
 
     def test_monthly_bimonthly_rate_difference(self, empty_cache_file):
-        """Test that TariffPlan with different cycle types produces different results."""
+        """Test TariffPlan with different cycle types produces different results."""
         # Compare MONTHLY vs ODD_MONTH billing for same usage
 
         from tou_calculator.models import TariffRate
@@ -437,13 +467,13 @@ class TestComparison:
         plan_monthly = tou.tariff.TariffPlan(
             profile=plan.profile,
             rates=rates,
-            billing_cycle_type=BillingCycleType.MONTHLY
+            billing_cycle_type=BillingCycleType.MONTHLY,
         )
 
         plan_odd = tou.tariff.TariffPlan(
             profile=plan.profile,
             rates=rates,
-            billing_cycle_type=BillingCycleType.ODD_MONTH
+            billing_cycle_type=BillingCycleType.ODD_MONTH,
         )
 
         index = pd.to_datetime(["2025-02-01 00:00"])
@@ -465,11 +495,13 @@ class TestComparison:
 
     def test_billing_period_count_monthly(self, empty_cache_file):
         """Test that monthly billing produces correct number of periods."""
-        index = pd.to_datetime([
-            "2025-01-15 00:00",
-            "2025-02-15 00:00",
-            "2025-03-15 00:00",
-        ])
+        index = pd.to_datetime(
+            [
+                "2025-01-15 00:00",
+                "2025-02-15 00:00",
+                "2025-03-15 00:00",
+            ]
+        )
         usage = pd.Series([100.0, 100.0, 100.0], index=index)
 
         # residential_simple_2_tier has monthly billing
@@ -484,12 +516,14 @@ class TestComparison:
 
     def test_billing_period_count_bimonthly(self, empty_cache_file):
         """Test that bimonthly billing produces correct number of periods."""
-        index = pd.to_datetime([
-            "2025-02-15 00:00",
-            "2025-03-15 00:00",
-            "2025-04-15 00:00",
-            "2025-05-15 00:00",
-        ])
+        index = pd.to_datetime(
+            [
+                "2025-02-15 00:00",
+                "2025-03-15 00:00",
+                "2025-04-15 00:00",
+                "2025-05-15 00:00",
+            ]
+        )
         usage = pd.Series([100.0, 100.0, 100.0, 100.0], index=index)
 
         # residential_non_tou has bimonthly (ODD_MONTH) billing
@@ -512,10 +546,12 @@ class TestComparison:
         # it uses the non_summer rate since Feb has more usage weight
         # Let me verify actual behavior...
 
-        index = pd.to_datetime([
-            "2025-02-15 00:00",
-            "2025-03-15 00:00",
-        ])
+        index = pd.to_datetime(
+            [
+                "2025-02-15 00:00",
+                "2025-03-15 00:00",
+            ]
+        )
         usage = pd.Series([150.0, 150.0], index=index)  # 300 kWh total
 
         result = tou.calculate_bill_simple(
@@ -528,7 +564,8 @@ class TestComparison:
         # The actual behavior: it uses non_summer rate (2.26) not summer (2.55)
         # This is because the season is determined from the tiered cost calculation
         # which may use a different logic
-        # Standard tiers with non-summer rate: 120*1.78 + 180*2.26 = 213.6 + 406.8 = 620.4
+        # Standard tiers with non-summer rate:
+        # 120*1.78 + 180*2.26 = 213.6 + 406.8 = 620.4
         expected = 120 * 1.78 + 180 * 2.26
         assert result["energy_cost"].iloc[0] == pytest.approx(expected, rel=0.01)
 
@@ -538,10 +575,12 @@ class TestComparison:
         # Groups to November (non-summer)
         # Note: calculate_bill uses standard tiers (no doubling)
 
-        index = pd.to_datetime([
-            "2025-10-15 00:00",
-            "2025-11-15 00:00",
-        ])
+        index = pd.to_datetime(
+            [
+                "2025-10-15 00:00",
+                "2025-11-15 00:00",
+            ]
+        )
         usage = pd.Series([150.0, 150.0], index=index)  # 300 kWh total
 
         result = tou.calculate_bill_simple(

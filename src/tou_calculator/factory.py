@@ -279,7 +279,8 @@ def _normalize_schedules(schedules: list[dict[str, Any]]) -> list[dict[str, Any]
 def _normalize_tiers(tiers: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Normalize tier data from JSON.
 
-    Note: Tier scaling for bimonthly billing is handled in TariffPlan._calculate_tiered_costs()
+    Note: Tier scaling for bimonthly billing is handled in
+    TariffPlan._calculate_tiered_costs()
     """
     if not tiers:
         return []
