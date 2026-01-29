@@ -227,6 +227,7 @@ Common plans:
 The `plan()` function accepts multiple input formats for your convenience:
 `plan()` 函式接受多種輸入格式供您選擇：
 
+
 ```python
 # All of these work for the same plan!
 # 以下寫法都能取得同一個方案！
@@ -539,7 +540,8 @@ PF Adjustment = Basic Fee × (Base PF% - Actual PF%) × 0.1%
 | Basic Fee (基本費) | N/A | Based on contract capacity, not usage |
 
 **Critical for Industrial Users:**
-Taipower calculates demand penalties based on **15-minute average demand** (臺電詳細電價表：最高需量以15分鐘平均計算). Using hourly or coarser data for `demand_kw` may significantly underestimate peak demand and penalty charges. See Section 4 for detailed guidance.
+Taipower calculates demand penalties based on **15-minute average demand** (臺電詳細電價表：最高需量以15分鐘平均計算).
+Using hourly or coarser data for `demand_kw` may significantly underestimate peak demand and penalty charges. See Section 4 for detailed guidance.
 
 ## API Quickstart (API 使用範例)
 
@@ -654,6 +656,7 @@ For industrial or complex scenarios involving Basic Fees (基本費), Contract C
 **Taiwan Power Company's Official Standard (臺電官方規定)**
 
 According to Taipower's official tariff regulations (詳細電價表 第八章), contract capacity and demand penalties are calculated based on **15-minute average demand**:
+ 臺電官方規定：契約容量與違約金以 **15 分鐘平均** 計算。
 
 > 「以雙方約定最高需量（**15分鐘平均**）為契約容量」
 
@@ -728,6 +731,7 @@ print(f"This Month's Bill: {bill['total'].iloc[0]:.0f} TWD")
 
 **Detailed Bill Breakdown:**
 If you need to know exactly how the bill was composed (e.g., how much was the Power Factor deduction):
+若您需要了解帳單的詳細組成（例如力率折扣金額）：
 
 ```python
 from tou_calculator import calculate_bill_breakdown
