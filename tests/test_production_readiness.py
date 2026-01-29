@@ -892,7 +892,7 @@ class TestDocumentationExamples:
         assert bill["total"].iloc[0] > 0
 
     def test_plan_id_consistency_in_readme(self):
-        """Test that available_plans() returns bilingual names and available_plan_ids() returns IDs."""
+        """Test available_plans() returns bilingual names and available_plan_ids() returns IDs."""
         # available_plans() returns bilingual display names
         display_names = tou.available_plans()
         assert len(display_names) == 20
