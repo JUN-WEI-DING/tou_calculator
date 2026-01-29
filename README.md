@@ -189,41 +189,24 @@ import tou_calculator as tou
 # List all available plans (returns display names)
 # 列出所有可用方案（返回顯示名稱）
 print(tou.available_plans())
-# Output:
 # 表燈非時間電價 Residential Non-TOU
-# 表燈非時間-住宅非營業 Non-Business Tiered
-# 表燈非時間-營業用 Business Tiered
-# 簡型二段式 Simple 2-Tier
-# 簡型三段式 Simple 3-Tier
-# 標準型二段式 Standard 2-Tier
-# 標準型三段式 Standard 3-Tier
-# 低壓電力非時間 Low Voltage Power
-# 低壓電力二段式 Low Voltage 2-Tier
-# 低壓電力三段式 Low Voltage 3-Stage
-# 低壓電動車 Low Voltage EV
-# 高壓電力 High Voltage Power
-# 高壓電力二段式 High Voltage 2-Tier
-# 高壓電力三段式 High Voltage 3-Stage
-# 高壓批次生產 High Voltage Batch
-# 高壓電動車 High Voltage EV
-# 特高壓電力 Extra High Voltage Power
-# 特高壓電力二段式 EHV 2-Tier
-# 特高壓電力三段式 EHV 3-Stage
-# 特高壓批次生產 EHV Batch
+# 簡易型二段式 Simple 2-Tier
+# ... (20 plans total)
 ```
 
 Common plans:
 常見的方案：
 
-| User Type | 使用者型別 | Plan ID | 方案 ID | Description | 說明 |
-|-----------|---------|----------|---------|-------------|------|
-| Residential | 家庭用電 | `residential_simple_2_tier` | 簡易型二段式 | Simple 2-tier | 簡單兩段式 |
-| Low Voltage | 低壓用電 | `low_voltage_2_tier` | 低壓電力二段式 | General commercial | 一般商業用電 |
-| High Voltage | 高壓用電 | `high_voltage_2_tier` | 高壓電力二段式 | Industrial | 工業用電 |
-| High Voltage 3-Stage | 高壓三段式 | `high_voltage_three_stage` | 高壓電力三段式 | Peak/Semi-Peak/Off-Peak | 尖峰/半尖峰/離峰 |
+| Category | 分類 | Plan ID (for code) | Display Name | 顯示名稱 |
+|----------|------|-------------------|--------------|----------|
+| Residential | 家庭用電 | `residential_simple_2_tier` | Simple 2-Tier | 簡易型二段式 |
+| Residential | 家庭用電 | `residential_simple_3_tier` | Simple 3-Tier | 簡易型三段式 |
+| Low Voltage | 低壓用電 | `low_voltage_2_tier` | Low Voltage 2-Tier | 低壓電力二段式 |
+| High Voltage | 高壓用電 | `high_voltage_2_tier` | High Voltage 2-Tier | 高壓電力二段式 |
+| High Voltage | 高壓用電 | `high_voltage_three_stage` | High Voltage 3-Stage | 高壓電力三段式 |
 
-**Note:** Use the **Plan ID** (e.g., `residential_simple_2_tier`) when referring to plans in your code.
-**注意：** 在程式碼中使用 **方案 ID**（如 `residential_simple_2_tier`）來引用方案。
+**Use the Plan ID** (e.g., `residential_simple_2_tier`) in your code. The `plan()` function also accepts Chinese names or flexible formats for convenience.
+**在程式碼中使用 Plan ID**（如 `residential_simple_2_tier`）。`plan()` 函式也接受中文名稱或彈性格式以方便使用。
 
 ---
 
@@ -556,12 +539,7 @@ import tou_calculator as tou
 print(tou.available_plans())
 # 20 plans available with bilingual names:
 # 表燈非時間電價 Residential Non-TOU
-# 表燈非時間-住宅非營業 Non-Business Tiered
-# 表燈非時間-營業用 Business Tiered
 # 簡易型二段式 Simple 2-Tier
-# 簡易型三段式 Simple 3-Tier
-# 標準型二段式 Standard 2-Tier
-# 標準型三段式 Standard 3-Tier
 # ... (and more)
 ```
 

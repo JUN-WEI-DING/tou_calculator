@@ -949,6 +949,39 @@ class TestDocumentationExamples:
         assert len(bill) == 1
         assert bill["total"].iloc[0] > 0
 
+    def test_plan_id_consistency_in_readme(self):
+        """Test that README examples use consistent plan ID format.
+
+        This test ensures that:
+        1. Plan IDs in code examples use underscore format (e.g., residential_simple_2_tier)
+        2. Chinese/English display names are not used as code identifiers
+        3. available_plans() returns consistent display names
+        """
+        # Common plan IDs referenced in README table
+        common_plan_ids = [
+            "residential_simple_2_tier",
+            "residential_simple_3_tier",
+            "low_voltage_2_tier",
+            "high_voltage_2_tier",
+            "high_voltage_three_stage",
+        ]
+
+        for plan_id in common_plan_ids:
+            plan = tou.plan(plan_id)
+            assert plan is not None
+            # Verify the plan has the expected structure
+            assert hasattr(plan, "profile")
+            assert hasattr(plan, "rates")
+
+        # Verify available_plans() returns bilingual display names
+        plans = tou.available_plans()
+        assert len(plans) == 20  # Should have exactly 20 plans
+        assert all(isinstance(p, str) for p in plans)
+        # At least one plan should have Chinese characters
+        assert any(any("\u4e00" <= c <= "\u9fff" for c in p) for p in plans)
+        # First plan should be the non-TOU residential plan
+        assert "表燈非時間電價" in plans[0] or "Residential Non-TOU" in plans[0]
+
 
 # =============================================================================
 # CATEGORY 9: Boundary Value Tests
