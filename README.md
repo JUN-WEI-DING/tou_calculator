@@ -334,7 +334,7 @@ bill = calculate_bill(usage_series, "high_voltage_2_tier", inputs=inputs)
 
 print(bill)
 # Energy Cost | Basic Fee | Penalty | PF Adjustment | Total
-# 電能費      | 基本費    | 違約金  | 力率調整     | 總計
+# 電能費      | 基本費    | 違約金  | 功率因數調整     | 總計
 ```
 
 ---
@@ -409,7 +409,7 @@ This section explains how Taiwan Power Company (Taipower) calculates electricity
 ### Quick Formula (電費計算公式)
 
 ```
-總電費 = 電能費 + 基本費 + 違約金 ± 力率調整 + 其他調整
+總電費 = 電能費 + 基本費 + 違約金 ± 功率因數調整 + 其他調整
 
 Total Bill = Energy Cost + Basic Fee + Penalty ± PF Adjustment + Others
 ```
@@ -496,12 +496,12 @@ Penalty = Over-contract × Basic Fee Rate × Penalty Multiplier
 
 ---
 
-### 4. Power Factor Adjustment (力率調整)
+### 4. Power Factor Adjustment (功率因數調整)
 
 **Power factor measures how efficiently you use electricity. Taipower rewards high PF and penalizes low PF.**
 
 ```
-力率調整 = 基本費 × (基準力率% - 實際力率%) × 0.1%
+功率因數調整 = 基本費 × (基準功率因數% - 實際功率因數%) × 0.1%
 
 PF Adjustment = Basic Fee × (Base PF% - Actual PF%) × 0.1%
 ```
