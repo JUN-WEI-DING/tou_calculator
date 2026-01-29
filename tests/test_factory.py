@@ -26,7 +26,7 @@ class TestAllPlans:
         assert len(plans) > 0
         assert isinstance(plans, list)
 
-    @pytest.mark.parametrize("plan_id", tou.available_plan_ids())
+    @pytest.mark.parametrize("plan_id", tou.available_plans())
     def test_plan_can_be_loaded(self, plan_id: str, tmp_path) -> None:
         """Test that each plan can be loaded without errors."""
         # Use empty cache to avoid network calls
@@ -38,7 +38,7 @@ class TestAllPlans:
         assert plan.profile is not None
         assert plan.rates is not None
 
-    @pytest.mark.parametrize("plan_id", tou.available_plan_ids())
+    @pytest.mark.parametrize("plan_id", tou.available_plans())
     def test_plan_has_valid_profile(self, plan_id: str, tmp_path) -> None:
         """Test that each plan has a valid profile structure."""
         cache_file = tmp_path / "2024.json"
@@ -57,7 +57,7 @@ class TestAllPlans:
         assert "day_types" in description
         assert "schedules" in description
 
-    @pytest.mark.parametrize("plan_id", tou.available_plan_ids())
+    @pytest.mark.parametrize("plan_id", tou.available_plans())
     def test_plan_evaluate_context(self, plan_id: str, tmp_path) -> None:
         """Test that each plan can evaluate context for a datetime index."""
         cache_file = tmp_path / "2024.json"
@@ -73,7 +73,7 @@ class TestAllPlans:
         assert "period" in context.columns
         assert len(context) == 24
 
-    @pytest.mark.parametrize("plan_id", tou.available_plan_ids())
+    @pytest.mark.parametrize("plan_id", tou.available_plans())
     def test_plan_calculate_costs(
         self, plan_id: str, tmp_path, sample_usage: pd.Series
     ) -> None:
@@ -87,7 +87,7 @@ class TestAllPlans:
         assert isinstance(costs, pd.Series)
         assert (costs >= 0).all()  # All costs should be non-negative
 
-    @pytest.mark.parametrize("plan_id", tou.available_plan_ids())
+    @pytest.mark.parametrize("plan_id", tou.available_plans())
     def test_plan_monthly_breakdown(
         self, plan_id: str, tmp_path, sample_usage: pd.Series
     ) -> None:
@@ -104,7 +104,7 @@ class TestAllPlans:
         assert "usage_kwh" in breakdown.columns
         assert "cost" in breakdown.columns
 
-    @pytest.mark.parametrize("plan_id", tou.available_plan_ids())
+    @pytest.mark.parametrize("plan_id", tou.available_plans())
     def test_plan_pricing_context(self, plan_id: str, tmp_path) -> None:
         """Test that each plan can provide pricing context."""
         from datetime import datetime
@@ -119,7 +119,7 @@ class TestAllPlans:
         assert "season" in context
         assert "period" in context
 
-    @pytest.mark.parametrize("plan_id", tou.available_plan_ids())
+    @pytest.mark.parametrize("plan_id", tou.available_plans())
     def test_plan_describe(self, plan_id: str, tmp_path) -> None:
         """Test that each plan can describe itself."""
         cache_file = tmp_path / "2024.json"

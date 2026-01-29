@@ -223,7 +223,7 @@ def test_complete_api_workflow():
     # Step 1: Check available plans
     plans = tou.available_plans()
     assert len(plans) > 0
-    assert "residential_simple_2_tier" in tou.available_plan_ids()
+    assert "residential_simple_2_tier" in tou.available_plans()
 
     # Step 2: Get plan details
     details = tou.plan_details("residential_simple_2_tier")

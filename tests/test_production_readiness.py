@@ -490,10 +490,10 @@ class TestAPICompatibility:
     def test_available_plans_consistency(self):
         """Test that available_plans() is consistent."""
         plans1 = tou.available_plans()
-        plan_ids1 = tou.available_plan_ids()
+        plan_ids1 = tou.available_plans()
 
         plans2 = tou.available_plans()
-        plan_ids2 = tou.available_plan_ids()
+        plan_ids2 = tou.available_plans()
 
         # Should be consistent across calls
         assert plans1 == plans2
@@ -1412,7 +1412,7 @@ class TestFuzzingAndRandomInput:
     def test_random_plan_from_available(self):
         """Test that all available plans work with random data."""
         random.seed(42)
-        plan_ids = tou.available_plan_ids()
+        plan_ids = tou.available_plans()
 
         for plan_id in random.sample(list(plan_ids), min(10, len(plan_ids))):
             dates = pd.date_range("2024-01-01", periods=100, freq="h")
@@ -1473,7 +1473,6 @@ class TestInstallationAndIntegration:
         """Test that all public API functions exist."""
         public_api = [
             "available_plans",
-            "available_plan_ids",
             "plan",
             "plan_details",
             "is_holiday",

@@ -94,23 +94,6 @@ def residential_non_tou_plan(
     return plan("residential_non_tou", calendar_instance, cache_dir, api_timeout)
 
 
-def available_plan_ids() -> tuple[str, ...]:
-    """Return list of all available plan IDs for use in code.
-
-    Use these IDs with `plan()` to get a tariff plan.
-    使用這些 ID 呼叫 `plan()` 來獲取電價方案。
-
-    Returns:
-        Tuple of plan ID strings (e.g., 'residential_simple_2_tier')
-
-    Example:
-        >>> ids = available_plan_ids()
-        >>> plan_id = ids[0]  # e.g., 'residential_simple_2_tier'
-        >>> plan = tou.plan(plan_id)
-    """
-    return TariffFactory().list_plans()
-
-
 def available_plans() -> list[str]:
     """Return list of all available plan IDs.
 
@@ -275,7 +258,6 @@ __all__ = [
     "taiwan_calendar",
     "custom_calendar",
     "available_plans",
-    "available_plan_ids",
     "calculate_costs",
     "get_context",
     "get_period",

@@ -250,7 +250,7 @@ def test_all_plans_stress():
     print("STRESS TEST 5: All Plans (所有方案壓力測試)")
     print("=" * 70)
 
-    plan_ids = tou.available_plan_ids()
+    plan_ids = tou.available_plans()
 
     # Tiered plans that don't support pricing_context with usage parameter
     # (because they need monthly totals to determine rate tier)
