@@ -95,9 +95,8 @@ def main():
     print("=" * 60)
 
     plans = tou.available_plans()
-    for i, plan_name in enumerate(plans[:10], 1):  # Show first 10
-        print(f"{i}. {plan_name}")
-    print(f"... and {len(plans) - 10} more")
+    for i, (plan_id, chinese_name) in enumerate(plans.items(), 1):
+        print(f"{i:2d}. {plan_id}: {chinese_name}")
     print()
 
     # =============================================================================
