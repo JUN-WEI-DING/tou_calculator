@@ -205,12 +205,12 @@ About half of customers are metered in **odd months** (1, 3, 5, 7, 9, 11), and t
 > **臺電官方說明**：採隔月抄表後，使用者計費之分段度數亦均依電價表之各級距度數加倍計算。
 
 For example, for residential customers:
-- **Monthly billing**: First 120 kWh at 1.68 TWD/kWh
-- **Bimonthly billing**: First 240 kWh at 1.68 TWD/kWh (tier limit doubled)
+- **Monthly billing**: First 120 kWh at 1.78 TWD/kWh
+- **Bimonthly billing**: First 240 kWh at 1.78 TWD/kWh (tier limit doubled)
 
 例如住宅使用者：
-- **每月抄表**：120 度以內每度 1.68 元
-- **隔月抄表**：240 度以內每度 1.68 元（級距加倍）
+- **每月抄表**：120 度以內每度 1.78 元
+- **隔月抄表**：240 度以內每度 1.78 元（級距加倍）
 
 > This does **not increase** the customer's electricity burden—the tier limits simply cover a 2-month period instead of 1 month.
 > 並不會增加使用者電費負擔——級距上限只是涵蓋兩個月而非一個月。
