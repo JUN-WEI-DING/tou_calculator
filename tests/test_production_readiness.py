@@ -953,8 +953,8 @@ class TestDocumentationExamples:
         """Test that README examples use consistent plan ID format.
 
         This test ensures that:
-        1. Plan IDs in code examples use underscore format (e.g., residential_simple_2_tier)
-        2. Chinese/English display names are not used as code identifiers
+        1. Plan IDs use underscore format (e.g., residential_simple_2_tier)
+        2. Display names are not used as code identifiers
         3. available_plans() returns consistent display names
         """
         # Common plan IDs referenced in README table
