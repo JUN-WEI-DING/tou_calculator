@@ -43,14 +43,17 @@ def create_realistic_household_usage(
         is_summer = month in [6, 7, 8, 9]  # June-September
         is_weekend = dow >= 5
 
-        # Base load (always running appliances)
+        # Initialize all loads
         base_load = 0.15  # Refrigerator, WiFi router, standby devices
+        morning_load = 0.0
+        daytime_load = 0.0
+        evening_load = 0.0
+        night_load = 0.0
+        ac_load = 0.0
 
         # Morning routine (6-9 AM)
         if 6 <= hour < 9:
             morning_load = 0.8 if is_weekend else 1.2  # Shower pump, cooking
-        else:
-            morning_load = 0
 
         # Daytime low usage (9 AM - 5 PM)
         if 9 <= hour < 17:
@@ -71,7 +74,6 @@ def create_realistic_household_usage(
             night_load = 0.2
 
         # Air conditioning (summer only)
-        ac_load = 0.0
         if include_ac and is_summer:
             if ac_hours_start <= hour < ac_hours_end:
                 if is_weekend:
