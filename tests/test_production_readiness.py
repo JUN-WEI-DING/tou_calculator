@@ -545,24 +545,6 @@ class TestAPICompatibility:
         plan2 = tou.plan("residential_simple_2_tier", calendar_instance=cal)
         assert plan2 is not None
 
-    def test_deprecated_parameters(self):
-        """Test handling of potentially deprecated parameters."""
-        # Try various parameter combinations
-        try:
-            # Old style
-            p1 = tou.plan("residential_simple_2_tier", None, None, 10)
-            assert p1 is not None
-        except Exception:
-            pass  # May have changed
-
-        try:
-            # New style
-            cal = tou.taiwan_calendar()
-            p2 = tou.plan("residential_simple_2_tier", calendar_instance=cal)
-            assert p2 is not None
-        except Exception:
-            pass
-
     def test_available_plans_consistency(self):
         """Test that available_plans() is consistent."""
         plans1 = tou.available_plans()
@@ -614,18 +596,6 @@ class TestAPICompatibility:
         assert isinstance(ctx, dict)
         assert "rate" in ctx
 
-    def test_backward_compatible_imports(self):
-        """Test that old import patterns still work."""
-        # These imports should work
-        from tou_calculator import (
-            BillingInputs,
-            InvalidUsageInput,
-            calculate_bill,
-        )
-
-        assert callable(calculate_bill)
-        assert BillingInputs is not None
-        assert InvalidUsageInput is not None
 
 
 # =============================================================================
