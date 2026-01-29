@@ -107,6 +107,7 @@ class TaiwanDayTypeStrategy:
     def get_all_day_types(self) -> list[str]:
         return ["weekday", "saturday", "sunday_holiday"]
 
+
 class TariffProfile:
     def __init__(
         self,
