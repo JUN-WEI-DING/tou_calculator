@@ -95,10 +95,18 @@ def residential_non_tou_plan(
 
 
 def available_plan_ids() -> tuple[str, ...]:
-    """Return list of all available plan IDs (internal use).
+    """Return list of all available plan IDs for use in code.
 
-    For user-friendly display, use `available_plans()` which returns
-    bilingual names.
+    Use these IDs with `plan()` to get a tariff plan.
+    使用這些 ID 呼叫 `plan()` 來獲取電價方案。
+
+    Returns:
+        Tuple of plan ID strings (e.g., 'residential_simple_2_tier')
+
+    Example:
+        >>> ids = available_plan_ids()
+        >>> plan_id = ids[0]  # e.g., 'residential_simple_2_tier'
+        >>> plan = tou.plan(plan_id)
     """
     return TariffFactory().list_plans()
 
