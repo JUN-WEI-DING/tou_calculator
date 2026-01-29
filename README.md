@@ -1,7 +1,7 @@
 [![PyPI Version](https://img.shields.io/pypi/v/tou-calculator)](https://pypi.org/project/tou-calculator/)
 [![Python](https://img.shields.io/pypi/pyversions/tou-calculator)](https://pypi.org/project/tou-calculator/)
 [![License](https://img.shields.io/github/license/JUN-WEI-DING/tou_calculator)](https://github.com/JUN-WEI-DING/tou_calculator/blob/main/LICENSE)
-[![CI](https://img.shields.io/badge/CI-success-success)](https://github.com/JUN-WEI-DING/tou_calculator/actions/workflows/ci.yml)
+[![CI](https://img.shields.io/endpoint?url=https://github.com/JUN-WEI-DING/tou_calculator/actions/workflows/CI/badge.svg)](https://github.com/JUN-WEI-DING/tou_calculator/actions/workflows/CI)
 
 # Taiwan TOU Calculator
 
