@@ -488,17 +488,22 @@ class TestAPICompatibility:
         assert plan2 is not None
 
     def test_available_plans_consistency(self):
-        """Test that available_plans() and available_plan_ids() are consistent."""
-        plans1 = tou.available_plans()
-        plan_ids1 = tou.available_plan_ids()
+        """Test that available_plans() returns plan ID to Chinese name mapping."""
+        plans = tou.available_plans()
 
-        plans2 = tou.available_plans()
-        plan_ids2 = tou.available_plan_ids()
-
-        # Should be consistent across calls
-        assert plans1 == plans2
-        assert plan_ids1 == plan_ids2
-        assert len(plans1) == len(plan_ids1)
+        # Should be a dict
+        assert isinstance(plans, dict)
+        # Should have 20 plans
+        assert len(plans) == 20
+        # Keys should be plan IDs (lowercase with underscores)
+        for plan_id in plans.keys():
+            assert plan_id.replace("_", "").islower()
+        # Values should be Chinese names
+        for chinese_name in plans.values():
+            assert any("\u4e00" <= c <= "\u9fff" for c in chinese_name)
+        # Common plan should exist
+        assert "residential_simple_2_tier" in plans
+        assert plans["residential_simple_2_tier"] == "簡易型二段式"
 
     def test_plan_details_structure(self):
         """Test that plan_details returns consistent structure."""
@@ -830,8 +835,10 @@ class TestDocumentationExamples:
     def test_available_plans_example(self):
         """Test the available_plans example."""
         plans = tou.available_plans()
-        assert isinstance(plans, list)
+        assert isinstance(plans, dict)
         assert len(plans) > 0
+        # Keys are plan IDs, values are Chinese names
+        assert "residential_simple_2_tier" in plans
 
     def test_plan_creation_example(self):
         """Test plan creation example."""
@@ -892,24 +899,17 @@ class TestDocumentationExamples:
         assert bill["total"].iloc[0] > 0
 
     def test_plan_id_consistency_in_readme(self):
-        """Test available_plans() returns bilingual names and available_plan_ids() returns IDs."""
-        # available_plans() returns bilingual display names
-        display_names = tou.available_plans()
-        assert len(display_names) == 20
-        # Should contain Chinese characters
-        assert any(any("\u4e00" <= c <= "\u9fff" for c in name)
-                   for name in display_names)
-        # First one should be residential non-TOU with bilingual name
-        assert "表燈非時間電價" in display_names[0]
+        """Test available_plans() returns plan ID to Chinese name mapping."""
+        plans = tou.available_plans()
 
-        # available_plan_ids() returns plan IDs for code
-        plan_ids = tou.available_plan_ids()
-        assert len(plan_ids) == 20
-        # All should be lowercase with underscores
-        for pid in plan_ids:
-            assert pid.replace("_", "").islower()
-        # First one should be residential_non_tou
-        assert plan_ids[0] == "residential_non_tou"
+        # Should be a dict with 20 entries
+        assert isinstance(plans, dict)
+        assert len(plans) == 20
+
+        # Keys are plan IDs, values are Chinese names
+        assert "residential_simple_2_tier" in plans
+        assert plans["residential_simple_2_tier"] == "簡易型二段式"
+        assert plans["residential_non_tou"] == "表燈非時間電價"
 
 
 # =============================================================================
@@ -1420,7 +1420,7 @@ class TestFuzzingAndRandomInput:
     def test_random_plan_from_available(self):
         """Test that all available plans work with random data."""
         random.seed(42)
-        plan_ids = tou.available_plan_ids()
+        plan_ids = list(tou.available_plans().keys())
 
         for plan_id in random.sample(list(plan_ids), min(10, len(plan_ids))):
             dates = pd.date_range("2024-01-01", periods=100, freq="h")
@@ -1481,7 +1481,6 @@ class TestInstallationAndIntegration:
         """Test that all public API functions exist."""
         public_api = [
             "available_plans",
-            "available_plan_ids",
             "plan",
             "plan_details",
             "is_holiday",

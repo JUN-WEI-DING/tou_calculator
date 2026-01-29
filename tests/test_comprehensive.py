@@ -58,7 +58,7 @@ def test_all_plans():
     print("TEST 2: 所有20個方案測試 (All 20 Plans)")
     print("=" * 60)
 
-    plan_ids = tou.available_plan_ids()
+    plan_ids = list(tou.available_plans().keys())
     sample_usage = pd.Series(
         [1.0] * 24,
         index=pd.date_range("2025-07-15", periods=24, freq="h"),

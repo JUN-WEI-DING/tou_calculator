@@ -103,8 +103,8 @@ def test_entry_named_helpers(tmp_path) -> None:
     cache_file = tmp_path / "2025.json"
     cache_file.write_text("[]", encoding="utf-8")
 
-    assert "high_voltage_2_tier" in tou.available_plan_ids()
-    assert len(tou.available_plan_ids()) > 0  # Bilingual names
+    assert "high_voltage_2_tier" in list(tou.available_plans().keys())
+    assert len(list(tou.available_plans().keys())) > 0  # Bilingual names
     assert tou.period_at(
         datetime(2025, 7, 15, 10, 0),
         "residential_simple_2_tier",

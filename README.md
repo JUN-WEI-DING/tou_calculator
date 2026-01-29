@@ -186,31 +186,27 @@ Taipower has many plans. Let's see what's available:
 ```python
 import tou_calculator as tou
 
-# List all available plans (bilingual display names)
-# 列出所有可用方案（雙語顯示名稱）
-print(tou.available_plans())
-# 表燈非時間電價 Residential Non-TOU
-# 表燈非時間-住宅非營業 Non-Business Tiered
-# 簡易型二段式 Simple 2-Tier
-# ... (20 plans total)
+# List all available plans (plan ID -> Chinese name)
+# 列出所有可用方案（plan ID -> 中文名稱）
+plans = tou.available_plans()
+for plan_id, chinese_name in plans.items():
+    print(f"{plan_id}: {chinese_name}")
 
-# Get plan IDs for use in code
-# 取得程式碼中使用的 plan ID
-ids = tou.available_plan_ids()
-# ('residential_non_tou', 'lighting_non_business_tiered',
-#  'residential_simple_2_tier', ...)
+# residential_non_tou: 表燈非時間電價
+# residential_simple_2_tier: 簡易型二段式
+# ... (20 plans total)
 ```
 
 Common plans:
 常見的方案：
 
-| Category | 分類 | Plan ID (for code) | Display Name | 顯示名稱 |
-|----------|------|-------------------|--------------|----------|
-| Residential | 家庭用電 | `residential_simple_2_tier` | Simple 2-Tier | 簡易型二段式 |
-| Residential | 家庭用電 | `residential_simple_3_tier` | Simple 3-Tier | 簡易型三段式 |
-| Low Voltage | 低壓用電 | `low_voltage_2_tier` | Low Voltage 2-Tier | 低壓電力二段式 |
-| High Voltage | 高壓用電 | `high_voltage_2_tier` | High Voltage 2-Tier | 高壓電力二段式 |
-| High Voltage | 高壓用電 | `high_voltage_three_stage` | High Voltage 3-Stage | 高壓電力三段式 |
+| Plan ID | 中文名稱 |
+|---------|---------|
+| `residential_simple_2_tier` | 簡易型二段式 |
+| `residential_simple_3_tier` | 簡易型三段式 |
+| `low_voltage_2_tier` | 低壓電力二段式 |
+| `high_voltage_2_tier` | 高壓電力二段式 |
+| `high_voltage_three_stage` | 高壓電力三段式 |
 
 **Use the Plan ID** (e.g., `residential_simple_2_tier`) in your code.
 **在程式碼中使用 Plan ID**（如 `residential_simple_2_tier`）。
@@ -711,8 +707,7 @@ print(result["adjustment_details"])  # Specific adjustments (e.g., PF discount a
 Quick index of all public entry points exported by `tou_calculator`.
 
 ### Core helpers (核心入口)
-- `available_plans()` list supported plans with bilingual (EN/ZH) display names
-- `available_plan_ids()` list plan IDs for use in code
+- `available_plans()` returns dict of {plan_id: chinese_name}
 - `plan(name, ...)` get a `TariffPlan` by plan ID
 - `plan_details(name, ...)` return structured plan schema
 - `period_at(target, plan_name, ...)` return period enum at timepoint
