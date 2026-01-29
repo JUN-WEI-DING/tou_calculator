@@ -186,17 +186,11 @@ Taipower has many plans. Let's see what's available:
 ```python
 import tou_calculator as tou
 
-# Get plan IDs for use in code
-# 取得程式碼中使用的方案 ID
-ids = tou.available_plan_ids()
-# ('residential_non_tou', 'lighting_non_business_tiered',
-#  'residential_simple_2_tier', ...)
-
-# Get bilingual display names
-# 取得雙語顯示名稱
-names = tou.available_plans()
-# ['表燈非時間電價 Residential Non-TOU',
-#  '簡易型二段式 Simple 2-Tier', ...]
+# List all available plan IDs
+# 列出所有可用的 plan ID
+print(tou.available_plans())
+# ['residential_non_tou', 'lighting_non_business_tiered',
+#  'residential_simple_2_tier', 'residential_simple_3_tier', ...]
 ```
 
 Common plans:
@@ -209,33 +203,6 @@ Common plans:
 | Low Voltage | 低壓用電 | `low_voltage_2_tier` | Low Voltage 2-Tier | 低壓電力二段式 |
 | High Voltage | 高壓用電 | `high_voltage_2_tier` | High Voltage 2-Tier | 高壓電力二段式 |
 | High Voltage | 高壓用電 | `high_voltage_three_stage` | High Voltage 3-Stage | 高壓電力三段式 |
-
-**Use the Plan ID** (e.g., `residential_simple_2_tier`) in your code. The `plan()` function also accepts Chinese names or flexible formats for convenience.
-**在程式碼中使用 Plan ID**（如 `residential_simple_2_tier`）。`plan()` 函式也接受中文名稱或彈性格式以方便使用。
-
----
-
-**Alternative Input Formats (可選輸入格式):**
-
-For convenience, `plan()` also accepts alternative formats:
-為方便起見，`plan()` 也接受其他格式：
-
-```python
-# Plan ID (recommended) - 推薦
-plan = tou.plan("residential_simple_2_tier")
-
-# Chinese name - 中文名稱
-plan = tou.plan("簡易型二段式")
-
-# English short name - 英文簡稱
-plan = tou.plan("Simple 2-Tier")
-
-# Full display name - 完整顯示名稱
-plan = tou.plan("簡易型二段式 Simple 2-Tier")
-
-# Without spaces/hyphens - 無空格或連字元
-plan = tou.plan("residentialsimple2tier")
-```
 
 ---
 
@@ -733,9 +700,8 @@ print(result["adjustment_details"])  # Specific adjustments (e.g., PF discount a
 Quick index of all public entry points exported by `tou_calculator`.
 
 ### Core helpers (核心入口)
-- `available_plans()` list supported plans with bilingual (EN/ZH) display names
-- `available_plan_ids()` list plan IDs for use in code
-- `plan(name, ...)` get a `TariffPlan` (accepts English ID, Chinese, bilingual, or flexible formats)
+- `available_plans()` list available plan IDs for use in code
+- `plan(name, ...)` get a `TariffPlan` by plan ID
 - `plan_details(name, ...)` return structured plan schema
 - `period_at(target, plan_name, ...)` return period enum at timepoint
 - `period_context(target, plan_name, ...)` return season/day/period context
@@ -793,12 +759,7 @@ from tou_calculator import (
 ### Core helpers (核心入口)
 
 ```python
-# available_plan_ids - get IDs for code
-ids = tou.available_plan_ids()
-plan_id = ids[0]  # e.g., 'residential_simple_2_tier'
-plan = tou.plan(plan_id)
-
-# available_plans - get bilingual display names
+# available_plans
 print(tou.available_plans())
 
 # plan + plan_details

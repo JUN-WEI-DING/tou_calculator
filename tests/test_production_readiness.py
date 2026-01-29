@@ -188,73 +188,15 @@ class TestSecurityAndInputValidation:
 class TestMultilingualAndEncoding:
     """Test multilingual input handling and encoding."""
 
-    def test_chinese_plan_names(self):
-        """Test all Chinese plan name variations."""
-        chinese_names = [
-            "簡易型二段式",
-            "簡易型三段式",
-            "標準型二段式",
-            "標準型三段式",
-            "表燈非時間電價",
-            "高壓電力二段式",
-            "特高壓電力三段式",
-        ]
+    def test_invalid_plan_name_errors(self):
+        """Test that invalid plan names raise appropriate errors."""
+        # Chinese names should not work anymore
+        with pytest.raises(ValueError):
+            tou.plan("簡易型二段式")
 
-        for name in chinese_names:
-            try:
-                plan = tou.plan(name)
-                if plan is not None:
-                    assert hasattr(plan, "calculate_costs")
-            except TariffError:
-                pass  # Some names may not match
-
-    def test_bilingual_plan_names(self):
-        """Test bilingual (English/Chinese) plan names."""
-        bilingual_names = [
-            "簡易型二段式 Simple 2-Tier",
-            "Simple 2-Tier 簡易型二段式",
-            "高壓電力 High Voltage",
-        ]
-
-        for name in bilingual_names:
-            try:
-                plan = tou.plan(name)
-                if plan is not None:
-                    assert hasattr(plan, "calculate_costs")
-            except (TariffError, ValueError, KeyError):
-                pass  # Expected for some variations
-
-    def test_mixed_script_input(self):
-        """Test mixed script (Latin, Chinese, numbers) input."""
-        mixed_inputs = [
-            "residential簡易型2段式",
-            "簡易型residential二段式",
-            "123簡易型456",
-            "Residential簡易型2-Tier二段式",
-        ]
-
-        for mixed in mixed_inputs:
-            try:
-                _ = tou.plan(mixed)
-                assert True  # Should not crash
-            except Exception:
-                assert True  # No crash is acceptable
-
-    def test_unicode_edge_cases(self):
-        """Test Unicode edge cases (emoji, combining marks, etc.)."""
-        unicode_inputs = [
-            "residential_simple_2_tier😀",
-            "residential_💡_2_tier",
-            "re\u0301sident",  # e with combining acute accent
-            "resi\u0302dent",  # i with combining circumflex
-            "𝐫𝐞𝐬𝐢𝐝𝐞𝐧𝐭𝐢𝐚𝐥",  # Mathematical bold
-        ]
-
-        for uni_input in unicode_inputs:
-            try:
-                tou.plan(uni_input)
-            except Exception:
-                assert True  # Should handle gracefully
+        # Invalid English ID
+        with pytest.raises(ValueError):
+            tou.plan("invalid_plan_name")
 
     def test_encoding_preservation(self):
         """Test that string encoding is preserved correctly."""
@@ -954,8 +896,8 @@ class TestDocumentationExamples:
 
         This test ensures that:
         1. Plan IDs use underscore format (e.g., residential_simple_2_tier)
-        2. Display names are not used as code identifiers
-        3. available_plans() returns consistent display names
+        2. available_plans() returns plan IDs (not display names)
+        3. What you see is what you use
         """
         # Common plan IDs referenced in README table
         common_plan_ids = [
@@ -973,14 +915,17 @@ class TestDocumentationExamples:
             assert hasattr(plan, "profile")
             assert hasattr(plan, "rates")
 
-        # Verify available_plans() returns bilingual display names
+        # Verify available_plans() returns plan IDs
         plans = tou.available_plans()
         assert len(plans) == 20  # Should have exactly 20 plans
         assert all(isinstance(p, str) for p in plans)
-        # At least one plan should have Chinese characters
-        assert any(any("\u4e00" <= c <= "\u9fff" for c in p) for p in plans)
-        # First plan should be the non-TOU residential plan
-        assert "表燈非時間電價" in plans[0] or "Residential Non-TOU" in plans[0]
+        # All should be valid plan IDs (lowercase with underscores)
+        for p in plans:
+            assert p.islower() or "_" in p or "_" in p
+        # First plan should be residential_non_tou
+        assert plans[0] == "residential_non_tou"
+        # Common plans should be in the list
+        assert "residential_simple_2_tier" in plans
 
 
 # =============================================================================
