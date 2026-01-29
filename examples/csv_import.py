@@ -107,14 +107,30 @@ def calculate_and_show(
 
 
 def export_to_csv(
-    usage: pd.Series, costs: pd.Series, filename: str = "result.csv"
+    usage: pd.Series, plan_id: str = "residential_simple_2_tier", filename: str = "result.csv"
 ) -> None:
-    """Export results to CSV file."""
+    """Export hourly results to CSV file."""
+    # Calculate hourly costs by multiplying usage by rate at each timepoint
+    plan = tou.plan(plan_id)
+
+    # Get the rate for each hour
+    context_df = plan.profile.evaluate(usage.index)
+    hourly_rates = []
+    for _, row in context_df.iterrows():
+        season = row["season"]
+        period = row["period"]
+        rate = plan.rates.get_cost(season, period)
+        hourly_rates.append(rate)
+
+    # Calculate hourly costs
+    hourly_costs = usage.values * pd.Series(hourly_rates, index=usage.index).values
+
     result = pd.DataFrame(
         {
             "timestamp": usage.index.strftime("%Y-%m-%d %H:%M"),
             "usage_kwh": usage.values,
-            "cost_twd": costs.values,
+            "rate_twd_per_kwh": hourly_rates,
+            "cost_twd": hourly_costs,
         }
     )
     result.to_csv(filename, index=False, encoding="utf-8-sig")
@@ -150,9 +166,7 @@ def main() -> None:
 
     # Step 4: Export results
     print("Step 4: Exporting results to CSV...")
-    plan = tou.plan("residential_simple_2_tier")
-    costs = plan.calculate_costs(usage)
-    export_to_csv(usage, costs, "result.csv")
+    export_to_csv(usage, "residential_simple_2_tier", "result.csv")
     print()
 
     # Clean up sample files
