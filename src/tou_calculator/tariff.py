@@ -477,7 +477,9 @@ class TariffPlan:
         sorted_tiers = sorted(self.rates.tiered_rates, key=lambda x: x.start_kwh)
 
         # For bimonthly billing, tier limits are doubled
-        tier_multiplier = 2 if self.billing_cycle_type != BillingCycleType.MONTHLY else 1
+        tier_multiplier = (
+            2 if self.billing_cycle_type != BillingCycleType.MONTHLY else 1
+        )
 
         for period, period_usage in period_groups:
             total_usage_kwh = period_usage.sum()
@@ -500,7 +502,9 @@ class TariffPlan:
                 # Adjust tier limits for bimonthly billing
                 tier_end = tier.end_kwh if tier.end_kwh < 999999 else float("inf")
                 tier_start = last_limit_kwh
-                tier_end = tier_end if tier_multiplier == 1 else tier_end * tier_multiplier
+                tier_end = (
+                    tier_end if tier_multiplier == 1 else tier_end * tier_multiplier
+                )
 
                 # Calculate usage within this tier
                 tier_limit_kwh = tier_end - tier_start
@@ -536,7 +540,8 @@ class TariffPlan:
         context = self.profile.evaluate(usage_kwh.index)
 
         if self.rates.tiered_rates:
-            # For tiered rates, use billing period grouping (bimonthly for non-monthly cycles)
+            # For tiered rates, use billing period grouping
+            # (bimonthly for non-monthly cycles)
             billing_period_index = _billing_period_group_index(
                 usage_kwh.index, self.billing_cycle_type
             )
@@ -643,10 +648,17 @@ def _apportion_usage_by_season(
         {"before": 季節變動前的用電 Series, "after": 季節變動後的用電 Series}
     """
     if len(usage_kwh) == 0:
-        return {"before": pd.Series([], dtype=float), "after": pd.Series([], dtype=float)}
+        return {
+            "before": pd.Series([], dtype=float),
+            "after": pd.Series([], dtype=float),
+        }
 
     # Create change date timestamp
-    year = usage_kwh.index.year[0] if hasattr(usage_kwh.index.year, '__getitem__') else usage_kwh.index.year
+    year = (
+        usage_kwh.index.year[0]
+        if hasattr(usage_kwh.index.year, "__getitem__")
+        else usage_kwh.index.year
+    )
     change_date = pd.Timestamp(year, season_change_month, season_change_day)
 
     # Filter usage before and after change date
@@ -699,7 +711,9 @@ def _apportion_usage_by_season(
     # Create weights for apportionment
     if len(before_indices) > 0:
         before_weights = pd.Series(
-            apportioned_before * usage_kwh[before_indices] / usage_kwh[before_indices].sum(),
+            apportioned_before
+            * usage_kwh[before_indices]
+            / usage_kwh[before_indices].sum(),
             index=before_indices,
         )
     else:
@@ -707,7 +721,9 @@ def _apportion_usage_by_season(
 
     if len(after_indices) > 0:
         after_weights = pd.Series(
-            apportioned_after * usage_kwh[after_indices] / usage_kwh[after_indices].sum(),
+            apportioned_after
+            * usage_kwh[after_indices]
+            / usage_kwh[after_indices].sum(),
             index=after_indices,
         )
     else:
@@ -739,12 +755,13 @@ def _billing_period_group_index(
 
     if cycle_type == BillingCycleType.ODD_MONTH:
         # Odd-month billing: meters read in odd months (1,3,5,7,9,11)
-        # Billing periods: (12,1)->1, (2,3)->3, (4,5)->5, (6,7)->7, (8,9)->9, (10,11)->11
+        # Billing periods: (12,1)->1, (2,3)->3, (4,5)->5, (6,7)->7,
+        #                  (8,9)->9, (10,11)->11
         # Group key is the odd month (meter reading month)
         # For month 1: group 1 (Jan meter reading for Dec-Jan period)
         # For months 2,3: group 3 (Mar meter reading for Feb-Mar period)
         # For months 4,5: group 5, etc.
-        # For month 12: group 1 of next year (Dec belongs to Jan period of next year)
+        # For month 12: group 1 of next year (Dec belongs to Jan period)
         dec_mask = month == 12
         # Use floor division to round down to even, then add 1
         # This gives: 2->2->3, 3->2->3, 4->4->5, 5->4->5, 6->6->7, etc.
@@ -756,7 +773,8 @@ def _billing_period_group_index(
         year = np.where(dec_mask, year + 1, year)
     else:  # EVEN_MONTH
         # Even-month billing: meters read in even months (2,4,6,8,10,12)
-        # Billing periods: (1,2)->2, (3,4)->4, (5,6)->6, (7,8)->8, (9,10)->10, (11,12)->12
+        # Billing periods: (1,2)->2, (3,4)->4, (5,6)->6, (7,8)->8,
+        #                  (9,10)->10, (11,12)->12
         # Group key is the even month (meter reading month)
         # No year-crossing for even-month billing (Jan+Feb are together, not Dec+Jan)
         # Formula: ceiling division to even number: ((month + 1) // 2) * 2

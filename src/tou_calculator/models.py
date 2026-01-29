@@ -27,6 +27,7 @@ class BillingCycleType(Enum):
     - ODD_MONTH: 奇數月抄表 (1,3,5,7,9,11月)，計費週期為 (1-2, 3-4, ..., 11-12)
     - EVEN_MONTH: 偶數月抄表 (2,4,6,8,10,12月)，計費週期為 (2-3, 4-5, ..., 12-1)
     """
+
     MONTHLY = "monthly"
     ODD_MONTH = "odd_month"
     EVEN_MONTH = "even_month"
