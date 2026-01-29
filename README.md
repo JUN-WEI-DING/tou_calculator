@@ -186,15 +186,15 @@ Taipower has many plans. Let's see what's available:
 ```python
 import tou_calculator as tou
 
-# List all available plans
-# 列出所有可用的方案
+# List all available plans (returns display names)
+# 列出所有可用方案（返回顯示名稱）
 print(tou.available_plans())
 # Output:
 # 表燈非時間電價 Residential Non-TOU
 # 表燈非時間-住宅非營業 Non-Business Tiered
 # 表燈非時間-營業用 Business Tiered
-# 簡易型二段式 Simple 2-Tier
-# 簡易型三段式 Simple 3-Tier
+# 簡型二段式 Simple 2-Tier
+# 簡型三段式 Simple 3-Tier
 # 標準型二段式 Standard 2-Tier
 # 標準型三段式 Standard 3-Tier
 # 低壓電力非時間 Low Voltage Power
@@ -215,39 +215,38 @@ print(tou.available_plans())
 Common plans:
 常見的方案：
 
-| User Type | 使用者型別 | Recommended Plan | 推薦方案 | Description | 說明 |
-|-----------|---------|------------------|---------|-------------|------|
-| Residential | 家庭用電 | `residential_simple_2_tier` | | Simple 2-tier | 簡單兩段式 |
-| Low Voltage | 低壓用電 | `low_voltage_2_tier` | | General commercial | 一般商業用電 |
-| High Voltage | 高壓用電 | `high_voltage_2_tier` | | Industrial | 工業用電 |
-| High Voltage 3-Stage | 高壓三段式 | `high_voltage_three_stage` | | Peak/Semi-Peak/Off-Peak | 尖峰/半尖峰/離峰 |
+| User Type | 使用者型別 | Plan ID | 方案 ID | Description | 說明 |
+|-----------|---------|----------|---------|-------------|------|
+| Residential | 家庭用電 | `residential_simple_2_tier` | 簡易型二段式 | Simple 2-tier | 簡單兩段式 |
+| Low Voltage | 低壓用電 | `low_voltage_2_tier` | 低壓電力二段式 | General commercial | 一般商業用電 |
+| High Voltage | 高壓用電 | `high_voltage_2_tier` | 高壓電力二段式 | Industrial | 工業用電 |
+| High Voltage 3-Stage | 高壓三段式 | `high_voltage_three_stage` | 高壓電力三段式 | Peak/Semi-Peak/Off-Peak | 尖峰/半尖峰/離峰 |
 
-**Flexible Plan Name Matching (靈活的方案名稱匹配):**
+**Note:** Use the **Plan ID** (e.g., `residential_simple_2_tier`) when referring to plans in your code.
+**注意：** 在程式碼中使用 **方案 ID**（如 `residential_simple_2_tier`）來引用方案。
 
-The `plan()` function accepts multiple input formats for your convenience:
-`plan()` 函式接受多種輸入格式供您選擇：
+---
 
+**Alternative Input Formats (可選輸入格式):**
+
+For convenience, `plan()` also accepts alternative formats:
+為方便起見，`plan()` 也接受其他格式：
 
 ```python
-# All of these work for the same plan!
-# 以下寫法都能取得同一個方案！
-
-# English ID (英文 ID)
+# Plan ID (recommended) - 推薦
 plan = tou.plan("residential_simple_2_tier")
 
-# Chinese name (中文)
+# Chinese name - 中文名稱
 plan = tou.plan("簡易型二段式")
 
-# English part only (僅英文)
+# English short name - 英文簡稱
 plan = tou.plan("Simple 2-Tier")
 
-# Full bilingual from available_plans() output
-# 使用 available_plans() 輸出的完整雙語名稱
+# Full display name - 完整顯示名稱
 plan = tou.plan("簡易型二段式 Simple 2-Tier")
 
-# Without spaces/hyphens (無空格或連字元)
+# Without spaces/hyphens - 無空格或連字元
 plan = tou.plan("residentialsimple2tier")
-plan = tou.plan("簡易型二段式")
 ```
 
 ---
