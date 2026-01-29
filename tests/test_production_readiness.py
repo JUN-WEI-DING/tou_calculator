@@ -892,36 +892,16 @@ class TestDocumentationExamples:
         assert bill["total"].iloc[0] > 0
 
     def test_plan_id_consistency_in_readme(self):
-        """Test that README examples use consistent plan ID format.
-
-        This test ensures that:
-        1. available_plans() returns bilingual display names
-        2. available_plan_ids() returns plan IDs for code
-        3. plan() only accepts plan IDs
-        """
-        # available_plans() returns bilingual display names
-        display_names = tou.available_plans()
-        assert len(display_names) == 20
-        # Should contain Chinese characters
-        assert any(any("\u4e00" <= c <= "\u9fff" for c in name)
-                   for name in display_names)
-        # First one should be residential non-TOU
-        assert "表燈非時間電價" in display_names[0]
-
-        # available_plan_ids() returns plan IDs for code
-        plan_ids = tou.available_plan_ids()
-        assert len(plan_ids) == 20
-        # All should be lowercase with underscores
-        for pid in plan_ids:
+        """Test that available_plans() returns plan IDs only."""
+        plans = tou.available_plans()
+        assert len(plans) == 20
+        # All should be plan IDs (lowercase with underscores)
+        for pid in plans:
             assert pid.replace("_", "").islower()
-
-        # plan() only accepts plan IDs
-        plan = tou.plan("residential_simple_2_tier")
-        assert plan is not None
-
-        # Chinese display names should NOT work
-        with pytest.raises(ValueError):
-            tou.plan("簡易型二段式")
+        # First one should be residential_non_tou
+        assert plans[0] == "residential_non_tou"
+        # Common plans should be in the list
+        assert "residential_simple_2_tier" in plans
 
 
 # =============================================================================

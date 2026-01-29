@@ -112,36 +112,11 @@ def available_plan_ids() -> tuple[str, ...]:
 
 
 def available_plans() -> list[str]:
-    """Return list of all available plans with bilingual (EN/ZH) names."""
-    store = PlanStore()
-    plan_ids = store.list_plan_ids()
+    """Return list of all available plan IDs.
 
-    # Bilingual name mapping for each plan ID
-    # 雙語名稱對映
-    bilingual_names = {
-        "residential_non_tou": "表燈非時間電價 Residential Non-TOU",
-        "lighting_non_business_tiered": "表燈非時間-住宅非營業 Non-Business Tiered",
-        "lighting_business_tiered": "表燈非時間-營業用 Business Tiered",
-        "residential_simple_2_tier": "簡易型二段式 Simple 2-Tier",
-        "residential_simple_3_tier": "簡易型三段式 Simple 3-Tier",
-        "lighting_standard_2_tier": "標準型二段式 Standard 2-Tier",
-        "lighting_standard_3_tier": "標準型三段式 Standard 3-Tier",
-        "low_voltage_power": "低壓電力非時間 Low Voltage Power",
-        "low_voltage_2_tier": "低壓電力二段式 Low Voltage 2-Tier",
-        "low_voltage_three_stage": "低壓電力三段式 Low Voltage 3-Stage",
-        "low_voltage_ev": "低壓電動車 Low Voltage EV",
-        "high_voltage_power": "高壓電力 High Voltage Power",
-        "high_voltage_2_tier": "高壓電力二段式 High Voltage 2-Tier",
-        "high_voltage_three_stage": "高壓電力三段式 High Voltage 3-Stage",
-        "high_voltage_batch": "高壓批次生產 High Voltage Batch",
-        "high_voltage_ev": "高壓電動車 High Voltage EV",
-        "extra_high_voltage_power": "特高壓電力 Extra High Voltage Power",
-        "extra_high_voltage_2_tier": "特高壓電力二段式 EHV 2-Tier",
-        "extra_high_voltage_three_stage": "特高壓電力三段式 EHV 3-Stage",
-        "extra_high_voltage_batch": "特高壓批次生產 EHV Batch",
-    }
-
-    return [bilingual_names.get(pid, pid) for pid in plan_ids]
+    Use these IDs directly with `plan()`.
+    """
+    return list(TariffFactory().list_plans())
 
 
 def plan(
