@@ -484,11 +484,11 @@ PF Adjustment = Basic Fee × (Base PF% - Actual PF%) × 0.1%
 |------|-------------|--------------|
 | Energy Cost (Peak) | 10,000 kWh × $5.16 | 51,600 |
 | Energy Cost (Off-peak) | 20,000 kWh × $2.06 | 41,200 |
-| **Energy Cost (Subtotal)** | | **92,800** |
+| **Energy Cost (Subtotal)** | 92,800 (sum) | **92,800** |
 | Basic Fee | 200 kW × $236.20 | 47,240 |
 | Penalty | (230-200) kW × $236.20 × 2 | 14,172 |
 | PF Discount | -47,240 × 1.5% | -709 |
-| **Total** | | **153,503** |
+| **Total** | 153,503 (sum) | **153,503** |
 
 ---
 
