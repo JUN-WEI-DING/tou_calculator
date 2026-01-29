@@ -515,11 +515,13 @@ This guide covers the primary functions for querying plans, checking rates, and 
 ```python
 import tou_calculator as tou
 
-print(tou.available_plans())
-# 20 plans available with bilingual names:
-# 表燈非時間電價 Residential Non-TOU
-# 簡易型二段式 Simple 2-Tier
-# ... (and more)
+plans = tou.available_plans()
+for plan_id, chinese_name in plans.items():
+    print(f"{plan_id}: {chinese_name}")
+
+# residential_non_tou: 表燈非時間電價
+# residential_simple_2_tier: 簡易型二段式
+# ... (20 plans total)
 ```
 
 **Get Plan Details:**
