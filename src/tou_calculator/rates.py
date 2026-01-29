@@ -6,8 +6,6 @@ import json
 from importlib import resources
 from typing import IO, Any
 
-from tou_calculator.models import ConsumptionTier, PeriodType, SeasonType, TariffRate
-
 
 class TariffJSONLoader:
     def __init__(
@@ -55,33 +53,6 @@ class TariffJSONLoader:
                 return plan
         raise KeyError(f"Plan not found: {plan_id}")
 
-    def get_residential_simple_rate(self) -> TariffRate:
-        try:
-            section = self._find_plan("residential_simple_2_tier")["rates"]
-            period_costs: dict[tuple[SeasonType | str, PeriodType | str], float] = {}
-
-            for item in section:
-                season = item.get("season")
-                period = item.get("period")
-                cost = item.get("cost")
-                if season == "summer" and period == "peak":
-                    period_costs[(SeasonType.SUMMER, PeriodType.PEAK)] = float(cost)
-                elif season == "summer" and period == "off_peak":
-                    period_costs[(SeasonType.SUMMER, PeriodType.OFF_PEAK)] = float(cost)
-                elif season == "non_summer" and period == "peak":
-                    period_costs[(SeasonType.NON_SUMMER, PeriodType.PEAK)] = float(cost)
-                elif season == "non_summer" and period == "off_peak":
-                    period_costs[(SeasonType.NON_SUMMER, PeriodType.OFF_PEAK)] = float(
-                        cost
-                    )
-
-            return TariffRate(period_costs=period_costs)
-        except (KeyError, TypeError):
-            return TariffRate(period_costs={})
-
-    def get_high_voltage_2_tier_rate(self) -> TariffRate:
-        return TariffRate(period_costs={})
-
     def get_plan_data(self, plan_id: str) -> dict[str, Any]:
         """Get raw plan data by ID.
 
@@ -95,21 +66,3 @@ class TariffJSONLoader:
             KeyError: If plan_id is not found
         """
         return self._find_plan(plan_id)
-
-    def get_residential_non_tou_rate(self) -> TariffRate:
-        try:
-            section = self._find_plan("residential_non_tou")["tiers"]
-            tiers = []
-
-            for item in section:
-                tier = ConsumptionTier(
-                    start_kwh=float(item["min"]),
-                    end_kwh=float(item["max"]) if item["max"] is not None else 999999.0,
-                    summer_cost=float(item["summer"]),
-                    non_summer_cost=float(item["non_summer"]),
-                )
-                tiers.append(tier)
-
-            return TariffRate(tiered_rates=tiers)
-        except KeyError:
-            return TariffRate(tiered_rates=[])
