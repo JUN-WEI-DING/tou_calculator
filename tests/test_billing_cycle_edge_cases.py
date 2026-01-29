@@ -123,11 +123,13 @@ class TestBillingCycleEdgeCases:
         )
 
         # Only 3 data points over 2 months
-        dates = pd.to_datetime([
-            "2025-06-01",
-            "2025-06-15",
-            "2025-07-31",
-        ])
+        dates = pd.to_datetime(
+            [
+                "2025-06-01",
+                "2025-06-15",
+                "2025-07-31",
+            ]
+        )
         usage = pd.Series([100.0, 100.0, 100.0], index=dates)
         costs = plan.calculate_costs(usage)
 
