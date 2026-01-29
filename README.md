@@ -268,7 +268,7 @@ costs = plan.calculate_costs(usage_series)
 # 看結果
 print(f"Total Cost: {costs.iloc[0]:.2f} TWD")  # 總電費
 print(costs)
-# 2025-07-01    28.90
+# 2025-07-01    28.90 (實際值可能略有不同)
 # Name: cost, dtype: float64
 ```
 
@@ -308,8 +308,8 @@ print(bill)
 # 檢視每月統計
 report = plan.monthly_breakdown(usage_series)
 print(report)
-#         month  season period  usage_kwh     cost
-# 0 2025-07-01  summer   peak        5.6  28.90
+#        month  season period  usage_kwh    cost
+# 0 2025-07-01  summer   peak        5.6  28.896
 ```
 
 ---
@@ -569,6 +569,8 @@ context = plan_obj.profile.engine.evaluate(
 print(f"Season: {context['season'].iloc[0]}")  # SeasonType.SUMMER
 print(f"Period: {context['period'].iloc[0]}")  # PeriodType.PEAK
 ```
+
+**Note:** `period_at()` returns `PeriodType` enum (e.g., `PeriodType.PEAK`), while `pricing_context()` returns string (e.g., `"peak"`).
 
 **Get Pricing for a Timepoint:**
 
@@ -888,7 +890,7 @@ All 20 Taipower plans are now supported. Plans are organized by category:
 | **High Voltage** | `high_voltage_power`, `high_voltage_2_tier`, `high_voltage_three_stage`, `high_voltage_batch`, `high_voltage_ev` |
 | **Extra High Voltage** | `extra_high_voltage_power`, `extra_high_voltage_2_tier`, `extra_high_voltage_three_stage`, `extra_high_voltage_batch` |
 
-## Performance (效能效能)
+## Performance (效能)
 
 The library is optimized for processing large time-series datasets efficiently through vectorized calendar queries and intelligent caching.
 

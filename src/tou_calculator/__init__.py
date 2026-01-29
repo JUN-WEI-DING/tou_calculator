@@ -100,28 +100,9 @@ def available_plans() -> dict[str, str]:
     Returns:
         {plan_id: chinese_name} mapping
     """
-    return {
-        "residential_non_tou": "表燈非時間電價",
-        "lighting_non_business_tiered": "表燈非時間-住宅非營業",
-        "lighting_business_tiered": "表燈非時間-營業用",
-        "residential_simple_2_tier": "簡易型二段式",
-        "residential_simple_3_tier": "簡易型三段式",
-        "lighting_standard_2_tier": "標準型二段式",
-        "lighting_standard_3_tier": "標準型三段式",
-        "low_voltage_power": "低壓電力非時間",
-        "low_voltage_2_tier": "低壓電力二段式",
-        "low_voltage_three_stage": "低壓電力三段式",
-        "low_voltage_ev": "低壓電動車",
-        "high_voltage_power": "高壓電力",
-        "high_voltage_2_tier": "高壓電力二段式",
-        "high_voltage_three_stage": "高壓電力三段式",
-        "high_voltage_batch": "高壓批次生產",
-        "high_voltage_ev": "高壓電動車",
-        "extra_high_voltage_power": "特高壓電力",
-        "extra_high_voltage_2_tier": "特高壓電力二段式",
-        "extra_high_voltage_three_stage": "特高壓電力三段式",
-        "extra_high_voltage_batch": "特高壓批次生產",
-    }
+    from tou_calculator.factory import _PLAN_NAME_MAP
+
+    return dict(_PLAN_NAME_MAP)
 
 
 def plan(
