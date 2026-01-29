@@ -76,6 +76,7 @@ def test_extreme_data_volumes():
         print(f"  {name}: {status}")
 
     assert all("✅" in r[-1] for r in results), "Some data sizes failed"
+    return True
 
 
 # =============================================================================
@@ -133,6 +134,7 @@ def test_extreme_values():
             print(f"❌ {name}: 錯誤的異常型別 - {type(e).__name__}: {e}")
 
     # Check that no unexpected errors occurred (no assertion needed for this test)
+    return True
 
 
 # =============================================================================
@@ -191,6 +193,7 @@ def test_concurrent_access():
         assert completed >= n_workers * 0.95, "Concurrent test failed"
 
     print("\n✅ 並發訪問測試透過")
+    return True
 
 
 # =============================================================================
@@ -237,6 +240,7 @@ def test_memory_stability():
     assert total_delta <= 100, "Possible memory leak detected"
 
     print("  ✅ 記憶體穩定性良好")
+    return True
 
 
 # =============================================================================
@@ -366,6 +370,7 @@ def test_boundary_times():
             assert False, f"Boundary test {name} failed: {e}"
 
     # All tests passed (no assertion needed at end)
+    return True
 
 
 # =============================================================================
@@ -419,6 +424,7 @@ def test_holiday_edge_cases():
             all_correct = False
 
     assert all_correct, "Some edge cases failed"
+    return True
 
 
 # =============================================================================
@@ -461,6 +467,7 @@ def test_repeated_object_creation():
     assert not errors, f"Errors occurred: {errors[:5]}"
 
     print("  ✅ 物件建立穩定")
+    return True
 
 
 # =============================================================================
@@ -512,6 +519,7 @@ def test_large_date_range():
             print(f"❌ {name}: {e}")
 
     assert all("✅" in r[-1] for r in results), "Some year ranges failed"
+    return True
 
 
 # =============================================================================
@@ -575,6 +583,7 @@ def test_billing_stress():
             print(f"❌ {plan_id}: {type(e).__name__}: {e}")
 
     assert all("✅" in r[-1] for r in results), "Some plans failed"
+    return True
 
 
 # =============================================================================
@@ -645,6 +654,7 @@ def test_invalid_input_handling():
 
     # At least 80% should be properly rejected
     assert rejection_rate >= 80, f"Rejection rate too low: {rejection_rate:.0f}%"
+    return True
 
 
 # =============================================================================
@@ -698,6 +708,7 @@ def test_performance_consistency():
     assert ratio <= 3.0, f"Performance variance too high: {ratio:.2f}x"
 
     print("  ✅ 效能穩定")
+    return True
 
 
 # =============================================================================

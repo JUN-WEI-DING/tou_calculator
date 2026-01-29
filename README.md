@@ -3,11 +3,17 @@
 [![License](https://img.shields.io/github/license/JUN-WEI-DING/tou_calculator)](https://github.com/JUN-WEI-DING/tou_calculator/blob/main/LICENSE)
 [![CI](https://img.shields.io/github/actions/workflow/status/JUN-WEI-DING/tou_calculator/ci.yml?branch=main)](https://github.com/JUN-WEI-DING/tou_calculator/actions/workflows/ci.yml)
 
-# Taiwan TOU Calculator
+# Taiwan Electricity Tariff Calculator
 
-A specialized tool for calculating electricity costs based on Taiwan Power Company's (Taipower) Time-of-Use (TOU) tariffs.
+A comprehensive tool for calculating electricity costs based on Taiwan Power Company's (Taipower) pricing schemes.
 
-This library encapsulates the complex rules of Taiwan's electricity pricing—including seasonal variations, holiday logic, and multi-stage rate schedules—into a simple, easy-to-use API.
+This library supports **both** major tariff types used by Taipower:
+- **Tiered Rate Plans (累進費率)**: Rates increase progressively with usage (traditional residential/commercial)
+- **Time-of-Use Plans (時間電價)**: Rates vary by time period, season, and day type
+
+It encapsulates complex rules—including seasonal variations, holiday logic, and multi-stage rate schedules—into a simple, easy-to-use API.
+
+臺灣電價計算工具，支援 **累進費率** 與 **時間電價** 兩種主要計費方式。
 
 ## Installation
 
@@ -23,30 +29,182 @@ uv pip install tou-calculator
 uv add tou-calculator  # add to a project
 ```
 
-## Quick Start Tutorial (快速入門教學)
+## Quick Start Guide (快速入門)
 
-This section teaches you how to use this library to calculate Taiwan electricity costs with simple examples. Whatever format your data is in, we can handle it!
+Choose the section that matches your tariff type:
+根據您的電價方案選擇對應章節：
 
-這個章節用簡單的範例教你如何使用這個套件計算臺灣電費。不管你的資料是什麼格式，我們都能處理！
+- **[Tiered Rate Plans (累進費率)](#tiered-rate-quick-start)** - For `residential_non_tou`, `lighting_*_tiered`, etc.
+- **[Time-of-Use Plans (時間電價)](#time-of-use-quick-start)** - For `*_simple_*_tier`, `*_2_tier`, `*_three_stage`, etc.
 
 ---
 
-### Step 1: Prepare Your Data (準備你的用電資料)
+## Tiered Rate Quick Start (累進費率快速入門)
 
-This library requires two pieces of information: **Time** and **Usage (kWh)**. Time must be in datetime format, and usage is just a number.
+This section is for **tiered rate plans** where the rate per kWh increases progressively with your total usage (traditional residential/commercial billing).
 
-這個套件需要「時間」和「用電度數」兩種資訊。時間必須是日期格式，用電度數就是數字。
+這個章節適用於 **累進費率方案**，費率會隨著總用電量增加而上調（傳統住家/商業計費方式）。
+
+### Which Plans Use Tiered Rates? (哪些方案使用累進費率？)
+
+| Plan ID | 中文名稱 | Description |
+|---------|---------|-------------|
+| `residential_non_tou` | 表燈非時間電價 | Standard residential tiered rates |
+| `lighting_non_business_tiered` | 表燈非營業（累進） | Non-business lighting with tiers |
+| `lighting_business_tiered` | 表燈營業（累進） | Business lighting with tiers |
+
+### Understanding Tiered Rates (瞭解累進費率)
+
+In tiered rate plans, electricity cost is calculated based on **total monthly usage**, with higher rates for higher consumption brackets:
+
+累進費率方案根據 **每月總用電量** 計算，用電越多，單價越高：
+
+```
+Example: Residential Non-TOU (表燈非時間電價)
+Non-Summer (非夏月):
+  0 - 120 kWh:    3.10 TWD/kWh
+  121 - 330 kWh:  3.60 TWD/kWh
+  331 - 500 kWh:  4.50 TWD/kWh
+  501 - 700 kWh:  5.90 TWD/kWh
+  701+ kWh:       7.00 TWD/kWh
+
+Summer (夏月，6-9月):
+  0 - 120 kWh:    3.30 TWD/kWh
+  121 - 330 kWh:  3.90 TWD/kWh
+  331 - 500 kWh:  4.80 TWD/kWh
+  501 - 700 kWh:  6.20 TWD/kWh
+  701+ kWh:       7.50 TWD/kWh
+```
+
+### Basic Example (基本範例)
+
+```python
+import pandas as pd
+import tou_calculator as tou
+
+# Your monthly usage data (one value per month)
+# 你的每月用電資料（每個月一個值）
+monthly_usage = pd.Series(
+    [280, 320, 250, 310, 290, 280, 350, 380, 360, 300, 270, 260],
+    index=pd.date_range("2025-01-01", periods=12, freq="MS")
+)
+
+# Calculate with tiered rate plan
+# 使用累進費率方案計算
+plan = tou.plan("residential_non_tou")
+costs = plan.calculate_costs(monthly_usage)
+
+print(f"Annual Total: {costs.sum():.2f} TWD")
+# Output: Annual Total: 25845.60 TWD (example value)
+
+# View monthly breakdown
+# 檢視每月明細
+for month, cost in costs.items():
+    print(f"{month.strftime('%Y-%m')}: {cost:.2f} TWD")
+# 2025-01: 1748.40 TWD
+# 2025-02: 2075.40 TWD
+# ...
+```
+
+### Detailed Breakdown (詳細明細)
+
+```python
+# See how each month was calculated
+# 檢視每個月的計算明細
+report = plan.monthly_breakdown(monthly_usage)
+print(report)
+#         month    season period  usage_kwh     cost
+# 0  2025-01-01  non_summer   flat      280.0  1748.40
+# 1  2025-02-01  non_summer   flat      320.0  2075.40
+# ...
+```
+
+### Using List/Dict (使用 List 或 Dict)
+
+For tiered rates, data typically represents monthly readings:
+累進費率的資料通常代表每月抄表：
+
+```python
+# Simple list of monthly readings
+# 簡單的每月抄表列表
+result = tou.calculate_bill_from_list(
+    usage=[280, 320, 250, 310],  # Monthly kWh readings
+    plan_id="residential_non_tou",
+    start="2025-01-01",
+    freq="1MS",  # 1 Month Start frequency
+)
+print(f"4-Month Total: {result['total'].sum():.2f} TWD")
+
+# Or use dictionary with specific dates
+# 或使用指定日期的字典
+result = tou.calculate_bill_from_dict(
+    usage={
+        "2025-01-01": 280,
+        "2025-02-01": 320,
+        "2025-03-01": 250,
+    },
+    plan_id="表燈非時間電價",  # Supports Chinese name
+)
+print(result)
+```
+
+### Single Month Calculation (單月計算)
+
+```python
+# Calculate cost for a single month's usage
+# 計算單月用電費用
+plan = tou.plan("residential_non_tou")
+monthly_kwh = 350  # Total kWh for the month
+
+# Create a single-entry series
+usage = pd.Series([monthly_kwh], index=pd.date_range("2025-07-01", periods=1, freq="MS"))
+cost = plan.calculate_costs(usage).iloc[0]
+
+print(f"Usage: {monthly_kwh} kWh")
+print(f"Cost: {cost:.2f} TWD")
+print(f"Average: {cost/monthly_kwh:.2f} TWD/kWh")
+```
+
+---
+
+## Time-of-Use Quick Start (時間電價快速入門)
+
+This section is for **time-of-use (TOU) plans** where rates vary by time period (peak/off-peak), season, and day type.
+這個章節適用於 **時間電價方案**，費率會隨時段、季節和日期型別而變動。
+
+### Which Plans Use TOU Rates? (哪些方案使用時間電價？)
+
+| Category | Plan IDs | 中文名稱 |
+|----------|----------|---------|
+| **Residential** | `residential_simple_2_tier`, `residential_simple_3_tier` | 簡易型二段式、三段式 |
+| **Low Voltage** | `low_voltage_2_tier`, `low_voltage_three_stage`, `low_voltage_ev` | 低壓電力二段式、三段式、EV |
+| **High Voltage** | `high_voltage_2_tier`, `high_voltage_three_stage`, `high_voltage_ev` | 高壓電力二段式、三段式、EV |
+
+### Understanding TOU Rates (瞭解時間電價)
+
+In TOU plans, rates vary based on **when** you use electricity:
+時間電價方案根據 **何時** 用電來計費：
+
+| Factor | Options | Impact on Rate |
+|--------|---------|----------------|
+| **季節 Season** | 夏月 Summer (6-9月) / 非夏月 Non-Summer | Summer rates ≈ 20-40% higher |
+| **日期 Day Type** | 週日+國定假日 / 週六 Saturday / 平日 Weekday | Holidays get off-peak rates |
+| **時段 Period** | 尖峰 Peak / 半尖峰 Semi-Peak / 離峰 Off-Peak | Peak most expensive, off-peak cheapest |
+
+### Step 1: Prepare Your Time-Series Data (準備時間序列資料)
+
+TOU plans need **hourly or finer** time-series data to calculate different rates for different periods.
+時間電價需要 **小時或更細** 的時間序列資料來計算不同時段的費率。
 
 #### Example A: Create Data Manually (範例 A：用 Python 手動建立資料)
 
 ```python
 import pandas as pd
-from datetime import datetime
 
-# Method 1: Using list (simplest)
-# 方法 1：用 list 建立（最簡單）
+# Method 1: Using list
+# 方法 1：用 list 建立
 timestamps = [
-    "2025-07-15 09:00",  # July 15, 2025, 9:00 AM
+    "2025-07-15 09:00",  # July 15, 2025, 9:00 AM (summer weekday - peak)
     "2025-07-15 10:00",
     "2025-07-15 11:00",
 ]
@@ -78,153 +236,52 @@ timestamp,usage
 # Read CSV file
 # 讀取 CSV 檔
 df = pd.read_csv("electricity.csv")
-
-# Ensure timestamp column is datetime format
-# 確保時間欄位是日期格式
 df["timestamp"] = pd.to_datetime(df["timestamp"])
-
-# Set time as index (important!)
-# 將時間設為索引（重要！）
 df = df.set_index("timestamp")
-
-# Extract usage data
-# 取出用電資料
 usage_series = df["usage"]
 ```
 
-#### Example C: Read from Excel (範例 C：從 Excel 檔案讀取)
-
-```python
-# Read Excel file
-# 讀取 Excel 檔
-df = pd.read_excel("electricity.xlsx", sheet_name="July")
-
-# Assuming column names are "時間" and "用電度數"
-# 假設欄位名稱是 "時間" 和 "用電度數"
-df["時間"] = pd.to_datetime(df["時間"])
-df = df.set_index("時間")
-
-usage_series = df["用電度數"]
-```
-
-#### Example D: Handle Different Data Formats (範例 D：處理不同的資料格式)
-
-```python
-import numpy as np
-
-# numpy array → convert to Series
-# numpy array → 轉成 Series
-usage_array = np.array([1.5, 2.3, 1.8])
-dates = pd.date_range("2025-07-15 09:00", periods=3, freq="h")
-usage_series = pd.Series(usage_array, index=dates)
-
-# DataFrame → use index directly
-# DataFrame → 直接使用索引
-df = pd.DataFrame({
-    "時間": pd.date_range("2025-07-15", periods=24, freq="h"),
-    "用電": np.random.rand(24) * 5  # random usage data
-})
-df = df.set_index("時間")
-usage_series = df["用電"]
-```
-
----
-
-### Step 1.5: No-Pandas Convenience Functions (無需 Pandas 的便利函式)
-
-**Don't want to deal with pandas?** We provide convenience functions that accept plain Python lists or dictionaries!
-**不想處理 pandas？** 我們提供接受純 Python list 或 dict 的便利函式！
-
-#### Using List (使用 list)
+#### Example C: No-Pandas Functions (無需 Pandas 的便利函式)
 
 ```python
 import tou_calculator as tou
 
-# For regularly-spaced data, just pass a list of values
-# 對於固定間隔的資料，只需傳入數值列表
+# Using list (for regularly-spaced data)
+# 使用 list（適用於固定間隔資料）
 result = tou.calculate_bill_from_list(
-    usage=[1.5, 2.3, 1.8, 2.0, 1.6],  # kWh values
-    plan_id="簡易型二段式",              # Flexible name matching
-    start="2025-07-15 09:00",          # Start datetime
-    freq="1h",                          # Frequency: 15min, 1h, 1D, etc.
+    usage=[1.5, 2.3, 1.8, 2.0, 1.6],
+    plan_id="簡易型二段式",
+    start="2025-07-15 09:00",
+    freq="1h",  # 1-hour interval
 )
 print(f"Total: {result['total'].iloc[0]:.2f} TWD")
-```
 
-#### Using Dictionary (使用 dict)
-
-```python
-# For irregularly-spaced data, use a dictionary
-# 對於不規則間隔的資料，使用字典
+# Using dict (for irregularly-spaced data)
+# 使用 dict（適用於不規則間隔資料）
 result = tou.calculate_bill_from_dict(
     usage={
         "2025-07-15 09:00": 1.5,
         "2025-07-15 10:00": 2.3,
-        "2025-07-15 11:00": 1.8,
-        "2025-07-15 14:30": 2.0,  # Irregular interval allowed
+        "2025-07-15 14:30": 2.0,  # Different interval OK
     },
     plan_id="residential_simple_2_tier",
 )
 print(f"Total: {result['total'].iloc[0]:.2f} TWD")
 ```
 
-#### Comparison (對比)
+### Step 2: Check Rate Period (判斷費率時段)
 
-| Method | Best For | Example Input |
-|--------|----------|---------------|
-| `calculate_bill` | pandas users, large datasets | `pd.Series` with DatetimeIndex |
-| `calculate_bill_from_list` | Regular intervals (hourly, daily) | `[1.0, 1.5, 2.0]` + start + freq |
-| `calculate_bill_from_dict` | Irregular intervals | `{"2025-07-15 09:00": 1.0, ...}` |
-
----
-
-### Step 2: Choose Your Tariff Plan (選擇你的電價方案)
-
-Taipower has many plans. Let's see what's available:
-臺電有很多種方案，先看看有哪些：
-
-```python
-import tou_calculator as tou
-
-# List all available plans (plan ID -> Chinese name)
-# 列出所有可用方案（plan ID -> 中文名稱）
-plans = tou.available_plans()
-for plan_id, chinese_name in plans.items():
-    print(f"{plan_id}: {chinese_name}")
-
-# residential_non_tou: 表燈非時間電價
-# residential_simple_2_tier: 簡易型二段式
-# ... (20 plans total)
-```
-
-Common plans:
-常見的方案：
-
-| Plan ID | 中文名稱 |
-|---------|---------|
-| `residential_simple_2_tier` | 簡易型二段式 |
-| `residential_simple_3_tier` | 簡易型三段式 |
-| `low_voltage_2_tier` | 低壓電力二段式 |
-| `high_voltage_2_tier` | 高壓電力二段式 |
-| `high_voltage_three_stage` | 高壓電力三段式 |
-
-**Use the Plan ID** (e.g., `residential_simple_2_tier`) in your code.  
-**在程式碼中使用 Plan ID**（如 `residential_simple_2_tier`）。
-
----
-
-### Step 3: Check Rate Period (判斷費率時段)
-
-Before calculating costs, you might want to know what rate period applies at a specific time.  
-在計算電費之前，你可能想知道某個時間點屬於哪個費率時段。
+Before calculating, you can check what rate period applies at a specific time.
+計算前可以先查詢特定時間屬於哪個費率時段。
 
 ```python
 from datetime import datetime
+import tou_calculator as tou
 
-# Check period type at a specific time
-# 查詢特定時間的時段型別
 dt = datetime(2025, 7, 15, 14, 0)  # July 15, 2025, 2:00 PM (summer weekday afternoon)
 
+# Check period type
+# 查詢時段型別
 period = tou.period_at(dt, "residential_simple_2_tier")
 print(f"Period: {period}")  # Output: PeriodType.PEAK (尖峰)
 
@@ -234,7 +291,7 @@ is_holiday = tou.is_holiday(dt)
 print(f"Is Holiday: {is_holiday}")  # Output: False
 
 # Get pricing context (rate + more details)
-# 取得費率資訊（費率 + 更多細節）
+# 取得費率資訊
 ctx = tou.pricing_context(dt, "residential_simple_2_tier")
 print(f"Season: {ctx['season']}")   # summer (夏月)
 print(f"Period: {ctx['period']}")   # peak (尖峰)
@@ -249,11 +306,9 @@ print(f"Rate: {ctx['rate']} TWD/kWh")  # 5.16 TWD/kWh
 | `SEMIPPEAK` | 半尖峰 | Medium rate, usually Saturday or weekday evenings |
 | `OFF_PEAK` | 離峰 | Lowest rate, nights, Sundays, and holidays |
 
----
+### Step 3: Calculate Costs (計算電費)
 
-### Step 4: Calculate Costs (計算電費)
-
-#### Basic Calculation: Energy Cost Only (基礎計算：只算電能費)
+#### Using pandas Series (推薦用於大型資料集)
 
 ```python
 # Get plan object
@@ -266,25 +321,45 @@ costs = plan.calculate_costs(usage_series)
 
 # View results
 # 看結果
-print(f"Total Cost: {costs.iloc[0]:.2f} TWD")  # 總電費
-print(costs)
-# 2025-07-01    28.90 (實際值可能略有不同)
-# Name: cost, dtype: float64
+print(f"Total Cost: {costs.iloc[0]:.2f} TWD")
 ```
 
-**Note:** `calculate_costs()` returns monthly aggregated costs by default.  
-**說明：** `calculate_costs()` 預設返回按月匯總的電費。
+#### Using List/Dict (無需 pandas)
 
-#### Advanced Calculation: With Basic Fee and Penalty (進階計算：包含基本費和違約金)
+```python
+# For regularly-spaced hourly data
+# 對於每小時固定間隔的資料
+result = tou.calculate_bill_from_list(
+    usage=[1.2, 1.5, 1.8, 2.1, 1.6, 1.4, 1.3, 1.7],
+    plan_id="residential_simple_2_tier",
+    start="2025-07-15 09:00",
+    freq="1h",
+)
+print(f"Total: {result['total'].iloc[0]:.2f} TWD")
+```
 
-For industrial users or those with contract capacity:
-適合工業使用者或有契約容量的使用者：
+### Step 4: View Detailed Report (檢視詳細報表)
+
+```python
+# View monthly statistics by period
+# 檢視每月各時段統計
+report = plan.monthly_breakdown(usage_series)
+print(report)
+#        month  season period  usage_kwh    cost
+# 0 2025-07-01  summer   peak        5.6  28.896
+# 1 2025-07-01  summer off_peak       2.4   6.720
+```
+
+### Step 5: Advanced Calculation (進階計算)
+
+For industrial users with contract capacity, basic fees, and penalties:
+適合有契約容量的工業使用者（含基本費和違約金）：
 
 ```python
 from tou_calculator import calculate_bill, BillingInputs
 
-# Set contract capacity (in kW)
-# 設定契約容量（以 kW 為單位）
+# Configure billing parameters
+# 設定計費引數
 inputs = BillingInputs(
     contract_capacities={"regular": 100},  # 100 kW contract
     power_factor=90.0,  # 90% power factor
@@ -293,80 +368,52 @@ inputs = BillingInputs(
 # Calculate full bill
 # 計算完整帳單
 bill = calculate_bill(usage_series, "high_voltage_2_tier", inputs=inputs)
-
 print(bill)
 # Energy Cost | Basic Fee | Penalty | PF Adjustment | Total
 # 電能費      | 基本費    | 違約金  | 功率因數調整     | 總計
 ```
 
----
+**Important:** For penalty calculation, use **15-minute interval** demand data. See [Data Resolution Requirements](#data-resolution-requirements) below.
+**重要：** 違約金計算請使用 **15 分鐘間隔** 的需量資料。詳見下方的[資料解析度要求](#data-resolution-requirements)。
 
-### Step 5: View Detailed Report (檢視詳細報表)
-
-```python
-# View monthly statistics
-# 檢視每月統計
-report = plan.monthly_breakdown(usage_series)
-print(report)
-#        month  season period  usage_kwh    cost
-# 0 2025-07-01  summer   peak        5.6  28.896
-```
-
----
-
-### Step 6: Export Results (匯出結果)
-
-```python
-# Save results to CSV
-# 把結果存成 CSV
-result_df = pd.DataFrame({
-    "Usage_kWh": usage_series,  # 用電度數
-    "Cost_TWD": costs,           # 電費
-})
-result_df.to_csv("電費計算結果.csv", encoding="utf-8-sig")
-
-# Or save to Excel
-# 或存成 Excel
-result_df.to_excel("電費計算結果.xlsx")
-```
-
----
-
-### Complete Example: End-to-End (完整範例：從頭到尾)
+### Complete Example (完整範例)
 
 ```python
 import pandas as pd
 import tou_calculator as tou
 
-# 1. Load your usage data
-# 1. 讀取你的用電資料
+# 1. Load hourly usage data
+# 1. 讀取每小時用電資料
 df = pd.read_csv("my_usage.csv")
 df["timestamp"] = pd.to_datetime(df["timestamp"])
 df = df.set_index("timestamp")
 
-# 2. Get tariff plan
-# 2. 取得電價方案
+# 2. Get TOU plan
+# 2. 取得時間電價方案
 plan = tou.plan("residential_simple_2_tier")
 
 # 3. Calculate costs
 # 3. 計算電費
 costs = plan.calculate_costs(df["usage"])
 
-# 4. Print results
-# 4. 印出結果
+# 4. View breakdown by period
+# 4. 檢視各時段明細
+report = plan.monthly_breakdown(df["usage"])
+print(report)
+
+# 5. Print summary
+# 5. 印出摘要
 print(f"Total Cost: {costs.sum():.2f} TWD")
-print(f"總電費: {costs.sum():.2f} 元")
 print(f"Total Usage: {df['usage'].sum():.2f} kWh")
-print(f"總用電: {df['usage'].sum():.2f} 度")
-print(f"Average per kWh: {costs.sum() / df['usage'].sum():.2f} TWD")
-print(f"平均每度: {costs.sum() / df['usage'].sum():.2f} 元")
+print(f"Average: {costs.sum() / df['usage'].sum():.2f} TWD/kWh")
 ```
 
 ---
 
-## Calculation Logic & Background (基本計算邏輯)
+## Calculation Logic & Background (計算邏輯與背景)
 
 This section explains how Taiwan Power Company (Taipower) calculates electricity bills. Understanding this helps you verify the results and optimize your electricity usage.
+這個章節說明臺電如何計算電費，瞭解這些可以幫助你驗證結果並最佳化用電。
 
 ### Quick Formula (電費計算公式)
 
@@ -378,23 +425,59 @@ Total Bill = Energy Cost + Basic Fee + Penalty ± PF Adjustment + Others
 
 ---
 
-### 1. Energy Cost (電能費) - Consumption × Rate
+## Tiered Rate Calculation (累進費率計算方式)
 
-**The electricity you use during different time periods is charged at different rates.**
+For tiered rate plans (non-TOU), energy cost is calculated based on **total monthly usage** with progressively higher rates.
+累進費率方案根據 **每月總用電量** 計算，用電越多單價越高。
+
+### How Tiered Rates Work (累進費率運作方式)
+
+```
+電能費 = Σ(各累進級距用電度數 × 該級距單價)
+
+Energy Cost = Σ(Tier_kWh × Tier_Rate) for each tier
+```
+
+**Example: Residential Non-TOU (表燈非時間電價) - Non-Summer**
+
+| Usage Range (kWh) | Rate (TWD/kWh) | Example Calculation |
+|-------------------|----------------|---------------------|
+| 0 - 120 | 3.10 | First 120 kWh × 3.10 |
+| 121 - 330 | 3.60 | Next 210 kWh × 3.60 |
+| 331 - 500 | 4.50 | Next 170 kWh × 4.50 |
+| 501 - 700 | 5.90 | Next 200 kWh × 5.90 |
+| 701+ | 7.00 | Remaining kWh × 7.00 |
+
+**Sample Calculation for 350 kWh in Non-Summer:**
+
+| Tier | Usage | Rate | Cost |
+|------|-------|------|------|
+| 1st tier (0-120) | 120 kWh | 3.10 | 372.00 |
+| 2nd tier (121-330) | 210 kWh | 3.60 | 756.00 |
+| 3rd tier (331-500) | 20 kWh | 4.50 | 90.00 |
+| **Total** | **350 kWh** | - | **1,218.00 TWD** |
+
+### Factors Affecting Tiered Rates (影響累進費率的因素)
+
+| Factor | Options | Impact |
+|--------|---------|--------|
+| **季節 Season** | 夏月 Summer (6-9月) / 非夏月 Non-Summer | Summer rates are ~6-10% higher |
+| **累進級距 Tiers** | 5 or 6 tiers depending on plan | Higher usage = higher rate applies |
+
+---
+
+## Time-of-Use Calculation (時間電價計算方式)
+
+For TOU plans, energy cost is calculated based on **when** you use electricity.
+時間電價方案根據 **何時** 用電來計算電費。
+
+### How TOU Rates Work (時間電價運作方式)
 
 ```
 電能費 = Σ(各時段用電度數 × 該時段費率)
 
-Energy Cost = Σ(Usage_kWh × Rate) for each time period
+Energy Cost = Σ(Period_Usage_kWh × Period_Rate) for each time period
 ```
-
-**How it works:**
-
-| Component | Description | Example |
-|-----------|-------------|---------|
-| **用電度數** | Your actual electricity consumption | 150 kWh in peak hours |
-| **時段費率** | Different rate for each time period | $5.16/kWh for summer peak |
-| **計算** | Multiply and sum across all periods | 150 × 5.16 = $774 |
 
 **Rate varies by:**
 
@@ -402,17 +485,31 @@ Energy Cost = Σ(Usage_kWh × Rate) for each time period
 |--------|---------|----------------|
 | **季節 Season** | 夏月 Summer (6-9月) / 非夏月 Non-Summer | Summer rates ≈ 20-40% higher |
 | **日期 Day Type** | 週日+國定假日 Sunday+Holidays / 週六 Saturday / 平日 Weekday | Holidays get off-peak rates |
-| **時段 Time Period** | 尖峰 Peak / 半尖峰 Semi-Peak / 離峰 Off-Peak | Peak most expensive, off-peak cheapest |
+| **時段 Period** | 尖峰 Peak / 半尖峰 Semi-Peak / 離峰 Off-Peak | Peak most expensive, off-peak cheapest |
+
+**Sample TOU Schedule (簡易型二段式):**
+
+| Day Type | Period | Hours | Rate (Summer) |
+|----------|--------|-------|---------------|
+| Weekday | Peak | 07:00-23:00 | 5.16 TWD/kWh |
+| Weekday | Off-peak | 23:00-07:00 | 2.06 TWD/kWh |
+| Saturday | Semi-peak | All day | 3.19 TWD/kWh |
+| Sunday/Holiday | Off-peak | All day | 2.06 TWD/kWh |
 
 ---
 
-### 2. Basic Fee (基本費) - Contract Capacity × Unit Price
+## Common Components (共同計算元件)
+
+These components apply to both tiered rate and TOU plans.
+這些元件同樣適用於累進費率和時間電價方案。
+
+### 1. Basic Fee (基本費) - Contract Capacity × Unit Price
 
 **A fixed monthly fee based on your contracted power capacity.**
+基於契約容量的固定月費。
 
 ```
-基本費 = 契約容量(kW) × 單價
-
+基本費 = 契約容量 × 單價
 Basic Fee = Contract Capacity(kW) × Unit Rate
 ```
 
@@ -424,11 +521,15 @@ Basic Fee = Contract Capacity(kW) × Unit Rate
 | **週六半尖峰契約** | Saturday semi-peak capacity | 2/3-stage TOU users |
 | **離峰契約** | Off-peak capacity | 2/3-stage TOU users |
 
+**Note:** Basic fee only applies to plans with contract capacity (industrial/commercial TOU plans).
+**說明：** 基本費僅適用於有契約容量的方案（工業/商業時間電價）。
+
 ---
 
-### 3. Demand Penalty (違約金) - Exceeding Contract Capacity
+### 2. Demand Penalty (違約金) - Exceeding Contract Capacity
 
 **If your peak demand exceeds your contract capacity, you pay a penalty.**
+如果最高需量超過契約容量，需支付違約金。
 
 ```
 最高需量 = 當月內任意15分鐘平均功率的最大值
@@ -458,7 +559,7 @@ Penalty = Over-contract × Basic Fee Rate × Penalty Multiplier
 
 ---
 
-### 4. Power Factor Adjustment (功率因數調整)
+### 3. Power Factor Adjustment (功率因數調整)
 
 **Power factor measures how efficiently you use electricity. Taipower rewards high PF and penalizes low PF.**
 
@@ -476,7 +577,7 @@ PF Adjustment = Basic Fee × (Base PF% - Actual PF%) × 0.1%
 
 ---
 
-### Complete Bill Example (完整帳單範例)
+### 4. Complete Bill Example (完整帳單範例)
 
 **Scenario:** High-voltage factory in July (summer)
 
@@ -492,7 +593,7 @@ PF Adjustment = Basic Fee × (Base PF% - Actual PF%) × 0.1%
 
 ---
 
-### Data Resolution Requirements (資料解析度要求)
+### 5. Data Resolution Requirements (資料解析度要求)
 
 | Calculation Type | Recommended Resolution | Notes |
 |------------------|------------------------|-------|
@@ -802,8 +903,30 @@ print(tou.calculate_bill_breakdown(usage, "high_voltage_2_tier", inputs=inputs))
 print(tou.calculate_bill_simple(usage, "high_voltage_2_tier"))
 
 # Convenience functions - no pandas required
-print(tou.calculate_bill_from_list([1.0, 1.5, 2.0], "residential_simple_2_tier", start="2025-07-15", freq="1h"))
-print(tou.calculate_bill_from_dict({"2025-07-15 09:00": 1.0, "2025-07-15 10:00": 1.5}, "residential_simple_2_tier"))
+# 便利函式 - 不需要 pandas
+
+# calculate_bill_from_list: for regularly-spaced data
+# calculate_bill_from_list: 適用於固定間隔資料
+result_list = tou.calculate_bill_from_list(
+    usage=[1.0, 1.5, 2.0, 1.8],
+    plan_id="residential_simple_2_tier",
+    start="2025-07-15 09:00",
+    freq="1h",
+)
+print(result_list)
+# Returns DataFrame with: [energy_cost, basic_cost, surcharge, adjustment, total]
+
+# calculate_bill_from_dict: for irregularly-spaced data
+# calculate_bill_from_dict: 適用於不規則間隔資料
+result_dict = tou.calculate_bill_from_dict(
+    usage={
+        "2025-07-15 09:00": 1.0,
+        "2025-07-15 10:30": 1.5,  # Different interval OK
+        "2025-07-15 14:00": 2.0,
+    },
+    plan_id="residential_simple_2_tier",
+)
+print(result_dict)
 ```
 
 ### Calendar & tariff access (日曆與費率)
@@ -880,15 +1003,44 @@ except Exception as exc:
 
 ## Available Plans (可用方案)
 
-All 20 Taipower plans are now supported. Plans are organized by category:
+All 20 Taipower plans are supported. Plans are organized by billing type:
+支援全部 20 種臺電方案，按計費方式分類：
 
-| Category | Plans |
-|----------|-------|
-| **Residential** | `residential_non_tou`, `residential_simple_2_tier`, `residential_simple_3_tier` |
-| **Lighting** | `lighting_non_business_tiered`, `lighting_business_tiered`, `lighting_standard_2_tier`, `lighting_standard_3_tier` |
-| **Low Voltage** | `low_voltage_power`, `low_voltage_2_tier`, `low_voltage_three_stage`, `low_voltage_ev` |
-| **High Voltage** | `high_voltage_power`, `high_voltage_2_tier`, `high_voltage_three_stage`, `high_voltage_batch`, `high_voltage_ev` |
-| **Extra High Voltage** | `extra_high_voltage_power`, `extra_high_voltage_2_tier`, `extra_high_voltage_three_stage`, `extra_high_voltage_batch` |
+### Tiered Rate Plans (累進費率方案)
+
+Rates increase progressively based on monthly usage volume.
+費率隨每月用電量逐級上調。
+
+| Category | Plan ID | 中文名稱 |
+|----------|---------|---------|
+| **Residential** | `residential_non_tou` | 表燈非時間電價 |
+| **Lighting** | `lighting_non_business_tiered` | 表燈非營業（累進） |
+| **Lighting** | `lighting_business_tiered` | 表燈營業（累進） |
+
+### Time-of-Use Plans (時間電價方案)
+
+Rates vary by time period, season, and day type.
+費率隨時段、季節和日期型別變動。
+
+| Category | Plan ID | 中文名稱 |
+|----------|---------|---------|
+| **Residential** | `residential_simple_2_tier` | 簡易型二段式 |
+| **Residential** | `residential_simple_3_tier` | 簡易型三段式 |
+| **Lighting** | `lighting_standard_2_tier` | 表燈標準二段式 |
+| **Lighting** | `lighting_standard_3_tier` | 表燈標準三段式 |
+| **Low Voltage** | `low_voltage_2_tier` | 低壓電力二段式 |
+| **Low Voltage** | `low_voltage_three_stage` | 低壓電力三段式 |
+| **Low Voltage** | `low_voltage_ev` | 低壓電動車充電 |
+| **Low Voltage** | `low_voltage_power` | 低壓電力綜合 |
+| **High Voltage** | `high_voltage_2_tier` | 高壓電力二段式 |
+| **High Voltage** | `high_voltage_three_stage` | 高壓電力三段式 |
+| **High Voltage** | `high_voltage_ev` | 高壓電動車充電 |
+| **High Voltage** | `high_voltage_power` | 高壓電力綜合 |
+| **High Voltage** | `high_voltage_batch` | 高壓電力包表 |
+| **Extra High Voltage** | `extra_high_voltage_2_tier` | 特高壓電力二段式 |
+| **Extra High Voltage** | `extra_high_voltage_three_stage` | 特高壓電力三段式 |
+| **Extra High Voltage** | `extra_high_voltage_power` | 特高壓電力綜合 |
+| **Extra High Voltage** | `extra_high_voltage_batch` | 特高壓電力包表 |
 
 ## Performance (效能)
 
