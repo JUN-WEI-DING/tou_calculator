@@ -1,21 +1,19 @@
 # tou_calculator API 中文說明
 
-本文件列出目前公開 API 的功能、常用設定與回傳內容。所有範例請參考
+本檔案列出目前公開 API 的功能、常用設定與回傳內容。所有範例請參考
 `examples/usage_examples.py`。
 
 ## 行事曆與假日
 - `taiwan_calendar(cache_dir=None, api_timeout=10)`
-  - 功能：建立台灣假日行事曆，必要時從公開 API 抓資料並快取。
+  - 功能：建立臺灣假日行事曆，必要時從公開 API 抓資料並快取。
   - 設定：`cache_dir` 指定快取資料夾；`api_timeout` 設定請求秒數。
 - `is_holiday(target, calendar=None, cache_dir=None, api_timeout=10)`
   - 功能：判斷 `date` 或 `datetime` 是否為假日。
   - 設定：可傳入自訂 `calendar`；或傳 `cache_dir`/`api_timeout` 建立新行事曆。
 
-## 方案與工廠
+## 方案
 - `available_plans()`
   - 功能：列出支援的方案名稱。
-- `taipower_tariffs(calendar_instance=None, cache_dir=None, api_timeout=10)`
-  - 功能：建立方案工廠 `TaipowerTariffs`（可用自訂行事曆）。
 - `plan(name, calendar_instance=None, cache_dir=None, api_timeout=10)`
   - 功能：用方案名稱取得 `TariffPlan`。
 - `residential_simple_2_tier_plan(...)`
@@ -25,10 +23,10 @@
 
 ## 時段與上下文
 - `get_period(target, profile)`
-  - 功能：用 `TariffProfile` 查詢時段類型。
+  - 功能：用 `TariffProfile` 查詢時段型別。
   - 回傳：`PeriodType` 或 `pd.Series`。
 - `period_at(target, plan_name, ...)`
-  - 功能：用方案名稱查詢時段類型。
+  - 功能：用方案名稱查詢時段型別。
 - `period_context(target, plan_name, ...)`
   - 功能：回傳 `season/day_type/period`。
   - 回傳：單點為 `dict`，多點為 `DataFrame`。
@@ -50,7 +48,7 @@
   - 功能：依 `plans.json` 規則計算每月帳單費用（含基本費/加成/調整）。
   - 設定：`inputs` 為 `BillingInputs`，可傳契約容量、功率因數、電表設定等。
 - `calculate_bill_simple(usage, plan_id, ...)`
-  - 功能：快速計算每月帳單費用（不需進階參數）。
+  - 功能：快速計算每月帳單費用（不需進階引數）。
 - `calculate_bill_breakdown(usage, plan_id, inputs=None, ...)`
   - 功能：回傳每月總表與時段明細（含每期用電與能量費）。
 - `monthly_breakdown(usage, plan_name, include_shares=False, ...)`

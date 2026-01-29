@@ -773,7 +773,6 @@ Quick index of all public entry points exported by `tou_calculator`.
 - `taiwan_calendar(...)` cached Taiwan holiday calendar
 - `custom_calendar(...)` create a custom calendar instance
 - `is_holiday(target, ...)` holiday check
-- `taipower_tariffs(...)` legacy access (deprecated)
 - `TariffFactory` data-driven plan loader
 
 ### Custom plan builders (自定義方案)
@@ -863,9 +862,6 @@ print(custom.is_holiday(datetime(2025, 1, 2)))
 # TariffFactory
 factory = TariffFactory()
 plan = factory.create("residential_simple_2_tier", calendar=calendar)
-
-# taipower_tariffs (legacy, deprecated)
-legacy = tou.taipower_tariffs(calendar)
 ```
 
 ### Custom plan builders (自定義方案)
