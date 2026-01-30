@@ -5,6 +5,7 @@
 
 # Taiwan Electricity Tariff Calculator
 
+**Confused by Taipower's complex rates? / 台電費率複雜，每次都搞不清楚嗎？**
 A comprehensive tool for calculating electricity costs based on Taiwan Power Company's (Taipower) pricing schemes.
 
 This library supports **both** major tariff types used by Taipower:
