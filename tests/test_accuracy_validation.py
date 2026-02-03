@@ -200,21 +200,21 @@ class TestResidentialSimple3TierAccuracy:
     def test_summer_peak_rate_3tier(self):
         """Test summer peak rate for 3-tier plan."""
         # July 15, 5PM = summer peak (4-10pm)
-        # PDF rate: 7.33 TWD/kWh
+        # PDF rate: 7.13 TWD/kWh
         dt = datetime(2024, 7, 15, 17, 0)
         ctx = tou.pricing_context(dt, "residential_simple_3_tier", usage=1.0)
 
-        assert ctx["rate"] == 7.33, f"Expected 7.33, got {ctx['rate']}"
+        assert ctx["rate"] == 7.13, f"Expected 7.13, got {ctx['rate']}"
         assert ctx["period"] == "peak"
 
     def test_summer_semi_peak_rate_3tier(self):
         """Test summer semi-peak rate for 3-tier plan."""
         # July 15, 10AM = summer semi-peak (9am-4pm)
-        # PDF rate: 5.24 TWD/kWh
+        # PDF rate: 4.69 TWD/kWh
         dt = datetime(2024, 7, 15, 10, 0)
         ctx = tou.pricing_context(dt, "residential_simple_3_tier", usage=1.0)
 
-        assert ctx["rate"] == 5.24, f"Expected 5.24, got {ctx['rate']}"
+        assert ctx["rate"] == 4.69, f"Expected 4.69, got {ctx['rate']}"
         assert ctx["period"] == "semi_peak"
 
 

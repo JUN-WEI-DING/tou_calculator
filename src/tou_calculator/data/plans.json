@@ -361,12 +361,12 @@
         {
           "season": "summer",
           "period": "peak",
-          "cost": 7.33
+          "cost": 7.13
         },
         {
           "season": "summer",
           "period": "semi_peak",
-          "cost": 5.24
+          "cost": 4.69
         },
         {
           "season": "summer",
@@ -381,7 +381,7 @@
         {
           "season": "non_summer",
           "period": "semi_peak",
-          "cost": 3.78
+          "cost": 4.48
         },
         {
           "season": "non_summer",
