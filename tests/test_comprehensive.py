@@ -294,7 +294,12 @@ def test_billing_accuracy():
     usage = pd.Series([100.0] * 48, index=dates)  # 每半小時100kW
 
     inputs = BillingInputs(
-        contract_capacities={"regular": 200},
+        contract_capacities={
+            "regular": 200.0,
+            "non_summer": 0.0,
+            "saturday_semi_peak": 0.0,
+            "off_peak": 0.0,
+        },
         power_factor=90.0,
     )
 

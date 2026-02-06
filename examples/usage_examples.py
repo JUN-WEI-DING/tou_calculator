@@ -111,7 +111,7 @@ def main() -> None:
     )
 
     # pricing_context（DatetimeIndex 版本）: 回傳 DataFrame（season/period）
-    index = pd.date_range(datetime(2025, 7, 15, 0, 0), periods=3, freq="12H")
+    index = pd.date_range(datetime(2025, 7, 15, 0, 0), periods=3, freq="12h")
     print(
         "pricing_context_index:\n",
         tou.pricing_context(
@@ -129,7 +129,7 @@ def main() -> None:
 
     # period_context（DatetimeIndex 版本）: 回傳 DataFrame（season/day_type/period）
     start = datetime(2025, 7, 15)
-    window = pd.date_range(start, start + timedelta(hours=6), freq="2H")
+    window = pd.date_range(start, start + timedelta(hours=6), freq="2h")
     print(
         "period_context_index:\n",
         tou.period_context(window, "high_voltage_2_tier", calendar_instance=calendar),

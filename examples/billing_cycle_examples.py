@@ -34,6 +34,15 @@ def print_subsection(title: str) -> None:
     print(f"\n--- {title} ---\n")
 
 
+def _residential_non_tou_inputs() -> tou.BillingInputs:
+    """Inputs to avoid minimum-usage advisory warnings in examples."""
+    return tou.BillingInputs(
+        meter_phase="single",
+        meter_voltage_v=110,
+        meter_ampere=10,
+    )
+
+
 def example_billing_cycle_types() -> None:
     """Demonstrate the three billing cycle types."""
     print_section("Billing Cycle Types")
@@ -99,7 +108,11 @@ def example_odd_month_billing() -> None:
 
     # Calculate bill using residential_non_tou (which uses 2-month billing)
     print_subsection("Bill calculation (residential_non_tou)")
-    bill = tou.calculate_bill_simple(usage, "residential_non_tou")
+    bill = tou.calculate_bill(
+        usage,
+        "residential_non_tou",
+        inputs=_residential_non_tou_inputs(),
+    )
     print(bill)
 
 
@@ -179,7 +192,11 @@ def example_tier_doubling() -> None:
     dates = pd.to_datetime(["2025-02-01 00:00"])
     usage = pd.Series([200.0], index=dates)
 
-    bill = tou.calculate_bill_simple(usage, "residential_non_tou")
+    bill = tou.calculate_bill(
+        usage,
+        "residential_non_tou",
+        inputs=_residential_non_tou_inputs(),
+    )
     print("Usage: 200 kWh")
     print(f"Energy cost: {bill['energy_cost'].iloc[0]:.2f} NT")
     print(f"(200 kWh × 1.78 NT/kWh = {200 * 1.78:.2f} NT)")
@@ -188,7 +205,11 @@ def example_tier_doubling() -> None:
     dates = pd.to_datetime(["2025-02-01 00:00"])
     usage = pd.Series([300.0], index=dates)
 
-    bill = tou.calculate_bill_simple(usage, "residential_non_tou")
+    bill = tou.calculate_bill(
+        usage,
+        "residential_non_tou",
+        inputs=_residential_non_tou_inputs(),
+    )
     print("Usage: 300 kWh")
     print(f"Energy cost: {bill['energy_cost'].iloc[0]:.2f} NT")
     print("Calculation:")
@@ -218,7 +239,11 @@ def example_season_boundary_handling() -> None:
 
     print(f"Usage:\n{usage}\n")
 
-    bill = tou.calculate_bill_simple(usage, "residential_non_tou")
+    bill = tou.calculate_bill(
+        usage,
+        "residential_non_tou",
+        inputs=_residential_non_tou_inputs(),
+    )
     print(f"Total usage: {usage.sum()} kWh")
     print(f"Energy cost: {bill['energy_cost'].iloc[0]:.2f} NT")
     print("\nNote: Feb-Mar period groups to March (summer)")
@@ -237,7 +262,11 @@ def example_season_boundary_handling() -> None:
 
     print(f"Usage:\n{usage}\n")
 
-    bill = tou.calculate_bill_simple(usage, "residential_non_tou")
+    bill = tou.calculate_bill(
+        usage,
+        "residential_non_tou",
+        inputs=_residential_non_tou_inputs(),
+    )
     print(f"Total usage: {usage.sum()} kWh")
     print(f"Energy cost: {bill['energy_cost'].iloc[0]:.2f} NT")
     print("\nNote: Oct-Nov period groups to November (non-summer)")
@@ -272,7 +301,11 @@ def example_monthly_vs_bimonthly_comparison() -> None:
     print("This is a tiered plan with 2-month billing")
     print("Feb+Mar grouped together, Apr is start of next period")
 
-    bill_bimonthly = tou.calculate_bill_simple(usage, "residential_non_tou")
+    bill_bimonthly = tou.calculate_bill(
+        usage,
+        "residential_non_tou",
+        inputs=_residential_non_tou_inputs(),
+    )
     print(bill_bimonthly)
 
 
@@ -311,14 +344,22 @@ def example_practical_use_case() -> None:
     print_subsection("Step 2: Calculate with bimonthly billing")
 
     # For ODD_MONTH billing: Jan alone (grouped with previous Dec), Feb+Mar together
-    bill = tou.calculate_bill_simple(usage_q1, "residential_non_tou")
+    bill = tou.calculate_bill(
+        usage_q1,
+        "residential_non_tou",
+        inputs=_residential_non_tou_inputs(),
+    )
 
     print(f"\nBilling periods: {len(bill)}")
     print(bill)
 
     print_subsection("Step 3: Analyze cost components")
 
-    breakdown = tou.calculate_bill_breakdown(usage_q1, "residential_non_tou")
+    breakdown = tou.calculate_bill_breakdown(
+        usage_q1,
+        "residential_non_tou",
+        inputs=_residential_non_tou_inputs(),
+    )
 
     print("\nSummary:")
     print(breakdown["summary"])

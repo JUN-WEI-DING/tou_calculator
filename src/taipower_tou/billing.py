@@ -8,6 +8,7 @@ from datetime import date
 from pathlib import Path
 from typing import Any
 
+import numpy as np
 import pandas as pd
 
 from taipower_tou.calendar import TaiwanCalendar, taiwan_calendar
@@ -281,15 +282,17 @@ def _validate_billing_inputs(
             )
 
     # 2. Validate basic_fee_inputs keys
+    valid_basic_fee_labels = set(requirements.valid_basic_fee_labels)
+    if plan_data.get("basic_fee") is not None:
+        valid_basic_fee_labels.add("basic_fee")
+
     if inputs.basic_fee_inputs:
-        unknown_keys = (
-            set(inputs.basic_fee_inputs.keys()) - requirements.valid_basic_fee_labels
-        )
+        unknown_keys = set(inputs.basic_fee_inputs.keys()) - valid_basic_fee_labels
         if unknown_keys:
             if strict:
                 raise InvalidBasicFeeInput(
                     f"Unknown keys in basic_fee_inputs: {unknown_keys}. "
-                    f"Valid keys for this plan: {requirements.valid_basic_fee_labels}"
+                    f"Valid keys for this plan: {valid_basic_fee_labels}"
                 )
             warnings.append(
                 f"Unknown keys in basic_fee_inputs (ignored): {unknown_keys}"
@@ -333,6 +336,19 @@ def _validate_billing_inputs(
     return warnings
 
 
+def _validate_usage_series(usage: pd.Series) -> None:
+    """Validate usage series for billing entrypoints."""
+    numeric_usage = pd.to_numeric(usage, errors="coerce")
+    if numeric_usage.isna().any():
+        raise InvalidUsageInput("usage series contains NaN or non-numeric values")
+    if not np.isfinite(numeric_usage.to_numpy()).all():
+        raise InvalidUsageInput("usage values must be finite")
+    if (numeric_usage < 0).any():
+        raise InvalidUsageInput("usage values must be non-negative")
+    if not usage.index.is_monotonic_increasing:
+        raise InvalidUsageInput("usage timestamps must be ordered")
+
+
 def calculate_bill(
     usage: pd.Series,
     plan_id: str,
@@ -346,6 +362,7 @@ def calculate_bill(
         raise InvalidUsageInput("usage must be a pandas.Series")
     if not isinstance(usage.index, pd.DatetimeIndex):
         raise InvalidUsageInput("usage index must be a pandas.DatetimeIndex")
+    _validate_usage_series(usage)
 
     inputs = inputs or BillingInputs()
     store = PlanStore()
@@ -457,6 +474,7 @@ def calculate_bill_breakdown(
         raise InvalidUsageInput("usage must be a pandas.Series")
     if not isinstance(usage.index, pd.DatetimeIndex):
         raise InvalidUsageInput("usage index must be a pandas.DatetimeIndex")
+    _validate_usage_series(usage)
 
     inputs = inputs or BillingInputs()
     store = PlanStore()

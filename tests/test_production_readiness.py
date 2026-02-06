@@ -1448,7 +1448,7 @@ class TestInstallationAndIntegration:
         import importlib.metadata as metadata
 
         try:
-            pkg_info = metadata.metadata("tou-calculator")
+            pkg_info = metadata.metadata("taipower-tou")
             assert pkg_info is not None
             assert "Name" in pkg_info or "name" in pkg_info
         except Exception:

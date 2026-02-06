@@ -26,7 +26,7 @@ Version: 20251001
 | lighting_non_business_tiered | 表燈(住商)非時間電價-住宅以外非營業用 | TIERED | lighting | seasons | tiers:6 |
 | lighting_business_tiered | 表燈(住商)非時間電價-營業用 | TIERED | lighting | seasons | tiers:5 |
 | residential_simple_2_tier | 簡易型時間電價-二段式 | TOU | lighting | seasons | basic_fee, rates:4, schedules:10, over_2000_kwh_surcharge |
-| residential_simple_3_tier | 簡易型時間電價-三段式 | TOU | lighting | seasons | basic_fee, rates:5, schedules:12, over_2000_kwh_surcharge |
+| residential_simple_3_tier | 簡易型時間電價-三段式 | TOU | lighting | seasons | basic_fee, rates:6, schedules:14, over_2000_kwh_surcharge |
 | lighting_standard_2_tier | 標準型時間電價-二段式 | TOU | lighting | seasons | basic_fees, rates:10, schedules:14 |
 | lighting_standard_3_tier | 標準型時間電價-三段式 | TOU | lighting | seasons | basic_fees, rates:11, schedules:16 |
 | low_voltage_power | 低壓電力-非時間電價 | NON_TOU | low_voltage | seasons | basic_fees, rates:2 |

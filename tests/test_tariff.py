@@ -144,6 +144,22 @@ def test_pricing_context_single_basic(tmp_path) -> None:
     assert result["cost"] == result["rate"]
 
 
+def test_pricing_context_holiday_full_day_slot_has_rate(tmp_path) -> None:
+    calendar = _calendar_with_cache(tmp_path)
+    dt = datetime(2025, 7, 13, 14, 0)  # Sunday
+    result = pricing_context(
+        dt,
+        "residential_simple_2_tier",
+        usage=1.0,
+        calendar_instance=calendar,
+    )
+
+    assert result["period"] == PeriodType.OFF_PEAK.value
+    assert result["rate"] is not None
+    assert result["rate"] > 0
+    assert result["cost"] == result["rate"]
+
+
 def test_pricing_context_details(tmp_path) -> None:
     calendar = _calendar_with_cache(tmp_path)
     dt = datetime(2025, 7, 15, 10, 0)

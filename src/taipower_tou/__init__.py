@@ -257,7 +257,7 @@ def get_plan_requirements(plan_name: str) -> dict[str, Any]:
         ['經常契約', '非夏月契約', '週六半尖峰契約', '離峰契約']
     """
     store = PlanStore()
-    plan_data = store.get_plan(plan_name)
+    plan_data = store.resolve_plan(plan_name)
     requirements = PlanRequirements.from_plan_data(plan_data)
 
     return {

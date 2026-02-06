@@ -32,7 +32,7 @@ def main():
     print(f"Date: {dates[0]}")
     print("Usage: 1 kWh")
     print(f"Plan: {plan.name}")
-    print(f"Season: {tou.period_at(dates[0], 'residential_simple_2_tier')}")
+    print(f"Period: {tou.period_at(dates[0], 'residential_simple_2_tier')}")
     print(f"Cost: {cost:.2f} TWD")
     print()
 

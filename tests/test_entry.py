@@ -2,6 +2,7 @@ import json
 from datetime import date, datetime, time
 
 import pandas as pd
+import pytest
 
 import taipower_tou as tou
 from taipower_tou.calendar import TaiwanCalendar
@@ -99,6 +100,23 @@ def test_entry_get_period_and_calculate_costs() -> None:
     assert list(tou.calculate_costs(usage, plan).values) == [7.5]
 
 
+def test_calculate_costs_rejects_infinite_usage() -> None:
+    profile = _build_profile()
+    rate = TariffRate(
+        period_costs={
+            (SeasonType.SUMMER, PeriodType.OFF_PEAK): 1.0,
+            (SeasonType.SUMMER, PeriodType.PEAK): 3.0,
+        }
+    )
+    plan = TariffPlan(profile, rate)
+    usage = pd.Series(
+        [1.0, float("inf")],
+        index=pd.DatetimeIndex(["2024-07-01 11:00", "2024-07-01 13:00"]),
+    )
+    with pytest.raises(InvalidUsageInput):
+        plan.calculate_costs(usage)
+
+
 def test_entry_named_helpers(tmp_path) -> None:
     cache_file = tmp_path / "2025.json"
     cache_file.write_text("[]", encoding="utf-8")
@@ -122,3 +140,9 @@ def test_entry_named_helpers(tmp_path) -> None:
 def test_errors_exports() -> None:
     assert issubclass(InvalidUsageInput, PowerKitError)
     assert issubclass(TariffError, PowerKitError)
+
+
+def test_get_plan_requirements_supports_chinese_name() -> None:
+    req = tou.get_plan_requirements("簡易型二段式")
+    assert "requires_contract_capacity" in req
+    assert "valid_basic_fee_labels" in req

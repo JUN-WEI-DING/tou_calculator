@@ -1,4 +1,4 @@
 include README.md
 include LICENSE
 include CHANGELOG.md
-recursive-include src/tou_calculator/data *.json
+recursive-include src/taipower_tou/data *.json

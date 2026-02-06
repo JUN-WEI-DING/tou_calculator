@@ -436,9 +436,15 @@ class TestYearCrossing:
         )
         usage = pd.Series([120.0, 130.0], index=index)  # 250 kWh total
 
-        result = tou.calculate_bill_simple(
+        inputs = tou.BillingInputs(
+            meter_phase="single",
+            meter_voltage_v=110,
+            meter_ampere=10,
+        )
+        result = tou.calculate_bill(
             usage,
             "residential_non_tou",
+            inputs=inputs,
             cache_dir=empty_cache_file,
         )
 
@@ -528,9 +534,15 @@ class TestComparison:
 
         # residential_non_tou has bimonthly (ODD_MONTH) billing
         # Feb+Mar = 1 period, Apr+May = 1 period
-        result = tou.calculate_bill_simple(
+        inputs = tou.BillingInputs(
+            meter_phase="single",
+            meter_voltage_v=110,
+            meter_ampere=10,
+        )
+        result = tou.calculate_bill(
             usage,
             "residential_non_tou",
+            inputs=inputs,
             cache_dir=empty_cache_file,
         )
 
@@ -554,9 +566,15 @@ class TestComparison:
         )
         usage = pd.Series([150.0, 150.0], index=index)  # 300 kWh total
 
-        result = tou.calculate_bill_simple(
+        inputs = tou.BillingInputs(
+            meter_phase="single",
+            meter_voltage_v=110,
+            meter_ampere=10,
+        )
+        result = tou.calculate_bill(
             usage,
             "residential_non_tou",
+            inputs=inputs,
             cache_dir=empty_cache_file,
         )
 
@@ -583,9 +601,15 @@ class TestComparison:
         )
         usage = pd.Series([150.0, 150.0], index=index)  # 300 kWh total
 
-        result = tou.calculate_bill_simple(
+        inputs = tou.BillingInputs(
+            meter_phase="single",
+            meter_voltage_v=110,
+            meter_ampere=10,
+        )
+        result = tou.calculate_bill(
             usage,
             "residential_non_tou",
+            inputs=inputs,
             cache_dir=empty_cache_file,
         )
 

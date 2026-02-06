@@ -547,6 +547,12 @@ class TestRealWorldScenarios:
         inputs = BillingInputs.for_lighting_standard(
             phase="three", contract_kw=10, household_count=1.0
         )
+        inputs.contract_capacities = {
+            "regular": 10.0,
+            "non_summer": 0.0,
+            "saturday_semi_peak": 0.0,
+            "off_peak": 0.0,
+        }
         bill = calculate_bill(usage, "lighting_standard_2_tier", inputs=inputs)
 
         assert bill["total"].iloc[0] > 0

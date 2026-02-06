@@ -1,7 +1,7 @@
-[![PyPI Version](https://img.shields.io/pypi/v/tou-calculator)](https://pypi.org/project/tou-calculator/)
-[![Python](https://img.shields.io/pypi/pyversions/tou-calculator)](https://pypi.org/project/tou-calculator/)
-[![License](https://img.shields.io/github/license/JUN-WEI-DING/taipower_tou)](https://github.com/JUN-WEI-DING/taipower_tou/blob/main/LICENSE)
-[![CI](https://img.shields.io/github/actions/workflow/status/JUN-WEI-DING/taipower_tou/ci.yml?branch=main)](https://github.com/JUN-WEI-DING/taipower_tou/actions/workflows/ci.yml)
+[![PyPI Version](https://img.shields.io/pypi/v/taipower-tou)](https://pypi.org/project/taipower-tou/)
+[![Python](https://img.shields.io/pypi/pyversions/taipower-tou)](https://pypi.org/project/taipower-tou/)
+[![License](https://img.shields.io/github/license/JUN-WEI-DING/taipower-tou)](https://github.com/JUN-WEI-DING/taipower-tou/blob/main/LICENSE)
+[![CI](https://img.shields.io/github/actions/workflow/status/JUN-WEI-DING/taipower-tou/ci.yml?branch=main)](https://github.com/JUN-WEI-DING/taipower-tou/actions/workflows/ci.yml)
 
 # Taiwan Electricity Tariff Calculator
 
@@ -20,14 +20,14 @@ It encapsulates complex rules—including seasonal variations, holiday logic, an
 
 ```bash
 # Basic installation
-pip install tou-calculator
+pip install taipower-tou
 
 # With lunar calendar support (recommended for accurate holiday calculation)
-pip install tou-calculator[lunar]
+pip install taipower-tou[lunar]
 
 # Alternatively, using uv (faster)
-uv pip install tou-calculator
-uv add tou-calculator  # add to a project
+uv pip install taipower-tou
+uv add taipower-tou  # add to a project
 ```
 
 ## Quick Start Guide (快速入門)
@@ -312,17 +312,19 @@ import pandas as pd
 # Method 1: Using list
 # 方法 1：用 list 建立
 timestamps = [
+    "2025-07-15 06:00",  # July 15, 2025, 6:00 AM (summer weekday - off-peak)
     "2025-07-15 09:00",  # July 15, 2025, 9:00 AM (summer weekday - peak)
     "2025-07-15 10:00",
     "2025-07-15 11:00",
 ]
-usage_kwh = [1.5, 2.3, 1.8]  # kWh used per hour
+usage_kwh = [2.4, 1.5, 2.3, 1.8]  # kWh used per hour
 
 # Convert to pandas Series (required format)
 # 轉換成 pandas Series（套件需要的格式）
 dates = pd.to_datetime(timestamps)
 usage_series = pd.Series(usage_kwh, index=dates)
 print(usage_series)
+# 2025-07-15 06:00:00    2.4
 # 2025-07-15 09:00:00    1.5
 # 2025-07-15 10:00:00    2.3
 # 2025-07-15 11:00:00    1.8
@@ -391,7 +393,7 @@ dt = datetime(2025, 7, 15, 14, 0)  # July 15, 2025, 2:00 PM (summer weekday afte
 # Check period type
 # 查詢時段型別
 period = tou.period_at(dt, "residential_simple_2_tier")
-print(f"Period: {period}")  # Output: PeriodType.PEAK (尖峰)
+print(f"Period: {period}")  # Output: PeriodType.PEAK
 
 # Check if it's a holiday
 # 檢查是否為國定假日
@@ -455,7 +457,7 @@ report = plan.monthly_breakdown(usage_series)
 print(report)
 #        month  season period  usage_kwh    cost
 # 0 2025-07-01  summer   peak        5.6  28.896
-# 1 2025-07-01  summer off_peak       2.4   6.720
+# 1 2025-07-01  summer off_peak       2.4   4.944
 ```
 
 ### Step 5: Advanced Calculation (進階計算)
@@ -492,9 +494,12 @@ import taipower_tou as tou
 
 # 1. Load hourly usage data
 # 1. 讀取每小時用電資料
-df = pd.read_csv("my_usage.csv")
-df["timestamp"] = pd.to_datetime(df["timestamp"])
-df = df.set_index("timestamp")
+df = pd.DataFrame(
+    {
+        "timestamp": pd.date_range("2025-07-01 00:00", periods=24, freq="h"),
+        "usage": [1.2] * 24,
+    }
+).set_index("timestamp")
 
 # 2. Get TOU plan
 # 2. 取得時間電價方案
@@ -863,18 +868,37 @@ Penalty Impact (assuming 200 kW contract, 2x rate for over-contract):
 **Recommended Usage**
 
 ```python
+import pandas as pd
 from taipower_tou import calculate_bill, BillingInputs
 
 # Best practice: Use 15-minute demand data
+demand_15min = pd.Series(
+    [180.0, 190.0, 210.0, 175.0],
+    index=pd.date_range("2025-07-01 14:00", periods=4, freq="15min"),
+)
 inputs = BillingInputs(
-    contract_capacities={"regular": 200, "off_peak": 50},
+    contract_capacities={
+        "regular": 200,
+        "non_summer": 100,
+        "saturday_semi_peak": 50,
+        "off_peak": 50,
+    },
     demand_kw=demand_15min,  # 15-minute interval data
     demand_adjustment_factor=1.0,  # No adjustment needed
 )
 
 # If only hourly data is available: apply conservative adjustment
+demand_hourly = pd.Series(
+    [190.0, 175.0],
+    index=pd.date_range("2025-07-01 14:00", periods=2, freq="h"),
+)
 inputs = BillingInputs(
-    contract_capacities={"regular": 200, "off_peak": 50},
+    contract_capacities={
+        "regular": 200,
+        "non_summer": 100,
+        "saturday_semi_peak": 50,
+        "off_peak": 50,
+    },
     demand_kw=demand_hourly,  # hourly data
     demand_adjustment_factor=1.15,  # 15% conservative adjustment
 )
@@ -1005,11 +1029,20 @@ print(tou.monthly_breakdown(usage, "residential_simple_2_tier"))
 ### Billing helpers (帳單計算)
 
 ```python
-inputs = BillingInputs(contract_capacities={"regular": 200}, power_factor=95.0)
+# High-voltage plans need complete contract capacities for formula-based basic fee
+inputs = BillingInputs(
+    contract_capacities={
+        "regular": 200,
+        "non_summer": 100,
+        "saturday_semi_peak": 50,
+        "off_peak": 50,
+    },
+    power_factor=95.0,
+)
 
 print(tou.calculate_bill(usage, "high_voltage_2_tier", inputs=inputs))
 print(tou.calculate_bill_breakdown(usage, "high_voltage_2_tier", inputs=inputs))
-print(tou.calculate_bill_simple(usage, "high_voltage_2_tier"))
+print(tou.calculate_bill_simple(usage, "residential_simple_2_tier"))
 
 # Convenience functions - no pandas required
 # 便利函式 - 不需要 pandas
@@ -1062,32 +1095,60 @@ plan = factory.create("residential_simple_2_tier", calendar=calendar)
 from taipower_tou import (
     build_tariff_profile,
     build_tariff_rate,
-    build_day_schedule,
     build_tariff_plan,
     WeekdayDayTypeStrategy,
+    TaiwanSeasonStrategy,
+    custom_calendar,
 )
 
+# 1. Define Strategies
+# Strategy for determining seasons (Summer: June 1 - Sept 30)
+season_strategy = TaiwanSeasonStrategy(summer_start=(6, 1), summer_end=(9, 30))
+
+# Strategy for determining day types (Weekday/Weekend + Holidays)
+calendar = custom_calendar()
+day_type_strategy = WeekdayDayTypeStrategy(calendar)
+
+# 2. Define Profile (Time periods)
+# Map (Season, DayType) to Schedule
 profile = build_tariff_profile(
     name="demo_plan",
-    seasons=["summer", "non_summer"],
-    day_types=["weekday", "weekend"],
-    period_types=["peak", "off_peak"],
+    season_strategy=season_strategy,
+    day_type_strategy=day_type_strategy,
+    schedules=[
+        {
+            "season": "summer",
+            "day_type": "weekday",
+            "slots": [
+                {"start": "09:00", "end": "23:00", "period": "peak"},
+                {"start": "23:00", "end": "09:00", "period": "off_peak"},
+            ]
+        },
+        # Define other schedules for (summer, weekend), (non_summer, ...), etc.
+        {
+            "season": "summer",
+            "day_type": "saturday", # WeekdayDayTypeStrategy uses 'saturday'
+            "slots": [{"start": "00:00", "end": "24:00", "period": "off_peak"}]
+        }
+    ],
+    default_period="off_peak"
 )
+
+# 3. Define Rates (Prices)
 rate = build_tariff_rate(
-    season="summer",
-    day_type="weekday",
-    period_type="peak",
-    rate=5.0,
+    period_costs=[
+        {"season": "summer", "period": "peak", "cost": 5.0},
+        {"season": "summer", "period": "off_peak", "cost": 2.0},
+        {"season": "summer", "period": "super_peak", "cost": 10.0},
+        # ... costs for other periods ...
+    ],
+    season_strategy=season_strategy
 )
-schedule = build_day_schedule(
-    period_map=[("08:00", "22:00", "peak")],
-    default_period="off_peak",
-)
+
+# 4. Build Plan
 plan = build_tariff_plan(
     profile=profile,
-    rates=[rate],
-    schedules={"weekday": schedule, "weekend": schedule},
-    day_type_strategy=WeekdayDayTypeStrategy(),
+    rates=rate,
 )
 ```
 
@@ -1189,12 +1250,18 @@ The library is optimized for processing large time-series datasets efficiently t
 ### Tips for Best Performance (效能最佳化建議)
 
 ```python
+import pandas as pd
+
 # For very large datasets, preload years in advance
 calendar = tou.taiwan_calendar()
 calendar.preload_years({2024, 2025, 2026})  # Preload multiple years
 
 # Then use the cached calendar
 plan = tou.plan("residential_simple_2_tier", calendar_instance=calendar)
+usage_data = pd.Series(
+    [1.0] * 24,
+    index=pd.date_range("2025-07-01 00:00", periods=24, freq="h"),
+)
 costs = plan.calculate_costs(usage_data)  # Will use cached holidays
 ```
 
@@ -1234,9 +1301,16 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ---
 
+## Acknowledgements (致謝)
+
+- **[ruyut/TaiwanCalendar](https://github.com/ruyut/TaiwanCalendar)**: Special thanks to @ruyut for providing the excellent Taiwan holiday data API, which powers the calendar features of this library.
+
+
+---
+
 ## Links (相關連結)
 
-- **Repository:** https://github.com/JUN-WEI-DING/taipower_tou
-- **Issues:** https://github.com/JUN-WEI-DING/taipower_tou/issues
+- **Repository:** https://github.com/JUN-WEI-DING/taipower-tou
+- **Issues:** https://github.com/JUN-WEI-DING/taipower-tou/issues
 - **Changelog:** [CHANGELOG.md](CHANGELOG.md)
 - **License:** [MIT](LICENSE)

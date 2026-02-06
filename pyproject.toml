@@ -40,7 +40,10 @@ Changelog = "https://github.com/JUN-WEI-DING/taipower-tou/blob/main/CHANGELOG.md
 Documentation = "https://github.com/JUN-WEI-DING/taipower-tou#readme"
 
 [project.optional-dependencies]
-test = ["pytest"]
+test = [
+    "pytest",
+    "tomli>=1.1.0; python_version < '3.11'",
+]
 dev = ["pre-commit", "ruff", "mypy"]
 lunar = ["zhdate>=0.1.0"]
 

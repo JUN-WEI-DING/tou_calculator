@@ -76,7 +76,7 @@ def test_extreme_data_volumes():
         print(f"  {name}: {status}")
 
     assert all("✅" in r[-1] for r in results), "Some data sizes failed"
-    return True
+
 
 
 # =============================================================================
@@ -134,7 +134,7 @@ def test_extreme_values():
             print(f"❌ {name}: 錯誤的異常型別 - {type(e).__name__}: {e}")
 
     # Check that no unexpected errors occurred (no assertion needed for this test)
-    return True
+
 
 
 # =============================================================================
@@ -193,7 +193,7 @@ def test_concurrent_access():
         assert completed >= n_workers * 0.95, "Concurrent test failed"
 
     print("\n✅ 並發訪問測試透過")
-    return True
+
 
 
 # =============================================================================
@@ -240,7 +240,7 @@ def test_memory_stability():
     assert total_delta <= 100, "Possible memory leak detected"
 
     print("  ✅ 記憶體穩定性良好")
-    return True
+
 
 
 # =============================================================================
@@ -330,7 +330,7 @@ def test_all_plans_stress():
         for plan_id, scenario, error in failed_plans:
             print(f"  - {plan_id}: {scenario}")
 
-    return len(failed_plans) == 0
+    assert len(failed_plans) == 0, "Some plans failed stress scenarios"
 
 
 # =============================================================================
@@ -370,7 +370,7 @@ def test_boundary_times():
             assert False, f"Boundary test {name} failed: {e}"
 
     # All tests passed (no assertion needed at end)
-    return True
+
 
 
 # =============================================================================
@@ -424,7 +424,7 @@ def test_holiday_edge_cases():
             all_correct = False
 
     assert all_correct, "Some edge cases failed"
-    return True
+
 
 
 # =============================================================================
@@ -467,7 +467,7 @@ def test_repeated_object_creation():
     assert not errors, f"Errors occurred: {errors[:5]}"
 
     print("  ✅ 物件建立穩定")
-    return True
+
 
 
 # =============================================================================
@@ -519,7 +519,7 @@ def test_large_date_range():
             print(f"❌ {name}: {e}")
 
     assert all("✅" in r[-1] for r in results), "Some year ranges failed"
-    return True
+
 
 
 # =============================================================================
@@ -561,8 +561,25 @@ def test_billing_stress():
                 index=demand_dates,
             )
 
+            if plan_id == "high_voltage_three_stage":
+                contract_capacities = {
+                    "regular": 200.0,
+                    "semi_peak": 100.0,
+                    "saturday_semi_peak": 50.0,
+                    "off_peak": 50.0,
+                }
+            elif plan_id == "high_voltage_2_tier":
+                contract_capacities = {
+                    "regular": 200.0,
+                    "non_summer": 100.0,
+                    "saturday_semi_peak": 50.0,
+                    "off_peak": 50.0,
+                }
+            else:
+                contract_capacities = {}
+
             inputs = BillingInputs(
-                contract_capacities={"regular": 200, "off_peak": 50},
+                contract_capacities=contract_capacities,
                 demand_kw=demand,
                 power_factor=85.0,
             )
@@ -583,7 +600,7 @@ def test_billing_stress():
             print(f"❌ {plan_id}: {type(e).__name__}: {e}")
 
     assert all("✅" in r[-1] for r in results), "Some plans failed"
-    return True
+
 
 
 # =============================================================================
@@ -654,7 +671,7 @@ def test_invalid_input_handling():
 
     # At least 80% should be properly rejected
     assert rejection_rate >= 80, f"Rejection rate too low: {rejection_rate:.0f}%"
-    return True
+
 
 
 # =============================================================================
@@ -709,7 +726,7 @@ def test_performance_consistency():
     assert ratio <= 10.0, f"Performance variance too high: {ratio:.2f}x"
 
     print("  ✅ 效能穩定")
-    return True
+
 
 
 # =============================================================================

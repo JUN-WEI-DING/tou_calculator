@@ -1,3 +1,4 @@
+import warnings
 from datetime import datetime
 
 import pandas as pd
@@ -55,9 +56,15 @@ def test_calculate_bill_minimum_usage_rule(empty_cache_file) -> None:
 def test_calculate_bill_two_month_cycle(empty_cache_file) -> None:
     index = pd.to_datetime(["2025-07-01 00:00", "2025-08-01 00:00"])
     usage = pd.Series([10.0, 10.0], index=index)
-    result = tou.calculate_bill_simple(
+    inputs = tou.BillingInputs(
+        meter_phase="single",
+        meter_voltage_v=110,
+        meter_ampere=10,
+    )
+    result = tou.calculate_bill(
         usage,
         "residential_non_tou",
+        inputs=inputs,
         cache_dir=empty_cache_file,
     )
     assert len(result.index) == 1
@@ -86,3 +93,74 @@ def test_calculate_bill_breakdown(empty_cache_file) -> None:
     assert {"period", "label", "quantity", "rate", "cost"} <= set(basic_details.columns)
     if not adjustment_details.empty:
         assert {"period", "type", "amount"} <= set(adjustment_details.columns)
+
+
+def test_calculate_bill_rejects_negative_usage(empty_cache_file) -> None:
+    usage = pd.Series(
+        [1.0, -0.5],
+        index=pd.to_datetime(["2025-07-15 10:00", "2025-07-15 11:00"]),
+    )
+    with pytest.raises(tou.InvalidUsageInput):
+        tou.calculate_bill(
+            usage, "residential_simple_2_tier", cache_dir=empty_cache_file
+        )
+
+
+def test_calculate_bill_rejects_nan_usage(empty_cache_file) -> None:
+    usage = pd.Series(
+        [1.0, float("nan")],
+        index=pd.to_datetime(["2025-07-15 10:00", "2025-07-15 11:00"]),
+    )
+    with pytest.raises(tou.InvalidUsageInput):
+        tou.calculate_bill(
+            usage, "residential_simple_2_tier", cache_dir=empty_cache_file
+        )
+
+
+def test_calculate_bill_rejects_infinite_usage(empty_cache_file) -> None:
+    usage = pd.Series(
+        [1.0, float("inf")],
+        index=pd.to_datetime(["2025-07-15 10:00", "2025-07-15 11:00"]),
+    )
+    with pytest.raises(tou.InvalidUsageInput):
+        tou.calculate_bill(
+            usage, "residential_simple_2_tier", cache_dir=empty_cache_file
+        )
+
+
+def test_calculate_bill_rejects_unsorted_usage(empty_cache_file) -> None:
+    usage = pd.Series(
+        [1.0, 2.0],
+        index=pd.to_datetime(["2025-07-15 11:00", "2025-07-15 10:00"]),
+    )
+    with pytest.raises(tou.InvalidUsageInput):
+        tou.calculate_bill(
+            usage, "residential_simple_2_tier", cache_dir=empty_cache_file
+        )
+
+
+def test_calculate_bill_breakdown_rejects_invalid_usage(empty_cache_file) -> None:
+    usage = pd.Series(
+        [1.0, -0.5],
+        index=pd.to_datetime(["2025-07-15 10:00", "2025-07-15 11:00"]),
+    )
+    with pytest.raises(tou.InvalidUsageInput):
+        tou.calculate_bill_breakdown(
+            usage, "residential_simple_2_tier", cache_dir=empty_cache_file
+        )
+
+
+def test_for_residential_does_not_warn_unknown_basic_fee(empty_cache_file) -> None:
+    usage = pd.Series([1.0], index=pd.to_datetime(["2025-07-15 10:00"]))
+    inputs = tou.BillingInputs.for_residential(phase="single", voltage=110, ampere=10)
+    with warnings.catch_warnings(record=True) as record:
+        warnings.simplefilter("always")
+        tou.calculate_bill(
+            usage,
+            "residential_simple_2_tier",
+            inputs=inputs,
+            cache_dir=empty_cache_file,
+        )
+    assert not any(
+        "Unknown keys in basic_fee_inputs" in str(w.message) for w in record
+    )

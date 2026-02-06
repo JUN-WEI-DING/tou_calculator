@@ -288,6 +288,9 @@ class _TariffEngine:
         default_period: PeriodType | str,
     ) -> PeriodType | str:
         for slot in schedule.slots:
+            # In Taipower schedules, 00:00-00:00 means "all day".
+            if slot.start == slot.end:
+                return slot.period_type
             if slot.start <= t < slot.end:
                 return slot.period_type
             if slot.start > slot.end:
@@ -790,9 +793,12 @@ def _validate_usage_series(usage_kwh: pd.Series) -> None:
         raise InvalidUsageInput("usage must be a pandas.Series")
     if not isinstance(usage_kwh.index, pd.DatetimeIndex):
         raise InvalidUsageInput("usage index must be a pandas.DatetimeIndex")
-    if usage_kwh.isna().any():
-        raise InvalidUsageInput("usage series contains NaN values")
-    if (usage_kwh < 0).any():
+    numeric_usage = pd.to_numeric(usage_kwh, errors="coerce")
+    if numeric_usage.isna().any():
+        raise InvalidUsageInput("usage series contains NaN or non-numeric values")
+    if not np.isfinite(numeric_usage.to_numpy()).all():
+        raise InvalidUsageInput("usage values must be finite")
+    if (numeric_usage < 0).any():
         raise InvalidUsageInput("usage values must be non-negative")
     if not usage_kwh.index.is_monotonic_increasing:
         raise InvalidUsageInput("usage timestamps must be ordered")
