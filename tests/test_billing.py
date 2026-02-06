@@ -161,6 +161,4 @@ def test_for_residential_does_not_warn_unknown_basic_fee(empty_cache_file) -> No
             inputs=inputs,
             cache_dir=empty_cache_file,
         )
-    assert not any(
-        "Unknown keys in basic_fee_inputs" in str(w.message) for w in record
-    )
+    assert not any("Unknown keys in basic_fee_inputs" in str(w.message) for w in record)
